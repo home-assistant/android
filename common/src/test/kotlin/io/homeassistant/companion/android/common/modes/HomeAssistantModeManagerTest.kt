@@ -39,7 +39,7 @@ private const val UPSIDE_DOWN_CAKE_SDK = 34
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class, sdk = [VANILLA_ICE_CREAM_SDK])
-class HomeAssistantModeTest {
+class HomeAssistantModeManagerTest {
 
     private val notificationManager: NotificationManager = mockk(relaxed = true)
     private val packageManager: PackageManager = mockk(relaxed = true)
@@ -50,7 +50,7 @@ class HomeAssistantModeTest {
     private val modesInAndroid = mutableMapOf<String, AutomaticZenRule>()
 
     private lateinit var context: Context
-    private lateinit var homeAssistantMode: HomeAssistantMode
+    private lateinit var homeAssistantModeManager: HomeAssistantModeManager
 
     @Before
     fun setUp() {
@@ -76,12 +76,12 @@ class HomeAssistantModeTest {
 
     /** Creates a new instance, like after the app process is restarted. */
     private fun createMode() {
-        homeAssistantMode = HomeAssistantMode(context, notificationManager, testDispatcher)
+        homeAssistantModeManager = HomeAssistantModeManager(context, notificationManager, testDispatcher)
     }
 
     /** @return the condition id the app gives its mode, read from a mode it added */
     private suspend fun modeConditionId(): Uri {
-        homeAssistantMode.add()
+        homeAssistantModeManager.add()
         return addedMode.captured.conditionId
     }
 
@@ -90,15 +90,15 @@ class HomeAssistantModeTest {
         every { isEnabled } returns enabled
     }
 
-    private suspend fun isAdded() = homeAssistantMode.getState()?.added == true
+    private suspend fun isAdded() = homeAssistantModeManager.getState()?.added == true
 
-    private suspend fun isActive() = homeAssistantMode.getState()?.active
+    private suspend fun isActive() = homeAssistantModeManager.getState()?.active
 
     private fun assertModeChangeIsUserAction(active: Boolean, expectedState: Int) = runTest(testDispatcher) {
-        homeAssistantMode.add()
+        homeAssistantModeManager.add()
         every { notificationManager.getAutomaticZenRuleState(MODE_ID) } returns expectedState
 
-        assertEquals(HomeAssistantMode.ChangeResult.Applied, homeAssistantMode.setActive(active))
+        assertEquals(HomeAssistantModeManager.ChangeResult.Applied, homeAssistantModeManager.setActive(active))
 
         verify {
             notificationManager.setAutomaticZenRuleState(
@@ -113,12 +113,12 @@ class HomeAssistantModeTest {
         SdkVersion.sdkInt = UPSIDE_DOWN_CAKE_SDK
         createMode()
 
-        assertFalse(homeAssistantMode.isSupported())
-        assertFalse(homeAssistantMode.add())
+        assertFalse(homeAssistantModeManager.isSupported())
+        assertFalse(homeAssistantModeManager.add())
         assertFalse(isAdded())
-        assertTrue(homeAssistantMode.remove())
+        assertTrue(homeAssistantModeManager.remove())
         assertNull(isActive())
-        assertEquals(HomeAssistantMode.ChangeResult.Failed, homeAssistantMode.setActive(true))
+        assertEquals(HomeAssistantModeManager.ChangeResult.Failed, homeAssistantModeManager.setActive(true))
 
         verify(exactly = 0) { notificationManager.areAutomaticZenRulesUserManaged() }
         verify(exactly = 0) { notificationManager.automaticZenRules }
@@ -128,8 +128,8 @@ class HomeAssistantModeTest {
     fun `Given device where modes are not managed by the user when adding then mode is not supported or added`() = runTest(testDispatcher) {
         every { notificationManager.areAutomaticZenRulesUserManaged() } returns false
 
-        assertFalse(homeAssistantMode.isSupported())
-        assertFalse(homeAssistantMode.add())
+        assertFalse(homeAssistantModeManager.isSupported())
+        assertFalse(homeAssistantModeManager.add())
         verify(exactly = 0) { notificationManager.addAutomaticZenRule(any()) }
     }
 
@@ -137,8 +137,8 @@ class HomeAssistantModeTest {
     fun `Given mode not added when adding twice then it is added once as a mode the user can turn on`() = runTest(testDispatcher) {
         assertFalse(isAdded())
 
-        assertTrue(homeAssistantMode.add())
-        assertTrue(homeAssistantMode.add())
+        assertTrue(homeAssistantModeManager.add())
+        assertTrue(homeAssistantModeManager.add())
 
         assertTrue(isAdded())
         verify(exactly = 1) { notificationManager.addAutomaticZenRule(any()) }
@@ -152,7 +152,7 @@ class HomeAssistantModeTest {
         createMode()
 
         assertTrue(isAdded())
-        assertTrue(homeAssistantMode.add())
+        assertTrue(homeAssistantModeManager.add())
 
         verify(exactly = 1) { notificationManager.addAutomaticZenRule(any()) }
         assertEquals(conditionId, modesInAndroid.getValue(MODE_ID).conditionId)
@@ -164,8 +164,8 @@ class HomeAssistantModeTest {
         modesInAndroid[OTHER_MODE_ID] = mode(Uri.parse("condition://other"))
 
         assertFalse(isAdded())
-        assertEquals(HomeAssistantMode.ChangeResult.NotAdded, homeAssistantMode.setActive(true))
-        assertTrue(homeAssistantMode.remove())
+        assertEquals(HomeAssistantModeManager.ChangeResult.NotAdded, homeAssistantModeManager.setActive(true))
+        assertTrue(homeAssistantModeManager.remove())
 
         verify(exactly = 0) { notificationManager.removeAutomaticZenRule(any()) }
     }
@@ -185,7 +185,7 @@ class HomeAssistantModeTest {
             )
         } returns resolveInfo
 
-        homeAssistantMode.add()
+        homeAssistantModeManager.add()
 
         assertEquals(
             ComponentName(context.packageName, MODE_SETTINGS_ACTIVITY),
@@ -195,7 +195,7 @@ class HomeAssistantModeTest {
 
     @Test
     fun `Given no mode settings screen when adding mode then Android links to the launcher activity`() = runTest(testDispatcher) {
-        homeAssistantMode.add()
+        homeAssistantModeManager.add()
 
         assertEquals(ComponentName(context.packageName, LAUNCH_ACTIVITY), addedMode.captured.configurationActivity)
     }
@@ -204,7 +204,7 @@ class HomeAssistantModeTest {
     fun `Given Android refuses the mode when adding then it is reported as not added`() = runTest(testDispatcher) {
         every { notificationManager.addAutomaticZenRule(any()) } throws IllegalArgumentException("Rule limit")
 
-        assertFalse(homeAssistantMode.add())
+        assertFalse(homeAssistantModeManager.add())
         assertFalse(isAdded())
     }
 
@@ -212,12 +212,12 @@ class HomeAssistantModeTest {
     fun `Given no Do Not Disturb access when using the mode then Android is not asked for its modes`() = runTest(testDispatcher) {
         every { notificationManager.isNotificationPolicyAccessGranted } returns false
 
-        assertFalse(homeAssistantMode.hasAccess())
-        assertFalse(homeAssistantMode.add())
+        assertFalse(homeAssistantModeManager.hasAccess())
+        assertFalse(homeAssistantModeManager.add())
         assertFalse(isAdded())
-        assertFalse(homeAssistantMode.remove())
+        assertFalse(homeAssistantModeManager.remove())
         assertNull(isActive())
-        assertEquals(HomeAssistantMode.ChangeResult.NoAccess, homeAssistantMode.setActive(true))
+        assertEquals(HomeAssistantModeManager.ChangeResult.NoAccess, homeAssistantModeManager.setActive(true))
         verify(exactly = 0) { notificationManager.automaticZenRules }
         verify(exactly = 0) { notificationManager.setAutomaticZenRuleState(any(), any()) }
     }
@@ -226,19 +226,19 @@ class HomeAssistantModeTest {
     fun `Given Do Not Disturb access revoked while using the mode then failure is handled`() = runTest(testDispatcher) {
         every { notificationManager.automaticZenRules } throws SecurityException("No access")
 
-        assertFalse(homeAssistantMode.add())
+        assertFalse(homeAssistantModeManager.add())
         assertFalse(isAdded())
-        assertFalse(homeAssistantMode.remove())
+        assertFalse(homeAssistantModeManager.remove())
         assertNull(isActive())
-        assertEquals(HomeAssistantMode.ChangeResult.Failed, homeAssistantMode.setActive(true))
+        assertEquals(HomeAssistantModeManager.ChangeResult.Failed, homeAssistantModeManager.setActive(true))
         verify(exactly = 0) { notificationManager.setAutomaticZenRuleState(any(), any()) }
     }
 
     @Test
     fun `Given mode added when removing then it is gone from Android`() = runTest(testDispatcher) {
-        homeAssistantMode.add()
+        homeAssistantModeManager.add()
 
-        assertTrue(homeAssistantMode.remove())
+        assertTrue(homeAssistantModeManager.remove())
 
         assertFalse(isAdded())
         verify(exactly = 1) { notificationManager.removeAutomaticZenRule(MODE_ID) }
@@ -249,7 +249,7 @@ class HomeAssistantModeTest {
         val conditionId = modeConditionId()
         modesInAndroid[OTHER_MODE_ID] = mode(conditionId)
 
-        assertTrue(homeAssistantMode.remove())
+        assertTrue(homeAssistantModeManager.remove())
 
         assertTrue(modesInAndroid.isEmpty())
     }
@@ -260,7 +260,7 @@ class HomeAssistantModeTest {
         modesInAndroid[OTHER_MODE_ID] = mode(conditionId)
         every { notificationManager.removeAutomaticZenRule(MODE_ID) } returns false
 
-        assertFalse(homeAssistantMode.remove())
+        assertFalse(homeAssistantModeManager.remove())
 
         verify(exactly = 1) { notificationManager.removeAutomaticZenRule(OTHER_MODE_ID) }
         assertEquals(setOf(MODE_ID), modesInAndroid.keys)
@@ -268,24 +268,24 @@ class HomeAssistantModeTest {
 
     @Test
     fun `Given mode not added when removing then nothing is removed`() = runTest(testDispatcher) {
-        assertTrue(homeAssistantMode.remove())
+        assertTrue(homeAssistantModeManager.remove())
 
         verify(exactly = 0) { notificationManager.removeAutomaticZenRule(any()) }
     }
 
     @Test
     fun `Given Android keeps the mode when removing then it is reported as still added`() = runTest(testDispatcher) {
-        homeAssistantMode.add()
+        homeAssistantModeManager.add()
         every { notificationManager.removeAutomaticZenRule(any()) } returns false
 
-        assertFalse(homeAssistantMode.remove())
+        assertFalse(homeAssistantModeManager.remove())
     }
 
     @Test
     fun `Given mode not added when reading its state then it is off and not added`() = runTest(testDispatcher) {
         assertEquals(
-            HomeAssistantMode.State(added = false, enabled = false, active = false),
-            homeAssistantMode.getState(),
+            HomeAssistantModeManager.State(added = false, enabled = false, active = false),
+            homeAssistantModeManager.getState(),
         )
     }
 
@@ -294,14 +294,14 @@ class HomeAssistantModeTest {
         modesInAndroid[MODE_ID] = mode(modeConditionId(), enabled = false)
 
         assertEquals(
-            HomeAssistantMode.State(added = true, enabled = false, active = false),
-            homeAssistantMode.getState(),
+            HomeAssistantModeManager.State(added = true, enabled = false, active = false),
+            homeAssistantModeManager.getState(),
         )
     }
 
     @Test
     fun `Given mode added when reading its state then Android's state is reported`() = runTest(testDispatcher) {
-        homeAssistantMode.add()
+        homeAssistantModeManager.add()
 
         assertEquals(false, isActive())
         every { notificationManager.getAutomaticZenRuleState(MODE_ID) } returns Condition.STATE_TRUE
@@ -312,8 +312,8 @@ class HomeAssistantModeTest {
 
     @Test
     fun `Given mode not added when turning it on or off then it is not added`() = runTest(testDispatcher) {
-        assertEquals(HomeAssistantMode.ChangeResult.NotAdded, homeAssistantMode.setActive(true))
-        assertEquals(HomeAssistantMode.ChangeResult.NotAdded, homeAssistantMode.setActive(false))
+        assertEquals(HomeAssistantModeManager.ChangeResult.NotAdded, homeAssistantModeManager.setActive(true))
+        assertEquals(HomeAssistantModeManager.ChangeResult.NotAdded, homeAssistantModeManager.setActive(false))
 
         verify(exactly = 0) { notificationManager.addAutomaticZenRule(any()) }
         verify(exactly = 0) { notificationManager.setAutomaticZenRuleState(any(), any()) }
@@ -327,25 +327,25 @@ class HomeAssistantModeTest {
 
     @Test
     fun `Given Android leaves the mode on when turning it off then the result says it was not applied`() = runTest(testDispatcher) {
-        homeAssistantMode.add()
+        homeAssistantModeManager.add()
         every { notificationManager.getAutomaticZenRuleState(MODE_ID) } returns Condition.STATE_TRUE
 
-        assertEquals(HomeAssistantMode.ChangeResult.NotApplied, homeAssistantMode.setActive(false))
+        assertEquals(HomeAssistantModeManager.ChangeResult.NotApplied, homeAssistantModeManager.setActive(false))
     }
 
     @Test
     fun `Given Android cannot tell the mode state after turning it off then the result says it was not applied`() = runTest(testDispatcher) {
-        homeAssistantMode.add()
+        homeAssistantModeManager.add()
         every { notificationManager.getAutomaticZenRuleState(MODE_ID) } returns Condition.STATE_UNKNOWN
 
-        assertEquals(HomeAssistantMode.ChangeResult.NotApplied, homeAssistantMode.setActive(false))
+        assertEquals(HomeAssistantModeManager.ChangeResult.NotApplied, homeAssistantModeManager.setActive(false))
     }
 
     @Test
     fun `Given user disabled the mode in Android when turning it on then nothing is changed`() = runTest(testDispatcher) {
         modesInAndroid[MODE_ID] = mode(modeConditionId(), enabled = false)
 
-        assertEquals(HomeAssistantMode.ChangeResult.DisabledInAndroid, homeAssistantMode.setActive(true))
+        assertEquals(HomeAssistantModeManager.ChangeResult.DisabledInAndroid, homeAssistantModeManager.setActive(true))
 
         verify(exactly = 0) { notificationManager.setAutomaticZenRuleState(any(), any()) }
     }

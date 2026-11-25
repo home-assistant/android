@@ -184,7 +184,8 @@
             android:icon="@drawable/ic_minus_circle_outline"
             android:title="@string/home_assistant_mode_title"
             android:summary="@string/home_assistant_mode_summary"
-            android:persistent="false" />
+            android:persistent="false"
+            android:enabled="false" />
     </PreferenceCategory>
     <PreferenceCategory
         android:key="quick_settings"

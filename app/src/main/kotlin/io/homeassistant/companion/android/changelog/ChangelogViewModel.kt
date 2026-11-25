@@ -1,12 +1,15 @@
 package io.homeassistant.companion.android.changelog
 
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.modes.HomeAssistantModeManager
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
+import io.homeassistant.companion.android.settings.SettingsActivity
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,12 +38,21 @@ data class ChangelogUiState(
  * current app version regardless of how the user leaves the screen.
  */
 @HiltViewModel
-class ChangelogViewModel @Inject constructor(
+class ChangelogViewModel @VisibleForTesting internal constructor(
     prefsRepository: PrefsRepository,
-    @IsAutomotive isAutomotive: Boolean,
+    isAutomotive: Boolean,
     appVersion: AppVersion,
-    actionAvailability: ChangelogActionAvailability,
+    homeAssistantModeManager: HomeAssistantModeManager,
+    changelog: Changelog,
 ) : ViewModel() {
+
+    @Inject
+    constructor(
+        prefsRepository: PrefsRepository,
+        @IsAutomotive isAutomotive: Boolean,
+        appVersion: AppVersion,
+        homeAssistantModeManager: HomeAssistantModeManager,
+    ) : this(prefsRepository, isAutomotive, appVersion, homeAssistantModeManager, currentChangelog)
 
     val uiState: StateFlow<ChangelogUiState> = MutableStateFlow(
         run {
@@ -49,7 +61,7 @@ class ChangelogViewModel @Inject constructor(
                 versionName = versionWithoutFlavor,
                 releaseUrl = RELEASE_TAG_URL_PREFIX + versionWithoutFlavor,
                 currentPlatform = if (isAutomotive) ChangelogPlatform.AUTOMOTIVE else ChangelogPlatform.APP,
-                sections = currentChangelog.toSections().withoutUnavailableActions(actionAvailability::isAvailable),
+                sections = changelog.toSections().withoutModeAction(homeAssistantModeManager.isSupported()),
             )
         },
     ).asStateFlow()
@@ -62,15 +74,13 @@ class ChangelogViewModel @Inject constructor(
 }
 
 /**
- * @return these sections, with the action of each entry that [isAvailable] rejects removed, so the entry is shown
- * without a link that leads nowhere on this device
+ * @return these sections, without the link to the setting of the Home Assistant mode on a device without Modes
+ * ([modeSupported] `false`), where the setting is hidden
  */
-private fun List<ChangelogSection>.withoutUnavailableActions(
-    isAvailable: (ChangelogAction) -> Boolean,
-): List<ChangelogSection> = map { section ->
-    section.copy(
-        entries = section.entries.map { entry ->
-            if (entry.action?.let(isAvailable) == false) entry.copy(action = null) else entry
-        },
-    )
+private fun List<ChangelogSection>.withoutModeAction(modeSupported: Boolean): List<ChangelogSection> {
+    if (modeSupported) return this
+    val modeAction = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.HomeAssistantMode)
+    return map { section ->
+        section.copy(entries = section.entries.map { if (it.action == modeAction) it.copy(action = null) else it })
+    }
 }

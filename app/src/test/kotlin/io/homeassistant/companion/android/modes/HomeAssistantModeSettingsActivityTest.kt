@@ -7,8 +7,13 @@ import dagger.hilt.android.testing.BindValue
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
-import io.homeassistant.companion.android.common.modes.HomeAssistantMode
+import dagger.hilt.android.testing.UninstallModules
+import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.modes.HomeAssistantModeManager
+import io.homeassistant.companion.android.di.ServerManagerModule
+import io.homeassistant.companion.android.launch.LaunchActivity
 import io.homeassistant.companion.android.settings.SettingsActivity
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Rule
@@ -26,6 +31,7 @@ private const val SETTINGS_DEEPLINK_EXTRA = "fragment"
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
+@UninstallModules(ServerManagerModule::class)
 @HiltAndroidTest
 class HomeAssistantModeSettingsActivityTest {
 
@@ -34,7 +40,15 @@ class HomeAssistantModeSettingsActivityTest {
 
     @BindValue
     @JvmField
-    val homeAssistantMode: HomeAssistantMode = mockk()
+    val homeAssistantModeManager: HomeAssistantModeManager = mockk()
+
+    private var registered = true
+
+    @BindValue
+    @JvmField
+    val serverManager: ServerManager = mockk(relaxed = true) {
+        coEvery { isRegistered() } answers { registered }
+    }
 
     private fun launch(): HomeAssistantModeSettingsActivity = Robolectric.buildActivity(
         HomeAssistantModeSettingsActivity::class.java,
@@ -43,7 +57,7 @@ class HomeAssistantModeSettingsActivityTest {
 
     @Test
     fun `Given a device with the mode when launched from the mode's page then the mode setting opens and the activity finishes`() {
-        every { homeAssistantMode.isSupported() } returns true
+        every { homeAssistantModeManager.isSupported() } returns true
 
         val activity = launch()
 
@@ -58,11 +72,24 @@ class HomeAssistantModeSettingsActivityTest {
 
     @Test
     fun `Given a device without the mode when launched then nothing opens and the activity finishes`() {
-        every { homeAssistantMode.isSupported() } returns false
+        every { homeAssistantModeManager.isSupported() } returns false
 
         val activity = launch()
 
         assertNull(shadowOf(activity).nextStartedActivity)
+        assertTrue(activity.isFinishing)
+    }
+
+    @Test
+    fun `Given no server registered when launched then the onboarding opens instead of the settings`() {
+        every { homeAssistantModeManager.isSupported() } returns true
+        registered = false
+
+        val activity = launch()
+
+        val started = shadowOf(activity).nextStartedActivity
+        assertEquals(LaunchActivity::class.java.name, started?.component?.className)
+        assertEquals(Intent.ACTION_MAIN, started?.action)
         assertTrue(activity.isFinishing)
     }
 }

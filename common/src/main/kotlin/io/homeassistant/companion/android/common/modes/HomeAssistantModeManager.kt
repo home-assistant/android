@@ -32,8 +32,7 @@ private const val CONDITION_SUMMARY = ""
  * The "Home Assistant" mode that the user can add to Android's Modes from the app's settings.
  *
  * Unlike the mode Android creates on its own for [NotificationManager.setInterruptionFilter], the user can turn this
- * one on and off from Android, and Android tells the app when it changes with
- * [NotificationManager.ACTION_AUTOMATIC_ZEN_RULE_STATUS_CHANGED].
+ * one on and off from Android.
  *
  * The mode is only added and removed on the user's request, see [add] and [remove]; turning it on and off never adds
  * it. It is found by its condition id, so nothing about it is stored in the app. Only the first call to [isSupported]
@@ -41,7 +40,7 @@ private const val CONDITION_SUMMARY = ""
  * the main thread.
  */
 @Singleton
-class HomeAssistantMode @VisibleForTesting internal constructor(
+class HomeAssistantModeManager @VisibleForTesting internal constructor(
     private val context: Context,
     private val notificationManager: NotificationManager?,
     private val ioDispatcher: CoroutineDispatcher,
@@ -147,7 +146,11 @@ class HomeAssistantMode @VisibleForTesting internal constructor(
         if (!isSupported()) return true
         return withNotificationManager("remove") { manager ->
             // All of them, in case an earlier version of the app added more than one, even if one fails
-            manager.findModes().keys.map { id -> manager.removeAutomaticZenRule(id) }.all { removed -> removed }
+            manager.findModes().keys.map { id ->
+                manager.removeAutomaticZenRule(id).also { removed ->
+                    if (!removed) Timber.w("Android did not remove the Home Assistant mode $id")
+                }
+            }.all { removed -> removed }
         } == true
     }
 
@@ -232,7 +235,9 @@ class HomeAssistantMode @VisibleForTesting internal constructor(
             .setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
             .setManualInvocationAllowed(true)
             .build()
-        return addAutomaticZenRule(rule) != null
+        return (addAutomaticZenRule(rule) != null).also { added ->
+            if (!added) Timber.w("Android did not add the Home Assistant mode")
+        }
     }
 }
 

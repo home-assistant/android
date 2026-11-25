@@ -1,7 +1,7 @@
 package io.homeassistant.companion.android.modes
 
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.modes.HomeAssistantMode
+import io.homeassistant.companion.android.common.modes.HomeAssistantModeManager
 import io.homeassistant.companion.android.modes.HomeAssistantModeSwitch.Action
 import io.homeassistant.companion.android.modes.HomeAssistantModeSwitch.Display
 import io.homeassistant.companion.android.modes.HomeAssistantModeSwitch.Update
@@ -32,7 +32,7 @@ class HomeAssistantModeSwitchTest {
     private var added = false
     private var androidAccepts = true
 
-    private val homeAssistantMode = mockk<HomeAssistantMode> {
+    private val homeAssistantModeManager = mockk<HomeAssistantModeManager> {
         coEvery { hasAccess() } answers { hasAccess }
         coEvery { getState() } answers { stateInAndroid() }
         coEvery { add() } answers {
@@ -45,10 +45,10 @@ class HomeAssistantModeSwitchTest {
         }
     }
 
-    private val modeSwitch = HomeAssistantModeSwitch(homeAssistantMode)
+    private val modeSwitch = HomeAssistantModeSwitch(homeAssistantModeManager)
 
-    private fun stateInAndroid(): HomeAssistantMode.State? = if (hasAccess) {
-        HomeAssistantMode.State(added = added, enabled = added, active = false)
+    private fun stateInAndroid(): HomeAssistantModeManager.State? = if (hasAccess) {
+        HomeAssistantModeManager.State(added = added, enabled = added, active = false)
     } else {
         null
     }
@@ -59,9 +59,9 @@ class HomeAssistantModeSwitchTest {
      */
     private fun delayNextStateRead(
         reading: CompletableDeferred<Unit>,
-        read: CompletableDeferred<HomeAssistantMode.State?>,
+        read: CompletableDeferred<HomeAssistantModeManager.State?>,
     ) {
-        coEvery { homeAssistantMode.getState() } coAnswers {
+        coEvery { homeAssistantModeManager.getState() } coAnswers {
             reading.complete(Unit)
             read.await()
         } andThenAnswer { stateInAndroid() }
@@ -76,24 +76,24 @@ class HomeAssistantModeSwitchTest {
     }
 
     @Test
-    fun `Given access when turning the switch on then the mode is added and reported`() = runTest {
-        assertEquals(Update(ADDED, Action.ReportChange), modeSwitch.onSwitchChanged(add = true))
+    fun `Given access when turning the switch on then the mode is added`() = runTest {
+        assertEquals(Update(ADDED), modeSwitch.onSwitchChanged(add = true))
     }
 
     @Test
-    fun `Given added mode when turning the switch off then the mode is removed and reported`() = runTest {
+    fun `Given added mode when turning the switch off then the mode is removed`() = runTest {
         added = true
 
-        assertEquals(Update(NOT_ADDED, Action.ReportChange), modeSwitch.onSwitchChanged(add = false))
+        assertEquals(Update(NOT_ADDED), modeSwitch.onSwitchChanged(add = false))
     }
 
     @Test
     fun `Given access requested when unlocked after returning with access then the mode is added once`() = runTest {
         requestAccessThenReturn(add = true, grant = true)
 
-        assertEquals(Update(ADDED, Action.ReportChange), modeSwitch.onUnlocked())
+        assertEquals(Update(ADDED), modeSwitch.onUnlocked())
         assertNull(modeSwitch.onUnlocked())
-        coVerify(exactly = 1) { homeAssistantMode.add() }
+        coVerify(exactly = 1) { homeAssistantModeManager.add() }
     }
 
     @Test
@@ -101,16 +101,16 @@ class HomeAssistantModeSwitchTest {
         added = true
         requestAccessThenReturn(add = false, grant = true)
 
-        assertEquals(Update(NOT_ADDED, Action.ReportChange), modeSwitch.onUnlocked())
-        coVerify(exactly = 0) { homeAssistantMode.add() }
+        assertEquals(Update(NOT_ADDED), modeSwitch.onUnlocked())
+        coVerify(exactly = 0) { homeAssistantModeManager.add() }
     }
 
     @Test
     fun `Given access requested when resuming locked then nothing changes until unlocked`() = runTest {
         requestAccessThenReturn(add = true, grant = true)
 
-        coVerify(exactly = 0) { homeAssistantMode.add() }
-        assertEquals(Update(ADDED, Action.ReportChange), modeSwitch.onUnlocked())
+        coVerify(exactly = 0) { homeAssistantModeManager.add() }
+        assertEquals(Update(ADDED), modeSwitch.onUnlocked())
     }
 
     @Test
@@ -122,7 +122,7 @@ class HomeAssistantModeSwitchTest {
 
         hasAccess = true
         modeSwitch.onResume()
-        assertEquals(Update(ADDED, Action.ReportChange), modeSwitch.onUnlocked())
+        assertEquals(Update(ADDED), modeSwitch.onUnlocked())
     }
 
     @Test
@@ -133,7 +133,7 @@ class HomeAssistantModeSwitchTest {
         hasAccess = true
         modeSwitch.onResume()
         assertNull(modeSwitch.onUnlocked())
-        coVerify(exactly = 0) { homeAssistantMode.add() }
+        coVerify(exactly = 0) { homeAssistantModeManager.add() }
     }
 
     @ParameterizedTest
@@ -142,20 +142,20 @@ class HomeAssistantModeSwitchTest {
         added = !add
         hasAccess = false
         modeSwitch.onSwitchChanged(add)
-        val recreated = HomeAssistantModeSwitch(homeAssistantMode)
+        val recreated = HomeAssistantModeSwitch(homeAssistantModeManager)
         recreated.restore(modeSwitch.savedState)
         hasAccess = true
 
         recreated.onResume()
 
-        assertEquals(Update(if (add) ADDED else NOT_ADDED, Action.ReportChange), recreated.onUnlocked())
+        assertEquals(Update(if (add) ADDED else NOT_ADDED), recreated.onUnlocked())
     }
 
     @Test
     fun `Given access requested when the screen is recreated while access is checked then the request is kept`() = runTest {
         requestAccessThenReturn(add = true, grant = true)
         val checkingAccess = CompletableDeferred<Unit>()
-        coEvery { homeAssistantMode.hasAccess() } coAnswers {
+        coEvery { homeAssistantModeManager.hasAccess() } coAnswers {
             checkingAccess.complete(Unit)
             awaitCancellation()
         }
@@ -163,19 +163,19 @@ class HomeAssistantModeSwitchTest {
         checkingAccess.await()
 
         unlocked.cancelAndJoin()
-        val recreated = HomeAssistantModeSwitch(homeAssistantMode)
+        val recreated = HomeAssistantModeSwitch(homeAssistantModeManager)
         recreated.restore(modeSwitch.savedState)
-        coEvery { homeAssistantMode.hasAccess() } answers { hasAccess }
+        coEvery { homeAssistantModeManager.hasAccess() } answers { hasAccess }
         recreated.onResume()
 
-        assertEquals(Update(ADDED, Action.ReportChange), recreated.onUnlocked())
+        assertEquals(Update(ADDED), recreated.onUnlocked())
     }
 
     @Test
     fun `Given access granted when leaving the settings while the mode is added then it is added on return`() = runTest {
         requestAccessThenReturn(add = true, grant = true)
         val adding = CompletableDeferred<Unit>()
-        coEvery { homeAssistantMode.add() } coAnswers {
+        coEvery { homeAssistantModeManager.add() } coAnswers {
             adding.complete(Unit)
             awaitCancellation()
         } andThenAnswer {
@@ -188,7 +188,7 @@ class HomeAssistantModeSwitchTest {
         unlocked.cancelAndJoin()
         modeSwitch.onResume()
 
-        assertEquals(Update(ADDED, Action.ReportChange), modeSwitch.onUnlocked())
+        assertEquals(Update(ADDED), modeSwitch.onUnlocked())
         assertNull(modeSwitch.onUnlocked())
     }
 
@@ -196,7 +196,7 @@ class HomeAssistantModeSwitchTest {
     fun `Given the state is still read after returning when unlocked then the change is made and shown after it`() = runTest {
         requestAccessThenReturn(add = true, grant = true)
         val reading = CompletableDeferred<Unit>()
-        val read = CompletableDeferred<HomeAssistantMode.State?>()
+        val read = CompletableDeferred<HomeAssistantModeManager.State?>()
         delayNextStateRead(reading, read)
         val shown = mutableListOf<Update?>()
         val resumed = launch { shown += modeSwitch.onResume() }
@@ -204,18 +204,18 @@ class HomeAssistantModeSwitchTest {
         val unlocked = launch { shown += modeSwitch.onUnlocked() }
         yield()
 
-        coVerify(exactly = 0) { homeAssistantMode.add() }
+        coVerify(exactly = 0) { homeAssistantModeManager.add() }
         read.complete(stateInAndroid())
         joinAll(resumed, unlocked)
 
-        assertEquals(listOf(Update(NOT_ADDED), Update(ADDED, Action.ReportChange)), shown)
+        assertEquals(listOf(Update(NOT_ADDED), Update(ADDED)), shown)
     }
 
     @Test
     fun `Given a request is being dropped without access when the switch is changed then the new request is kept`() = runTest {
         requestAccessThenReturn(add = true, grant = false)
         val reading = CompletableDeferred<Unit>()
-        val read = CompletableDeferred<HomeAssistantMode.State?>()
+        val read = CompletableDeferred<HomeAssistantModeManager.State?>()
         delayNextStateRead(reading, read)
         val unlocked = launch { modeSwitch.onUnlocked() }
         reading.await()
@@ -228,7 +228,7 @@ class HomeAssistantModeSwitchTest {
         assertEquals(Update(display = null, action = Action.RequestAccess), changed.await())
         hasAccess = true
         modeSwitch.onResume()
-        assertEquals(Update(ADDED, Action.ReportChange), modeSwitch.onUnlocked())
+        assertEquals(Update(ADDED), modeSwitch.onUnlocked())
     }
 
     @Test
@@ -239,6 +239,30 @@ class HomeAssistantModeSwitchTest {
         modeSwitch.onResume()
 
         assertNull(modeSwitch.onUnlocked())
+    }
+
+    @Test
+    fun `Given access requested when the switch is changed directly after returning with access then the request is dropped`() = runTest {
+        requestAccessThenReturn(add = true, grant = true)
+
+        modeSwitch.onSwitchChanged(add = true)
+        assertEquals(Update(NOT_ADDED), modeSwitch.onSwitchChanged(add = false))
+
+        assertNull(modeSwitch.onUnlocked())
+        assertEquals(NOT_ADDED, modeSwitch.onResume().display)
+    }
+
+    @Test
+    fun `Given access requested when the switch changes again before returning then access is requested once and the change kept`() = runTest {
+        hasAccess = false
+        assertEquals(Update(display = null, action = Action.RequestAccess), modeSwitch.onSwitchChanged(add = true))
+
+        assertEquals(Update(display = null), modeSwitch.onSwitchChanged(add = true))
+
+        hasAccess = true
+        modeSwitch.onResume()
+        assertEquals(Update(ADDED), modeSwitch.onUnlocked())
+        coVerify(exactly = 1) { homeAssistantModeManager.add() }
     }
 
     @Test
@@ -261,8 +285,8 @@ class HomeAssistantModeSwitchTest {
         added = true
 
         assertEquals(Update(ADDED), modeSwitch.onResume())
-        coVerify(exactly = 0) { homeAssistantMode.add() }
-        coVerify(exactly = 0) { homeAssistantMode.remove() }
+        coVerify(exactly = 0) { homeAssistantModeManager.add() }
+        coVerify(exactly = 0) { homeAssistantModeManager.remove() }
     }
 
     @Test

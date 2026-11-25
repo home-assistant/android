@@ -62,7 +62,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
-import io.homeassistant.companion.android.common.modes.HomeAssistantMode
+import io.homeassistant.companion.android.common.modes.HomeAssistantModeManager
 import io.homeassistant.companion.android.common.notifications.DeviceCommandData
 import io.homeassistant.companion.android.common.notifications.NotificationData
 import io.homeassistant.companion.android.common.notifications.clearNotification
@@ -79,7 +79,6 @@ import io.homeassistant.companion.android.common.notifications.parseColor
 import io.homeassistant.companion.android.common.notifications.parseVibrationPattern
 import io.homeassistant.companion.android.common.notifications.prepareText
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
-import io.homeassistant.companion.android.common.sensors.DNDSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -138,46 +137,27 @@ import okhttp3.Request
 import okio.sink
 import timber.log.Timber
 
-/** How the app handles a `command_dnd` value, see [dndCommandHandling]. */
-private sealed interface DndCommandHandling {
-    /** A valid command for this device. */
-    data object Apply : DndCommandHandling
-
-    /**
-     * A Home Assistant mode command on a device without the mode: ignored, so a command sent to several devices does
-     * not show up as a notification on the ones without it.
-     */
-    data object IgnoreUnsupported : DndCommandHandling
-
-    /** Not a `command_dnd` value: posted as a regular notification, like other invalid commands. */
-    data object Invalid : DndCommandHandling
-}
-
-/** @return how to handle [command], given whether the device supports the Home Assistant mode ([modeSupported]). */
-private fun dndCommandHandling(command: String?, modeSupported: Boolean): DndCommandHandling = when {
-    command in MessagingManager.DND_MODE_COMMANDS && !modeSupported -> DndCommandHandling.IgnoreUnsupported
-    command in MessagingManager.DND_COMMANDS -> DndCommandHandling.Apply
-    else -> DndCommandHandling.Invalid
-}
-
 /**
- * Turns the Home Assistant mode on for [MessagingManager.DND_MODE_ON] and off for [MessagingManager.DND_MODE_OFF],
- * then reports the change to the mode's sensor. Logs when the mode did not change, for example because the user did
- * not add it. Unlike the other `command_dnd` values, this never asks for a missing Do Not Disturb access: the user
- * opts in to the mode with its setting in the app, which asks for the access, and a command sent to several devices
- * must not bother the ones that did not.
+ * Turns the Home Assistant mode on for [MessagingManager.DND_MODE_ON] and off for [MessagingManager.DND_MODE_OFF].
+ * Logs when the mode did not change, for example because the user did not add it. Unlike the other `command_dnd`
+ * values, this never asks for a missing Do Not Disturb access: the user opts in to the mode with its setting in the
+ * app, which asks for the access, and a command sent to several devices must not bother the ones that did not.
  */
 private suspend fun applyHomeAssistantModeCommand(
-    context: Context,
     command: String?,
-    homeAssistantMode: HomeAssistantMode,
+    homeAssistantModeManager: HomeAssistantModeManager,
 ) {
-    val result = homeAssistantMode.setActive(command == MessagingManager.DND_MODE_ON)
-    if (result == HomeAssistantMode.ChangeResult.Applied) {
-        // Not left to Android, which only promises to tell the app about the changes the user makes on the device
-        SensorReceiver.updateSensor(context, DNDSensorManager.homeAssistantModeSensor.id)
-    } else {
-        Timber.w("The Home Assistant mode did not change for $command: $result")
+    val result = homeAssistantModeManager.setActive(command == MessagingManager.DND_MODE_ON)
+    when (result) {
+        HomeAssistantModeManager.ChangeResult.Applied -> Unit
+        // Expected where the user did not add the mode, or turned it off in Android
+        HomeAssistantModeManager.ChangeResult.NotAdded,
+        HomeAssistantModeManager.ChangeResult.NoAccess,
+        HomeAssistantModeManager.ChangeResult.DisabledInAndroid,
+        -> Timber.d("The Home Assistant mode did not change for $command: $result")
+        HomeAssistantModeManager.ChangeResult.NotApplied,
+        HomeAssistantModeManager.ChangeResult.Failed,
+        -> Timber.w("The Home Assistant mode did not change for $command: $result")
     }
 }
 
@@ -195,7 +175,7 @@ class MessagingManager @Inject constructor(
     private val assistConfigManager: AssistConfigManager,
     private val defaultAssistantManager: DefaultAssistantManager,
     private val bluetoothSensorManager: BluetoothSensorManager,
-    private val homeAssistantMode: HomeAssistantMode,
+    private val homeAssistantModeManager: HomeAssistantModeManager,
     private val clock: Clock,
 ) {
     companion object {
@@ -269,7 +249,7 @@ class MessagingManager @Inject constructor(
         const val DND_ALL = "off"
         const val DND_NONE = "total_silence"
 
-        // Commands for the Home Assistant mode, see HomeAssistantMode
+        // Commands for the Home Assistant mode, see HomeAssistantModeManager
         const val DND_MODE_ON = "mode_on"
         const val DND_MODE_OFF = "mode_off"
         val DND_MODE_COMMANDS = listOf(DND_MODE_ON, DND_MODE_OFF)
@@ -325,12 +305,7 @@ class MessagingManager @Inject constructor(
             COMMAND_FLASHLIGHT,
             COMMAND_WAKE_WORD_DETECTION,
         )
-        val DND_COMMANDS = listOf(
-            DND_ALARMS_ONLY,
-            DND_ALL,
-            DND_NONE,
-            DND_PRIORITY_ONLY,
-        ) + DND_MODE_COMMANDS
+        val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY) + DND_MODE_COMMANDS
         val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
         val CHANNEL_VOLUME_STREAM = listOf(
             NotificationData.ALARM_STREAM,
@@ -469,13 +444,13 @@ class MessagingManager @Inject constructor(
                     when (jsonData[NotificationData.MESSAGE]) {
                         COMMAND_DND -> {
                             val command = jsonData[NotificationData.COMMAND]
-                            val modeSupported = homeAssistantMode.isSupported()
-                            when (dndCommandHandling(command, modeSupported)) {
-                                DndCommandHandling.Apply -> handleDeviceCommands(jsonData)
-                                DndCommandHandling.IgnoreUnsupported -> Timber.i(
+                            when {
+                                // Not a notification on the devices without the mode, when sent to several devices
+                                command in DND_MODE_COMMANDS && !homeAssistantModeManager.isSupported() -> Timber.i(
                                     "Ignoring $command, this device does not support the Home Assistant mode",
                                 )
-                                DndCommandHandling.Invalid -> {
+                                command in DND_COMMANDS -> handleDeviceCommands(jsonData)
+                                else -> {
                                     Timber.d("Invalid DND command received, posting notification to device")
                                     sendNotification(jsonData)
                                 }
@@ -757,7 +732,7 @@ class MessagingManager @Inject constructor(
                 val notificationManager =
                     context.getSystemService<NotificationManager>()
                 if (command in DND_MODE_COMMANDS) {
-                    applyHomeAssistantModeCommand(context, command, homeAssistantMode)
+                    applyHomeAssistantModeCommand(command, homeAssistantModeManager)
                 } else if (notificationManager?.isNotificationPolicyAccessGranted == false) {
                     notifyMissingPermission(message, serverId)
                 } else {

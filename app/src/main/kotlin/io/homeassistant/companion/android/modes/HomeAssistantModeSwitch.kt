@@ -2,7 +2,7 @@ package io.homeassistant.companion.android.modes
 
 import androidx.annotation.StringRes
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.modes.HomeAssistantMode
+import io.homeassistant.companion.android.common.modes.HomeAssistantModeManager
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -20,7 +20,7 @@ private const val SAVED_REMOVE = "remove"
  * one before it to end, so what the screen shows last is what was read last, and a change requested meanwhile is not
  * lost.
  */
-internal class HomeAssistantModeSwitch(private val homeAssistantMode: HomeAssistantMode) {
+internal class HomeAssistantModeSwitch(private val homeAssistantModeManager: HomeAssistantModeManager) {
 
     /**
      * What the switch shows.
@@ -33,11 +33,8 @@ internal class HomeAssistantModeSwitch(private val homeAssistantMode: HomeAssist
 
     /** Something the screen must do besides showing [Update.display]. */
     sealed interface Action {
-        /** Open Android's Do Not Disturb access settings, then call [onAccessScreenUnavailable] if there is none. */
+        /** Open Android's Do Not Disturb access settings, or call [onAccessScreenUnavailable] if it cannot. */
         data object RequestAccess : Action
-
-        /** The mode was added or removed: report it to the mode's sensor right away. */
-        data object ReportChange : Action
 
         /** Tell the user why their change was not made. */
         data class ShowMessage(@param:StringRes val message: Int) : Action
@@ -76,8 +73,14 @@ internal class HomeAssistantModeSwitch(private val homeAssistantMode: HomeAssist
 
     /** Adds the mode when [add] is `true`, removes it otherwise, after the user grants access if it is missing. */
     suspend fun onSwitchChanged(add: Boolean): Update = mutex.withLock {
-        if (homeAssistantMode.hasAccess()) {
+        if (homeAssistantModeManager.hasAccess()) {
+            // Replaces a change still waiting for access, which must not undo this one later
+            pendingChange = null
             change(add)
+        } else if (pendingChange != null && !returnedSinceRequest) {
+            // The access screen is already on its way: the latest change waits for it, without a second screen
+            pendingChange = add
+            Update(display = null)
         } else {
             pendingChange = add
             returnedSinceRequest = false
@@ -85,7 +88,10 @@ internal class HomeAssistantModeSwitch(private val homeAssistantMode: HomeAssist
         }
     }
 
-    /** Drops the change waiting for access when the device has no screen to grant it. */
+    /**
+     * Drops the change waiting for access when the screen to grant it cannot be opened: the device has none, or the
+     * settings were left meanwhile.
+     */
     fun onAccessScreenUnavailable(): Update {
         pendingChange = null
         return Update(
@@ -113,7 +119,7 @@ internal class HomeAssistantModeSwitch(private val homeAssistantMode: HomeAssist
      */
     suspend fun onUnlocked(): Update? = mutex.withLock {
         pendingChange?.takeIf { returnedSinceRequest }?.let { add ->
-            val update = if (homeAssistantMode.hasAccess()) change(add) else Update(display())
+            val update = if (homeAssistantModeManager.hasAccess()) change(add) else Update(display())
             // The change is kept until it is made or dropped: the screen can be left or recreated meanwhile, and
             // restores it then. Adding or removing the mode a second time changes nothing.
             pendingChange = null
@@ -123,10 +129,10 @@ internal class HomeAssistantModeSwitch(private val homeAssistantMode: HomeAssist
     }
 
     private suspend fun change(add: Boolean): Update {
-        val changed = if (add) homeAssistantMode.add() else homeAssistantMode.remove()
+        val changed = if (add) homeAssistantModeManager.add() else homeAssistantModeManager.remove()
         val display = display()
         return if (changed) {
-            Update(display, Action.ReportChange)
+            Update(display)
         } else {
             val message = if (add) {
                 commonR.string.home_assistant_mode_add_failed
@@ -139,8 +145,8 @@ internal class HomeAssistantModeSwitch(private val homeAssistantMode: HomeAssist
 
     private suspend fun display(): Display {
         // Null without access, which is checked only then
-        val state = homeAssistantMode.getState()
-        val hasAccess = state != null || homeAssistantMode.hasAccess()
+        val state = homeAssistantModeManager.getState()
+        val hasAccess = state != null || homeAssistantModeManager.hasAccess()
         return Display(
             checked = state?.added == true,
             summary = if (hasAccess) {
