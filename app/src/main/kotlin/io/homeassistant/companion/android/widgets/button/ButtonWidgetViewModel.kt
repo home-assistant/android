@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.material.color.DynamicColors
@@ -16,6 +17,7 @@ import io.homeassistant.companion.android.common.data.integration.Action
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.MapAnySerializer
+import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.mdiName
@@ -409,7 +411,9 @@ class ButtonWidgetViewModel @Inject constructor(
                 },
                 PendingIntent.FLAG_MUTABLE,
             )
-            appWidgetManager.requestPinAppWidget(componentName, null, successCallback)
+            if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
+                appWidgetManager.requestPinAppWidget(componentName, null, successCallback)
+            }
         }.first()
     }
 
