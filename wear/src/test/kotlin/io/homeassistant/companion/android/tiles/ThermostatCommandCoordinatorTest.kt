@@ -15,6 +15,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import java.time.LocalDateTime
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -48,6 +49,19 @@ class ThermostatCommandCoordinatorTest {
         }
     }
 
+    @Test
+    fun `preferences are loaded lazily and reused`() = runTest {
+        val deferredContext = mockk<Context>()
+        val preferences = context.getSharedPreferences("thermostat_tile_commands", Context.MODE_PRIVATE)
+        every { deferredContext.getSharedPreferences(any(), any()) } returns preferences
+        val coordinator = ThermostatCommandCoordinator(deferredContext, servers, backgroundScope) {}
+        verify(exactly = 0) { deferredContext.getSharedPreferences(any(), any()) }
+        assertNull(coordinator.get(10, target))
+        verify(exactly = 1) { deferredContext.getSharedPreferences(any(), any()) }
+        assertNull(coordinator.get(10, target))
+        verify(exactly = 1) { deferredContext.getSharedPreferences(any(), any()) }
+    }
+
     private fun state(temperature: Float) = Entity(
         entityId = target.entityId,
         state = "heat",
@@ -55,6 +69,23 @@ class ThermostatCommandCoordinatorTest {
         lastChanged = LocalDateTime.of(2026, 1, 1, 0, 0),
         lastUpdated = LocalDateTime.of(2026, 1, 1, 0, 0),
     )
+
+    @Test
+    fun `immediate confirmation avoids subscription and redundant refresh`() = runTest {
+        var refreshes = 0
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) { refreshes++ }
+        coEvery { repository.callAction("climate", "set_temperature", any()) } returns Unit
+        coEvery { repository.getEntity(target.entityId) } returns state(72f)
+        coordinator.submitTemperature(10, target, false, null, null, 72f)
+        assertEquals(72f, coordinator.get(10, target)?.single)
+        assertEquals(0, refreshes)
+        runCurrent()
+        assertNull(coordinator.get(10, target))
+        assertEquals(1, refreshes)
+        assertEquals(EntityDisplayWithoutContext(state(72f)), coordinator.cachedEntity(target))
+        coVerify(exactly = 1) { repository.getEntity(target.entityId) }
+        coVerify(exactly = 0) { repository.getEntityChanges(any()) }
+    }
 
     @Test
     fun `queued calls dispatch in order without waiting for older acknowledgement`() = runTest {
@@ -66,6 +97,7 @@ class ThermostatCommandCoordinatorTest {
             sent.add(temperature)
             if (temperature == 71f) gate.await()
         }
+        coEvery { repository.getEntity(target.entityId) } returns state(70f)
         coEvery { repository.getEntityChanges(any()) } returns flowOf(EntityChange.StateChanged(state(73f)))
 
         coordinator.submitTemperature(10, target, false, null, null, 71f)
@@ -80,7 +112,7 @@ class ThermostatCommandCoordinatorTest {
         assertEquals(listOf(71f, 72f, 73f), sent)
         assertNull(coordinator.get(10, target))
         coVerify(exactly = 1) { repository.getEntityChanges(EntityFilter(entityIds = setOf(target.entityId))) }
-        coVerify(exactly = 0) { repository.getEntity(any()) }
+        coVerify(exactly = 1) { repository.getEntity(any()) }
     }
 
     @Test
@@ -93,13 +125,13 @@ class ThermostatCommandCoordinatorTest {
             if (temperature == 71f) error("Simulated service failure")
         }
         coEvery { repository.getEntityChanges(any()) } returns null
-        coEvery { repository.getEntity(target.entityId) } returns state(72f)
+        coEvery { repository.getEntity(target.entityId) } returnsMany listOf(null, state(72f))
         coordinator.submitTemperature(10, target, false, null, null, 71f)
         coordinator.submitTemperature(10, target, false, null, null, 72f)
         runCurrent()
         assertEquals(listOf(71f, 72f), sent)
         assertNull(coordinator.get(10, target))
-        coVerify(exactly = 1) { repository.getEntity(target.entityId) }
+        coVerify(exactly = 2) { repository.getEntity(target.entityId) }
     }
 
     @Test

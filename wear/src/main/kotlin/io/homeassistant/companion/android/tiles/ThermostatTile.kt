@@ -12,9 +12,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
-import io.homeassistant.companion.android.common.data.integration.EntityFilter
-import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
-import io.homeassistant.companion.android.common.data.integration.display.awaitLoadedOrNull
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.wear.ThermostatTile
@@ -66,9 +64,6 @@ class ThermostatTile : TileService() {
     lateinit var thermostatTileDao: ThermostatTileDao
 
     @Inject
-    lateinit var entitiesForDisplayManager: EntitiesForDisplayManager
-
-    @Inject
     lateinit var commandCoordinator: ThermostatCommandCoordinator
 
     override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<Tile> =
@@ -115,19 +110,12 @@ class ThermostatTile : TileService() {
                         val serverId = checkNotNull(serverManager.getServer()) { "No active server" }.id
                         val target = ThermostatCommandCoordinator.Target(serverId, entityId)
                         val actionPrefix = target.actionPrefix
-                        if (commandCoordinator.get(tileId, target) != null) {
-                            tile.setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(minOf(freshness, 5L)))
-                        }
-                        // Render warm tiles without waiting for a network request. On a cache miss,
-                        // use upstream's filtered snapshot to resolve state and display metadata.
+                        val requestStarted = android.os.SystemClock.elapsedRealtime()
+                        // Render warm tiles immediately; fetch only the selected entity on a cache miss.
                         val entity = commandCoordinator.cachedEntity(target)
                             ?: withTimeoutOrNull(6_000L) {
-                                entitiesForDisplayManager.snapshot(
-                                    serverId,
-                                    EntityFilter(entityIds = setOf(entityId)),
-                                )
-                                    .awaitLoadedOrNull()
-                                    ?.entity(entityId)
+                                serverManager.integrationRepository(serverId).getEntity(entityId)
+                                    ?.let { EntityDisplayWithoutContext(it) }
                                     ?.also { commandCoordinator.rememberEntity(target, it) }
                             }
                         checkNotNull(entity) { "Thermostat state not yet available: $entityId" }
@@ -135,6 +123,9 @@ class ThermostatTile : TileService() {
 
                         val clickedId = requestParams.currentState.lastClickableId
                         val lastId = if (clickedId.startsWith(actionPrefix)) clickedId.removePrefix(actionPrefix) else ""
+                        if (clickedId.isNotEmpty()) {
+                            Timber.i("Thermostat tile action resolved after %d ms; valid=%s", android.os.SystemClock.elapsedRealtime() - requestStarted, lastId.isNotEmpty())
+                        }
                         val controls = climateControls
                         if (controls != null && entity.rawState !in listOf("unavailable", "unknown")) {
                             val step = controls.targetTemperatureStep?.takeIf { it > 0 } ?: 1f
@@ -224,12 +215,29 @@ class ThermostatTile : TileService() {
 
                         // State refresh happens in the background, never before dispatching a tap.
                         // Pending commands monitor acknowledgment; the coordinator suppresses redundant reads.
+                        if (tileConfig.refreshInterval != 0L) {
+                            val visibleAt = if (lastId.isNotEmpty()) {
+                                System.currentTimeMillis()
+                            } else {
+                                requestParams.lastVisibleTime.toEpochMilli()
+                            }
+                            commandCoordinator.observeVisibleTile(tileId, target, visibleAt)
+                        } else {
+                            commandCoordinator.stopObservingTile(tileId)
+                        }
+                        val pending = commandCoordinator.get(tileId, target)
+                        if (pending != null) {
+                            val pendingFreshness = if (freshness == 0L) 5L else minOf(freshness, 5L)
+                            tile.setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(pendingFreshness))
+                        }
                         commandCoordinator.refreshEntityIfStale(
                             target,
-                            if (commandCoordinator.get(tileId, target) != null) 3_000L else 20_000L,
+                            if (pending != null) 3_000L else 5_000L,
                         )
                         val temperatureUnit = controls?.temperatureUnit ?: "°"
-                        val pending = commandCoordinator.get(tileId, target)
+                        if (clickedId.isNotEmpty()) {
+                            Timber.i("Thermostat tile action processed after %d ms; pending=%s", android.os.SystemClock.elapsedRealtime() - requestStarted, pending != null)
+                        }
                         val views = ThermostatTileViews(this@ThermostatTile)
                         tile.setTileTimeline(
                             if (tileConfig.layoutStyle == "classic") {
@@ -296,8 +304,36 @@ class ThermostatTile : TileService() {
 
     override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) = runBlocking {
         withContext(Dispatchers.IO) {
+            commandCoordinator.stopObservingTile(requestParams.tileId)
             thermostatTileDao.delete(requestParams.tileId)
         }
+    }
+
+    override fun onRecentInteractionEventsAsync(
+        events: List<EventBuilders.TileInteractionEvent>,
+    ): ListenableFuture<Void?> = serviceScope.future {
+        // Wear OS 6+ can batch ENTER and LEAVE, so process in time order and ignore stale enters.
+        for (event in events.sortedBy { it.timestamp }) {
+            when (event.eventType) {
+                EventBuilders.TileInteractionEvent.ENTER -> {
+                    val config = thermostatTileDao.get(event.tileId) ?: continue
+                    val entityId = config.entityId?.takeIf { it.isNotBlank() } ?: continue
+                    if (config.refreshInterval == 0L || !serverManager.isRegistered()) continue
+                    val serverId = serverManager.getServer()?.id ?: continue
+                    commandCoordinator.observeVisibleTile(
+                        event.tileId,
+                        ThermostatCommandCoordinator.Target(serverId, entityId),
+                        event.timestamp.toEpochMilli(),
+                    )
+                }
+                EventBuilders.TileInteractionEvent.LEAVE ->
+                    commandCoordinator.stopObservingTile(event.tileId, event.timestamp.toEpochMilli())
+            }
+        }
+        if (isRefreshOnViewedSupported()) {
+            requestUpdateOnEnter(events) { tileId -> (thermostatTileDao.get(tileId)?.refreshInterval ?: 0L) >= 1L }
+        }
+        null
     }
 
     override fun onDestroy() {

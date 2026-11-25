@@ -256,17 +256,15 @@ internal class ThermostatTileViews(private val context: Context) {
         // Compact circular watches must not crop rows at the upper/lower edges.
         val compact = screenWidthDp < 220 || screenHeightDp < 225
         val modeHeight = if (compact) 29f else 34f
-        val utilityHeight = if (compact) 29f else 33f
+        val modeWidth = if (compact) 37f else 39f
         val targetRowHeight = if (compact) 32f else 36f
 
         val column = LayoutElementBuilders.Column.Builder()
             .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
 
-        // Hide the name only in compact Auto mode where the two temperature rows need the space.
-        if (config.showEntityName == true && !(compact && range)) {
-            column.addContent(
-                temperatureText(entity.name.take(if (compact) 12 else 21), 10f, 0xFFCBD5E1.toInt()),
-            )
+        val showName = config.showEntityName == true && !(compact && range)
+        if (showName) {
+            column.addContent(verticalGap(16f))
         }
         column.addContent(temperatureText("$current $temperatureUnit", if (compact) 27f else 30f, 0xFFFFFFFF.toInt()))
         if (config.showActivity || pending != null) {
@@ -329,7 +327,7 @@ internal class ThermostatTileViews(private val context: Context) {
                 modeRow.addContent(
                     iconButton(
                         iconId, actionPrefix + TAP_MODE_PREFIX + mode, state == mode,
-                        if (compact) 37f else 39f, modeHeight, color, description, secondIconId,
+                        modeWidth, modeHeight, color, description, secondIconId,
                     ),
                 )
                 hasMode = true
@@ -352,19 +350,19 @@ internal class ThermostatTileViews(private val context: Context) {
                 val on = controls.fanMode != null && controls.fanMode != "auto"
                 utilityRow.addContent(
                     iconButton(
-                        ICON_FAN, actionPrefix + TAP_FAN, on, if (compact) 56f else 65f, utilityHeight,
+                        ICON_FAN, actionPrefix + TAP_FAN, on, modeWidth, modeHeight,
                         0xFF277766.toInt(), context.getString(
                             commonR.string.thermostat_tile_fan_mode, stateLabel(controls.fanMode.orEmpty()),
                         ),
                     ),
                 )
-                utilityRow.addContent(horizontalGap(if (compact) 6f else 8f))
+                utilityRow.addContent(horizontalGap(if (compact) 4f else 5f))
             }
             if (config.showHvacModes && "off" in available) {
                 utilityRow.addContent(
                     iconButton(
                         ICON_POWER, actionPrefix + TAP_MODE_PREFIX + "off", state == "off",
-                        if (compact) 45f else 54f, utilityHeight, 0xFF7A4355.toInt(), context.getString(commonR.string.thermostat_tile_turn_off),
+                        modeWidth, modeHeight, 0xFF7A4355.toInt(), context.getString(commonR.string.thermostat_tile_turn_off),
                     ),
                 )
             }
@@ -383,6 +381,34 @@ internal class ThermostatTileViews(private val context: Context) {
                 .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
                 .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
                 .addContent(column.build())
+                .apply {
+                    if (showName) {
+                        addContent(
+                            LayoutElementBuilders.Arc.Builder()
+                                .setAnchorAngle(DimensionBuilders.DegreesProp.Builder(180f).build())
+                                .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_CENTER)
+                                .addContent(
+                                    LayoutElementBuilders.ArcLine.Builder()
+                                        .setLength(DimensionBuilders.DegreesProp.Builder(360f).build())
+                                        .setThickness(DimensionBuilders.DpProp.Builder(24f).build())
+                                        .setColor(ColorBuilders.argb(0x00000000))
+                                        .build(),
+                                )
+                                .addContent(
+                                    LayoutElementBuilders.ArcText.Builder()
+                                        .setText(entity.name)
+                                        .setFontStyle(
+                                            LayoutElementBuilders.FontStyle.Builder()
+                                                .setSize(DimensionBuilders.sp(if (compact) 12f else 13f))
+                                                .setColor(ColorBuilders.argb(0xFFCBD5E1.toInt()))
+                                                .build(),
+                                        )
+                                        .build(),
+                                )
+                                .build(),
+                        )
+                    }
+                }
                 .build(),
         )
     }
