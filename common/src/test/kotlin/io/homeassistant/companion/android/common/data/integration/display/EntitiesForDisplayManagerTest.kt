@@ -18,6 +18,7 @@ import io.homeassistant.companion.android.common.data.websocket.WebSocketReposit
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryUpdatedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryDisplayEntry
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryDisplayResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
@@ -32,10 +33,12 @@ import io.mockk.mockk
 import io.mockk.unmockkAll
 import java.time.LocalDateTime
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -1216,6 +1219,49 @@ class EntitiesForDisplayManagerTest {
             }
 
             @Test
+            fun `Given an area registry refetch in flight when the device registry updates then both refetches are applied`() = runTest {
+                val areaUpdates = MutableSharedFlow<AreaRegistryUpdatedEvent>()
+                val deviceUpdates = MutableSharedFlow<DeviceRegistryUpdatedEvent>()
+                val areaRefetchStarted = CompletableDeferred<Unit>()
+                val areaRefetch = CompletableDeferred<List<AreaRegistryResponse>>()
+                coEvery { webSocketRepository.getAreaRegistryUpdates() } returns areaUpdates
+                coEvery { webSocketRepository.getDeviceRegistryUpdates() } returns deviceUpdates
+                coEvery { webSocketRepository.getEntityRegistryDisplay() } returns EntityRegistryDisplayResponse(
+                    entities = listOf(
+                        EntityRegistryDisplayEntry(entityId = "light.bed", areaId = "bedroom", deviceId = "device1"),
+                    ),
+                )
+                coEvery { webSocketRepository.getAreaRegistry() } returns
+                    listOf(AreaRegistryResponse(areaId = "bedroom", name = "Bedroom")) coAndThen {
+                        areaRefetchStarted.complete(Unit)
+                        areaRefetch.await()
+                    }
+                coEvery { webSocketRepository.getDeviceRegistry() } returns
+                    listOf(DeviceRegistryResponse(id = "device1", name = "Hub")) andThen
+                    listOf(DeviceRegistryResponse(id = "device1", name = "Hub renamed"))
+
+                manager.observeInContext(serverId).test {
+                    awaitInitialLoad()
+                    areaUpdates.awaitSubscribed()
+                    deviceUpdates.awaitSubscribed()
+
+                    areaUpdates.emit(AreaRegistryUpdatedEvent("update", "bedroom"))
+                    areaRefetchStarted.await()
+
+                    deviceUpdates.emit(DeviceRegistryUpdatedEvent("update", "device1"))
+                    val duringAreaRefetch = awaitLoaded().single()
+                    assertEquals("Hub renamed", duringAreaRefetch.deviceName)
+                    assertEquals("Bedroom", duringAreaRefetch.areaName)
+
+                    areaRefetch.complete(listOf(AreaRegistryResponse(areaId = "bedroom", name = "Bedroom renamed")))
+                    val afterAreaRefetch = awaitLoaded().single()
+                    assertEquals("Hub renamed", afterAreaRefetch.deviceName)
+                    assertEquals("Bedroom renamed", afterAreaRefetch.areaName)
+                    cancelAndIgnoreRemainingEvents()
+                }
+            }
+
+            @Test
             fun `Given an entity registry refetch in flight when a state changes then it is emitted without waiting for the refetch`() = runTest {
                 val refetchStarted = CompletableDeferred<Unit>()
                 val refetch = CompletableDeferred<EntityRegistryDisplayResponse>()
@@ -1249,7 +1295,18 @@ class EntitiesForDisplayManagerTest {
             @Test
             fun `Given entity registry updates during a refetch when observing then a single refetch answers them`() = runTest {
                 val refetchStarted = CompletableDeferred<Unit>()
+                val updatesReceived = CompletableDeferred<Unit>()
                 val refetch = CompletableDeferred<EntityRegistryDisplayResponse>()
+                val update = EntityRegistryUpdatedEvent("update", "light.bed")
+                // A SharedFlow returns from emit before its update is kept as the pending one, so
+                // the updates come from a Flow whose emit only returns once it is
+                coEvery { webSocketRepository.getEntityRegistryUpdates() } returns flow {
+                    emit(update)
+                    refetchStarted.await()
+                    repeat(3) { emit(update) }
+                    updatesReceived.complete(Unit)
+                    awaitCancellation()
+                }
                 coEvery { webSocketRepository.getEntityRegistryDisplay() } returns
                     EntityRegistryDisplayResponse() coAndThen {
                         refetchStarted.complete(Unit)
@@ -1261,11 +1318,7 @@ class EntitiesForDisplayManagerTest {
 
                 manager.observeInContext(serverId).test {
                     awaitInitialLoad()
-                    entityRegistryUpdates.awaitSubscribed()
-
-                    entityRegistryUpdates.emit(EntityRegistryUpdatedEvent("update", "light.bed"))
-                    refetchStarted.await()
-                    repeat(3) { entityRegistryUpdates.emit(EntityRegistryUpdatedEvent("update", "light.bed")) }
+                    updatesReceived.await()
 
                     refetch.complete(
                         EntityRegistryDisplayResponse(

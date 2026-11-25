@@ -265,8 +265,8 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
 
     /**
      * Emits the result of [fetch] after each update of this Flow. The updates received while a
-     * fetch is in flight are answered by a single other one, and the fetch runs apart from the
-     * collector, which is never kept waiting for the server.
+     * fetch is in flight are answered by a single other one. The fetch suspends the collector of
+     * the returned Flow, so [mergeUntilFirstCompletes] collects it apart from the entity events.
      *
      * For example, with five updates received while the first fetch takes 300ms:
      * ```
