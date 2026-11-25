@@ -73,12 +73,11 @@ class ButtonWidgetViewModel @Inject constructor(
     val uiState: StateFlow<ButtonWidgetUiState> = _uiState.asStateFlow()
 
     private var supportedTextColors: List<String> = emptyList()
-
     private var widgetId: Int = AppWidgetManager.INVALID_APPWIDGET_ID
     private var requestLauncherSetup: Boolean = false
 
-    private var actions = mutableMapOf<Int, HashMap<String, Action>>()
-    private var entities = mutableMapOf<Int, HashMap<String, Entity>>()
+    private val actions = mutableMapOf<Int, MutableMap<String, Action>>()
+    private val entities = mutableMapOf<Int, MutableMap<String, Entity>>()
     private val selectedServerMutex = Mutex()
     private var selectedServerActions: List<Action> = emptyList()
 
@@ -89,26 +88,58 @@ class ButtonWidgetViewModel @Inject constructor(
         this.supportedTextColors = supportedTextColors
         this.widgetId = widgetId
         viewModelScope.launch {
-            updateUiState(servers = serverManager.servers(), selectedServerId = serverManager.getServer()?.id)
-            for (server in serverManager.servers()) {
-                getActionsFromServer(server)
-                getEntitiesFromServer(server)
+            val servers = serverManager.servers()
+            val activeServerId = serverManager.getServer()?.id
+            _uiState.update { it.copy(servers = servers, selectedServerId = activeServerId) }
+            for (server in servers) {
+                try {
+                    val serverActionMap = mutableMapOf<String, Action>()
+                    actions[server.id] = serverActionMap
+                    serverManager.integrationRepository(server.id).getServices()?.forEach {
+                        serverActionMap["${it.domain}.${it.action}"] = it
+                    }
+                    val serverEntityMap = mutableMapOf<String, Entity>()
+                    entities[server.id] = serverEntityMap
+                    serverManager.integrationRepository(server.id).getEntities()?.forEach {
+                        serverEntityMap[it.entityId] = it
+                    }
+                    if (server.id == activeServerId) {
+                        val actionsList = serverActionMap.values.sortedBy { "${it.domain}.${it.action}" }
+                        selectedServerActions = actionsList
+                        _uiState.update { it.copy(serverActions = actionsList) }
+                    }
+                } catch (e: Exception) {
+                    Timber.w(e, "Unable to load services/entities from Home Assistant server ${server.id}")
+                }
             }
-            maybeLoadPreviousState(widgetId)
+            buttonWidgetDao.get(widgetId)?.let { widget ->
+                val icon = Mdi.fromHaName(widget.iconName) ?: Mdi.Flash
+                val colorIndex = supportedTextColors.indexOf(widget.textColor)
+                updateActionText("${widget.domain}.${widget.service}")
+                setServer(widget.serverId)
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        label = widget.label.orEmpty(),
+                        selectedBackgroundType = widget.backgroundType,
+                        selectedIcon = icon,
+                        selectedIconId = icon.mdiName,
+                        textColorIndex = if (colorIndex == -1) 0 else colorIndex,
+                        requiresAuthentication = widget.requireAuthentication,
+                        isUpdating = true,
+                    )
+                }
+            }
         }
     }
 
-    /**
-     * Return a [ButtonWidgetEntity] with the current selection, but without pushing this to the [buttonWidgetDao]
-     */
     private fun getPendingDaoEntity(): ButtonWidgetEntity {
         val state = _uiState.value
         with(state) {
             val serverId = checkNotNull(selectedServerId) { "Selected server ID is null" }
-            val actions = actions[serverId].orEmpty()
+            val actionsForServer = actions[serverId].orEmpty()
             val actionTextParts = actionText.split(".", limit = 2)
-            val domain = actions[actionText]?.domain ?: actionTextParts.getOrElse(0) { "" }
-            val action = actions[actionText]?.action ?: actionTextParts.getOrElse(1) { "" }
+            val domain = actionsForServer[actionText]?.domain ?: actionTextParts.getOrElse(0) { "" }
+            val action = actionsForServer[actionText]?.action ?: actionTextParts.getOrElse(1) { "" }
             val actionDataMap = dynamicFields.mapNotNull { field ->
                 cleanDynamicFieldValue(field.value)?.let { cleaned -> field.field to cleaned }
             }.toMap()
@@ -135,106 +166,74 @@ class ButtonWidgetViewModel @Inject constructor(
         context.sendBroadcast(intent)
     }
 
-    private suspend fun maybeLoadPreviousState(widgetId: Int) {
-        buttonWidgetDao.get(widgetId)?.let { widget ->
-            val icon = widget.iconName?.let { Mdi.fromHaName(it) } ?: Mdi.Flash
-            val colorIndex = supportedTextColors.indexOf(widget.textColor)
-            val action = "${widget.domain}.${widget.service}"
-            updateActionText(action)
-            setServer(widget.serverId)
-            updateLabel(widget.label)
-            updateSelectedBackgroundType(widget.backgroundType)
-            selectIcon(icon)
-            updateTextColorIndex(if (colorIndex == -1) 0 else colorIndex)
-            setRequiresAuthentication(widget.requireAuthentication)
-            updateUiState(isUpdating = true)
-        }
-    }
-
-    private fun updateUiState(
-        selectedServerId: Int? = null,
-        servers: List<Server>? = null,
-        actionText: String? = null,
-        serverActions: List<Action>? = null,
-        dynamicFields: List<ActionFieldBinder>? = null,
-        domainEntities: List<String>? = null,
-        selectedIcon: MdiIcon? = null,
-        selectedIconId: String? = null,
-        label: String? = null,
-        selectedBackgroundType: WidgetBackgroundType? = null,
-        textColorIndex: Int? = null,
-        requiresAuthentication: Boolean? = null,
-        isUpdating: Boolean? = null,
-    ) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                selectedServerId = selectedServerId ?: currentState.selectedServerId,
-                servers = servers ?: currentState.servers,
-                actionText = actionText ?: currentState.actionText,
-                serverActions = serverActions ?: currentState.serverActions,
-                dynamicFields = dynamicFields ?: currentState.dynamicFields,
-                domainEntities = domainEntities ?: currentState.domainEntities,
-                selectedIcon = selectedIcon ?: currentState.selectedIcon,
-                selectedIconId = selectedIconId ?: currentState.selectedIconId,
-                label = label ?: currentState.label,
-                selectedBackgroundType = selectedBackgroundType ?: currentState.selectedBackgroundType,
-                textColorIndex = textColorIndex ?: currentState.textColorIndex,
-                requiresAuthentication = requiresAuthentication ?: currentState.requiresAuthentication,
-                isUpdating = isUpdating ?: currentState.isUpdating,
-            )
-        }
-    }
-
-    private suspend fun getActionsFromServer(server: Server) {
-        val selectedServerId = _uiState.value.selectedServerId
-        try {
-            actions[server.id] = HashMap()
-            serverManager.integrationRepository(server.id).getServices()?.forEach {
-                actions[server.id]?.set(getActionString(it), it)
-            }
-            if (server.id == selectedServerId) setAdapterActions(server.id)
-        } catch (e: Exception) {
-            // Custom components can cause actions to not load
-            // Display error text
-            Timber.e(e, "Unable to load actions from Home Assistant")
-        }
-    }
-
-    private suspend fun getEntitiesFromServer(server: Server) {
-        val selectedServerId = _uiState.value.selectedServerId
-        try {
-            entities[server.id] = HashMap()
-            serverManager.integrationRepository(server.id).getEntities()?.forEach {
-                entities[server.id]?.set(it.entityId, it)
-            }
-            if (server.id == selectedServerId) setAdapterActions(server.id)
-        } catch (e: Exception) {
-            // If entities fail to load, it's okay to pass
-            // an empty map to the dynamicFieldAdapter
-        }
-    }
-
     fun updateActionText(newAction: String) {
-        updateUiState(actionText = newAction)
-        updateActionFields(newAction)
-        filterAdapterActions(newAction)
-    }
+        _uiState.update { it.copy(actionText = newAction) }
+        val domain = newAction.split(".")[0]
+        val validItems = selectedServerActions.filter { "${it.domain}.${it.action}".contains(domain) }
+        _uiState.update { it.copy(serverActions = validItems) }
 
-    private fun getActionString(action: Action): String {
-        return "${action.domain}.${action.action}"
-    }
-
-    fun updateLabel(newLabel: String?) {
-        updateUiState(label = newLabel ?: "")
+        val dynamicFields = _uiState.value.dynamicFields.toMutableList()
+        val selectedServerId = _uiState.value.selectedServerId
+        ongoingJob?.cancel()
+        ongoingJob = viewModelScope.launch {
+            val serverActions = actions[selectedServerId].orEmpty()
+            val action = serverActions[newAction]
+            if (action != null) {
+                dynamicFields.clear()
+                val actionData = action.actionData
+                val existingActionData = mutableMapOf<String, Any?>()
+                buttonWidgetDao.get(widgetId)?.let { buttonWidget ->
+                    if (buttonWidget.serverId == selectedServerId &&
+                        "${buttonWidget.domain}.${buttonWidget.service}" == newAction
+                    ) {
+                        val dbMap: Map<String, Any?> = kotlinJsonMapper.decodeFromString(
+                            MapAnySerializer,
+                            buttonWidget.serviceData,
+                        )
+                        existingActionData.putAll(dbMap)
+                    }
+                }
+                if (actionData.target != false) {
+                    dynamicFields.add(0, ActionFieldBinder(newAction, "entity_id", existingActionData["entity_id"]))
+                    val entityMap = entities[selectedServerId]
+                    val domainEntities = mutableListOf("all")
+                    val actionDomain = action.domain
+                    if (entityMap != null) {
+                        if (actionDomain == "homeassistant") {
+                            domainEntities.addAll(entityMap.keys)
+                        } else {
+                            entityMap.keys.filterTo(domainEntities) {
+                                it.startsWith(actionDomain) ||
+                                    it.startsWith("group")
+                            }
+                        }
+                    }
+                    _uiState.update { it.copy(domainEntities = domainEntities) }
+                }
+                actionData.fields.keys.sorted().forEach { fieldKey ->
+                    val binder = ActionFieldBinder(newAction, fieldKey, existingActionData[fieldKey])
+                    if (fieldKey.contains("_id")) dynamicFields.add(0, binder) else dynamicFields.add(binder)
+                }
+                existingActionData.keys.minus("entity_id").minus(actionData.fields.keys).forEach { extraKey ->
+                    dynamicFields.add(ActionFieldBinder(newAction, extraKey, existingActionData[extraKey]))
+                }
+            } else {
+                dynamicFields.clear()
+            }
+            _uiState.update { it.copy(dynamicFields = dynamicFields) }
+        }
     }
 
     fun setServer(serverId: Int) {
         val selectedServerId = _uiState.value.selectedServerId
         if (selectedServerId == serverId) return
-        updateUiState(selectedServerId = serverId, actionText = "")
+        _uiState.update { it.copy(selectedServerId = serverId, actionText = "") }
         viewModelScope.launch {
             selectedServerMutex.withLock {
-                setAdapterActions(serverId)
+                val serverActionsMap = actions[serverId] ?: return@withLock
+                val actionsList = serverActionsMap.values.sortedBy { "${it.domain}.${it.action}" }
+                selectedServerActions = actionsList
+                _uiState.update { it.copy(serverActions = actionsList) }
             }
         }
     }
@@ -242,163 +241,38 @@ class ButtonWidgetViewModel @Inject constructor(
     fun addDynamicField(position: Int, field: ActionFieldBinder) {
         val dynamicFields = _uiState.value.dynamicFields.toMutableList()
         dynamicFields.add(position, field)
-        updateUiState(dynamicFields = dynamicFields)
+        _uiState.update { it.copy(dynamicFields = dynamicFields) }
     }
 
     fun updateDynamicField(index: Int, value: String) {
         val currentState = _uiState.value
         val updatedFields = currentState.dynamicFields.toMutableList()
         updatedFields[index] = updatedFields[index].copy(value = value)
-        updateUiState(dynamicFields = updatedFields)
+        _uiState.update { it.copy(dynamicFields = updatedFields) }
     }
 
     fun selectIcon(icon: MdiIcon?) {
-        updateUiState(selectedIcon = icon ?: Mdi.Flash, selectedIconId = icon?.mdiName)
+        val resolvedIcon = icon ?: Mdi.Flash
+        _uiState.update { it.copy(selectedIcon = resolvedIcon, selectedIconId = resolvedIcon.mdiName) }
     }
 
-    fun updateSelectedBackgroundType(backgroundType: WidgetBackgroundType) {
-        updateUiState(selectedBackgroundType = backgroundType)
-    }
-
-    fun updateTextColorIndex(textColorIndex: Int) {
-        updateUiState(textColorIndex = textColorIndex)
-    }
-
-    fun setRequiresAuthentication(authenticationRequired: Boolean) {
-        updateUiState(requiresAuthentication = authenticationRequired)
-    }
-
-    fun setServerActions(actions: List<Action>) {
-        updateUiState(serverActions = actions)
-    }
-
-    fun updateActionFields(actionText: String) {
-        val dynamicFields = _uiState.value.dynamicFields.toMutableList()
-        val selectedServerId = _uiState.value.selectedServerId
-        ongoingJob?.cancel()
-        ongoingJob = viewModelScope.launch {
-            if (actions[selectedServerId].orEmpty().keys.contains(actionText)) {
-                Timber.d("Valid domain and action--processing dynamic fields")
-
-                // Make sure there are not already any dynamic fields created
-                // This can happen if selecting the drop-down twice or pasting
-                dynamicFields.clear()
-
-                // We only call this if servicesAvailable was fetched and is not null,
-                // so we can safely assume that it is not null here
-                val actionData = actions[selectedServerId]!![actionText]!!.actionData
-                val target = actionData.target
-                val fields = actionData.fields
-
-                val fieldKeys = fields.keys
-                Timber.d("Fields applicable to this action: $fields")
-
-                val existingActionData = mutableMapOf<String, Any?>()
-                val addedFields = mutableListOf<String>()
-                buttonWidgetDao.get(widgetId)?.let { buttonWidget ->
-                    if (
-                        buttonWidget.serverId != selectedServerId ||
-                        "${buttonWidget.domain}.${buttonWidget.service}" != actionText
-                    ) {
-                        return@let
-                    }
-
-                    val dbMap: Map<String, Any?> = kotlinJsonMapper.decodeFromString(
-                        MapAnySerializer,
-                        buttonWidget.serviceData,
-                    )
-                    for (item in dbMap) {
-                        existingActionData[item.key] = item.value
-                        addedFields.add(item.key)
-                    }
-                }
-
-                if (target != false) {
-                    dynamicFields.add(
-                        0,
-                        ActionFieldBinder(actionText, "entity_id", existingActionData["entity_id"]),
-                    )
-                    setEntitiesForAction()
-                }
-
-                fieldKeys.sorted().forEach { fieldKey ->
-                    Timber.d("Creating a text input box for $fieldKey")
-
-                    // Insert a dynamic layout
-                    // IDs get priority and go at the top, since the other fields
-                    // are usually optional but the ID is required
-                    if (fieldKey.contains("_id")) {
-                        dynamicFields.add(
-                            0,
-                            ActionFieldBinder(actionText, fieldKey, existingActionData[fieldKey]),
-                        )
-                    } else {
-                        dynamicFields.add(ActionFieldBinder(actionText, fieldKey, existingActionData[fieldKey]))
-                    }
-                }
-                addedFields.minus("entity_id").minus(fieldKeys).forEach { extraFieldKey ->
-                    Timber.d("Creating a text input box for extra $extraFieldKey")
-                    dynamicFields.add(
-                        ActionFieldBinder(actionText, extraFieldKey, existingActionData[extraFieldKey]),
-                    )
-                }
-            } else {
-                if (dynamicFields.isNotEmpty()) {
-                    dynamicFields.clear()
-                }
-            }
-            updateUiState(dynamicFields = dynamicFields)
+    fun updateOption(
+        label: String? = null,
+        selectedBackgroundType: WidgetBackgroundType? = null,
+        textColorIndex: Int? = null,
+        requiresAuthentication: Boolean? = null,
+    ) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                label = label ?: currentState.label,
+                selectedBackgroundType = selectedBackgroundType ?: currentState.selectedBackgroundType,
+                textColorIndex = textColorIndex ?: currentState.textColorIndex,
+                requiresAuthentication = requiresAuthentication ?: currentState.requiresAuthentication,
+            )
         }
-    }
-
-    private fun setAdapterActions(serverId: Int) {
-        Timber.i("Setting Adapter Actions")
-        var selectedServerActions: List<Action> = emptyList()
-        if (actions[serverId] != null) {
-            selectedServerActions = actions[serverId]?.values.orEmpty().toMutableList()
-            val comparator = Comparator { t1: Action, t2: Action ->
-                getActionString(t1).compareTo(getActionString(t2))
-            }
-            this.selectedServerActions = selectedServerActions.sortedWith(comparator)
-            setServerActions(this.selectedServerActions)
-        }
-    }
-
-    private fun filterAdapterActions(constraint: CharSequence) {
-        // Split Domain from String
-        val domain = constraint.split(".")[0]
-        val validItems = ArrayList<Action>()
-        for (i in selectedServerActions.indices) {
-            val item = selectedServerActions[i]
-            if (getActionString(item).contains(domain)) {
-                validItems.add(item)
-            }
-        }
-        setServerActions(validItems)
-    }
-
-    private fun setEntitiesForAction() {
-        val actionText = _uiState.value.actionText
-        val selectedServerId = _uiState.value.selectedServerId
-        val entityMap = entities[selectedServerId] ?: return
-        val domain = actions[selectedServerId]?.get(actionText)?.domain
-
-        val domainEntities = mutableListOf("all")
-
-        if (domain == ("homeassistant") || domain == null) {
-            domainEntities.addAll(entityMap.keys)
-        } else {
-            entityMap.keys.forEach {
-                if (it.startsWith(domain) || it.startsWith("group")) {
-                    domainEntities.add(it)
-                }
-            }
-        }
-        updateUiState(domainEntities = domainEntities)
     }
 
     suspend fun requestWidgetCreation(context: Context) {
-        // We drop the first value since we only care about knowing when the widget is actually added
         buttonWidgetDao.getWidgetCountFlow().drop(1).onStart {
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val componentName = ComponentName(context, ButtonWidget::class.java)
@@ -418,18 +292,14 @@ class ButtonWidgetViewModel @Inject constructor(
     }
 
     suspend fun updateWidgetConfiguration() {
-        val entity = getPendingDaoEntity()
-        buttonWidgetDao.add(entity)
+        buttonWidgetDao.add(getPendingDaoEntity())
     }
 }
 
 private fun cleanDynamicFieldValue(value: Any?): Any? {
     if (value !is String) return value
     return if (value.contains(",")) {
-        value.split(",")
-            .map(String::trim)
-            .filter(String::isNotEmpty)
-            .takeIf(List<String>::isNotEmpty)
+        value.split(",").map(String::trim).filter(String::isNotEmpty).takeIf(List<String>::isNotEmpty)
     } else {
         value.trim().takeIf(String::isNotBlank)
     }
