@@ -26,12 +26,12 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
-/**
- * A widget provider class for widgets that update based on entity state changes.
- */
 /** The [entities] a widget follows the changes of, and the [job] following them. */
 private data class WidgetSubscription(val entities: List<String>, val job: Job)
 
+/**
+ * A widget provider class for widgets that update based on entity state changes.
+ */
 abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : AppWidgetProvider() {
 
     companion object {
