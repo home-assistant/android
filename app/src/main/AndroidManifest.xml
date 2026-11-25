@@ -119,6 +119,8 @@
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|navigation|uiMode"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.LaunchScreen">
+            <tools:validation testUrl="https://www.home-assistant.io/get-mobile-app/" />
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -127,6 +129,22 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+
+            <!--
+            The "get the app" page, for example from the QR code the Home Assistant installer
+            shows. Without the app it sends the phone to its store; with the app installed,
+            the link opens the app instead. The link carries nothing else to handle.
+            -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:scheme="https"
+                    android:host="www.home-assistant.io"
+                    android:pathPrefix="/get-mobile-app" />
             </intent-filter>
         </activity>
 
