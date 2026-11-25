@@ -61,7 +61,6 @@
     <ID>CyclomaticComplexMethod:SettingsActivity.kt:SettingsActivity$override fun onCreate</ID>
     <ID>CyclomaticComplexMethod:SettingsFragment.kt:SettingsFragment$override fun onCreatePreferences</ID>
     <ID>CyclomaticComplexMethod:ThreadManagerImpl.kt:ThreadManagerImpl$private suspend fun fullSyncPreferredDataset: ThreadManager.SyncResult</ID>
-    <ID>CyclomaticComplexMethod:TileExtensions.kt:TileExtensions$private suspend fun setTileData: Boolean</ID>
     <ID>CyclomaticComplexMethod:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$override fun onBindViewHolder</ID>
     <ID>DoubleMutabilityForCollection:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity$private var actions = mutableMapOf&lt;Int, HashMap&lt;String, Action&gt;&gt;()</ID>
     <ID>DoubleMutabilityForCollection:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity$private var dynamicFields = ArrayList&lt;ActionFieldBinder&gt;()</ID>
@@ -122,7 +121,6 @@
     <ID>InjectDispatcher:SettingsWearFavoritesView.kt:IO</ID>
     <ID>InjectDispatcher:TLSWebViewClient.kt:SafeKeyChainAliasCallback$IO</ID>
     <ID>InjectDispatcher:TemplateWidget.kt:TemplateWidget.Companion$Default</ID>
-    <ID>InjectDispatcher:TileExtensions.kt:TileExtensions$IO</ID>
     <ID>InjectDispatcher:WakeWordListener.kt:IO</ID>
     <ID>InjectDispatcher:WearDnsRequestListener.kt:WearDnsRequestListener$IO</ID>
     <ID>InjectDispatcher:WebsocketBroadcastReceiver.kt:WebsocketBroadcastReceiver$Default</ID>
@@ -204,7 +202,6 @@
     <ID>LongMethod:TemplateComponents.kt:@RequiresApi(Build.VERSION_CODES.O) fun getDomainList: ItemList.Builder</ID>
     <ID>LongMethod:TemplateWidget.kt:TemplateWidget$private suspend fun getWidgetRemoteViews: RemoteViews</ID>
     <ID>LongMethod:ThreadManagerImpl.kt:ThreadManagerImpl$private suspend fun fullSyncPreferredDataset: ThreadManager.SyncResult</ID>
-    <ID>LongMethod:TileExtensions.kt:TileExtensions$private suspend fun setTileData: Boolean</ID>
     <ID>LongMethod:TileExtensions.kt:TileExtensions$private suspend fun tileClicked</ID>
     <ID>LongMethod:WebsocketManager.kt:WebsocketManager$private suspend fun createNotification: Boolean</ID>
     <ID>LongMethod:WebsocketSettingView.kt:@Composable fun WebsocketSettingView</ID>

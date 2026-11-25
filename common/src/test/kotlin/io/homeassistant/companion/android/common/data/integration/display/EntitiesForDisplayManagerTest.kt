@@ -39,6 +39,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -262,6 +264,37 @@ class EntitiesForDisplayManagerTest {
             entityRegistryUpdates.emit(EntityRegistryUpdatedEvent(action = "update", entityId = "light.bed"))
 
             assertEquals("Renamed bed", awaitLoaded().entities.single().name)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `Given an entity registry refetch in flight when a state changes while observing then it is emitted without waiting for the refetch`() = runTest {
+        val refetchStarted = CompletableDeferred<Unit>()
+        val refetch = CompletableDeferred<EntityRegistryDisplayResponse>()
+        coEvery { webSocketRepository.getEntityRegistryDisplay() } returns
+            EntityRegistryDisplayResponse() coAndThen {
+                refetchStarted.complete(Unit)
+                refetch.await()
+            }
+
+        manager.observe(serverId, EntityFilter(entityIds = entityIds.toSet())).test {
+            assertEquals("Bed Light", awaitInitialLoad().entities.single().name)
+            entityChanges.awaitSubscribed()
+            entityRegistryUpdates.awaitSubscribed()
+
+            entityRegistryUpdates.emit(EntityRegistryUpdatedEvent(action = "update", entityId = "light.bed"))
+            refetchStarted.await()
+
+            entityChanges.emit(EntityChange.StateChanged(entity("light.bed", "Bed Light changed")))
+            assertEquals("Bed Light changed", awaitLoaded().entities.single().name)
+
+            refetch.complete(
+                EntityRegistryDisplayResponse(
+                    entities = listOf(EntityRegistryDisplayEntry(entityId = "light.bed", name = "Bed renamed")),
+                ),
+            )
+            assertEquals("Bed renamed", awaitLoaded().entities.single().name)
             cancelAndIgnoreRemainingEvents()
         }
     }
@@ -1316,6 +1349,9 @@ class EntitiesForDisplayManagerTest {
                         entities = listOf(EntityRegistryDisplayEntry(entityId = "light.bed", name = "Bed renamed twice")),
                     )
 
+                // Runs on the test dispatcher, so the refetches still pending can be run before counting them
+                val manager = EntitiesForDisplayManager(serverManager, StandardTestDispatcher(testScheduler))
+
                 manager.observeInContext(serverId).test {
                     awaitInitialLoad()
                     updatesReceived.await()
@@ -1327,10 +1363,13 @@ class EntitiesForDisplayManagerTest {
                     )
                     assertEquals("Bed renamed", awaitLoaded().single().name)
                     assertEquals("Bed renamed twice", awaitLoaded().single().name)
-                    cancelAndIgnoreRemainingEvents()
+
+                    advanceUntilIdle()
+                    // The initial fetch, the refetch in flight, and one for the three updates received meanwhile
+                    coVerify(exactly = 3) { webSocketRepository.getEntityRegistryDisplay() }
+                    expectNoEvents()
+                    cancel()
                 }
-                // The initial fetch, the refetch in flight, and one for the three updates received meanwhile
-                coVerify(exactly = 3) { webSocketRepository.getEntityRegistryDisplay() }
             }
 
             @Test

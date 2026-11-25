@@ -20,7 +20,6 @@
     <ID>ConstructorParameterNaming:Server.kt:Server$@ColumnInfo(name = "_version") val _version: String? = null</ID>
     <ID>ConstructorParameterNaming:SingleSlotQueue.kt:SingleSlotQueue$private val _state: MutableStateFlow&lt;T?&gt; = MutableStateFlow(null)</ID>
     <ID>CyclomaticComplexMethod:AppSensorManagerBase.kt:AppSensorManagerBase$private suspend fun updateImportanceCheck</ID>
-    <ID>CyclomaticComplexMethod:AssistViewModelBase.kt:AssistViewModelBase$protected fun runAssistPipelineInternal</ID>
     <ID>CyclomaticComplexMethod:AudioSensorManager.kt:AudioSensorManager$private suspend fun updateAudioState</ID>
     <ID>CyclomaticComplexMethod:BluetoothSensorManager.kt:BluetoothSensorManager$private suspend fun updateBLESensor</ID>
     <ID>CyclomaticComplexMethod:DatabaseMigration.kt:Migration16to17$override suspend fun migrate</ID>
@@ -51,7 +50,6 @@
     <ID>InjectDispatcher:ContextExt.kt:IO</ID>
     <ID>InjectDispatcher:DataModule.kt:DataModule.Companion$IO</ID>
     <ID>InjectDispatcher:DefaultConnectivityChecker.kt:DefaultConnectivityChecker$IO</ID>
-    <ID>InjectDispatcher:EntitiesForDisplayManager.kt:EntitiesForDisplayManager$Default</ID>
     <ID>InjectDispatcher:ExoPlayerExt.kt:Default</ID>
     <ID>InjectDispatcher:HomeAssistantApis.kt:HomeAssistantApis$Default</ID>
     <ID>InjectDispatcher:IconDialogCompat.kt:IconDialogCompat$IO</ID>
@@ -128,7 +126,6 @@
     <ID>MagicNumber:ExoPlayerExt.kt:8.0f</ID>
     <ID>MagicNumber:IBeaconMonitor.kt:IBeaconMonitor$0.5</ID>
     <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$1000</ID>
-    <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$2022</ID>
     <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$2023</ID>
     <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$4</ID>
     <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$5</ID>
@@ -191,8 +188,8 @@
     <ID>ReturnCount:ServerConnectionStateProviderImpl.kt:ServerConnectionStateProviderImpl$override suspend fun canSafelySendCredentials: Boolean</ID>
     <ID>ReturnCount:ServerConnectionStateProviderImpl.kt:ServerConnectionStateProviderImpl$override suspend fun isInternal: Boolean</ID>
     <ID>ReturnCount:TLSHelper.kt:TLSHelper$private fun withUserInstalledCaFallback: X509TrustManager</ID>
-    <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun attemptWebSocketConnection: ConnectionAttemptResult</ID>
     <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private fun handleEvent</ID>
+    <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun attemptWebSocketConnection: ConnectionAttemptResult</ID>
     <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun sendMessage: RawMessageSocketResponse?</ID>
     <ID>SpreadOperator:DatabaseModule.kt:DatabaseModule$(*migrationPath(context))</ID>
     <ID>SuspendFunWithFlowReturnType:AssistAudioStrategy.kt:AssistAudioStrategy$suspend</ID>
@@ -257,8 +254,6 @@
     <ID>UnsafeCallOnNullableType:AuthenticationRepositoryImpl.kt:AuthenticationRepositoryImpl$server.session.refreshToken!!</ID>
     <ID>UnsafeCallOnNullableType:BluetoothUtils.kt:BluetoothUtils$context.applicationContext.getSystemService&lt;BluetoothManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:DeviceCommands.kt:data[DeviceCommandData.BLE_MEASURED_POWER]?.toInt()!!</ID>
-    <ID>UnsafeCallOnNullableType:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$it.newState!!</ID>
-    <ID>UnsafeCallOnNullableType:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$it.toState!!</ID>
     <ID>UnsafeCallOnNullableType:KeyguardSensorManager.kt:KeyguardSensorManager$applicationContext.getSystemService&lt;KeyguardManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:LightSensorManager.kt:LightSensorManager$applicationContext.getSystemService()!!</ID>
     <ID>UnsafeCallOnNullableType:MonitoringManager.kt:MonitoringManager$context.getSystemService&lt;NotificationManager&gt;()!!</ID>
@@ -281,7 +276,6 @@
     <ID>UnsafeCallOnNullableType:UrlUtil.kt:UrlUtil$url.toHttpUrlOrNull()!!</ID>
     <ID>UnsafeCallOnNullableType:WearPrefsRepositoryImpl.kt:WearPrefsRepositoryImpl$removeTemplateTile(UNKNOWN_TEMPLATE_TILE_ID)!!</ID>
     <ID>UnsafeCallOnNullableType:WearPrefsRepositoryImpl.kt:WearPrefsRepositoryImpl$removeTileShortcuts(null)!!</ID>
-    <ID>UnsafeCallOnNullableType:WebSocketCoreImpl.kt:WebSocketCoreImpl$urlObserverJob!!</ID>
     <ID>UnsafeCallOnNullableType:WebSocketRepositoryImpl.kt:WebSocketRepositoryImpl$it.connection.webhookId!!</ID>
     <ID>UnusedParameter:LastRebootSensorManager.kt:LastRebootSensorManager$applicationContext: Context</ID>
     <ID>UnusedParameter:MonitoringManager.kt:MonitoringManager$context: Context</ID>

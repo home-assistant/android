@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.integration.display
 
+import androidx.annotation.VisibleForTesting
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.MdiIcon
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -20,6 +21,7 @@ import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.fromHaName
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -51,7 +53,13 @@ import timber.log.Timber
  * The `observe`/`snapshot` variants resolve from the entity registry only; the `*InContext`
  * variants also resolve the area, floor and device registries into an [EntityDisplayWithContext].
  */
-class EntitiesForDisplayManager @Inject constructor(private val serverManager: ServerManager) {
+class EntitiesForDisplayManager @VisibleForTesting constructor(
+    private val serverManager: ServerManager,
+    private val backgroundDispatcher: CoroutineDispatcher,
+) {
+
+    @Inject
+    constructor(serverManager: ServerManager) : this(serverManager, Dispatchers.Default)
 
     /**
      * Observes the entities selected by [filter] with their display information, or every entity
@@ -98,7 +106,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
             }
             emit(snapshot())
         }
-    }.flowOn(Dispatchers.Default)
+    }.flowOn(backgroundDispatcher)
 
     /**
      * Resolves the entities selected by [filter] with their display information once, the one-shot
@@ -123,7 +131,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         val registryEntries = serverManager.webSocketRepositoryOrNull(serverId)
             .fetchEntityRegistryEntries(filter)
         emit(EntityDisplayState.Loaded(entities.map { registryEntries.itemFor(it) }))
-    }.flowOn(Dispatchers.Default)
+    }.flowOn(backgroundDispatcher)
 
     /**
      * Observes the display state of the entities selected by [filter], or of every entity of the
@@ -171,7 +179,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
                 emit(EntityDisplayState.Loaded(items))
             }
         }
-    }.flowOn(Dispatchers.Default)
+    }.flowOn(backgroundDispatcher)
 
     /**
      * Resolves the display state of the entities selected by [filter] once, or of every entity of
@@ -185,7 +193,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
     ): Flow<EntityDisplayState<EntityDisplayWithContext>> = flow {
         val entities = loadEntities(serverId, filter) ?: return@flow
         emit(resolveState(serverId = serverId, entities = entities, filter = filter))
-    }.flowOn(Dispatchers.Default)
+    }.flowOn(backgroundDispatcher)
 
     /**
      * Merges what an [EntityDisplayWithoutContext] depends on into a single [ObserveEvent] flow: the state
