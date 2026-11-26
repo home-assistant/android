@@ -6,6 +6,7 @@ import android.os.strictmode.DiskWriteViolation
 import android.os.strictmode.IncorrectContextUseViolation
 import android.os.strictmode.Violation
 import androidx.annotation.RequiresApi
+import io.homeassistant.companion.android.common.util.IgnoreActivityThreadVsyncDiskReadWrite
 import io.homeassistant.companion.android.common.util.IgnoreViolationRule
 
 val vmPolicyIgnoredViolationRules = listOf(
@@ -115,23 +116,6 @@ private data object IgnoreComposeTextContextMenuDiskRead : IgnoreViolationRule {
         return violation.stackTrace.any {
             it.className ==
                 "androidx.compose.foundation.text.contextmenu.internal.AndroidTextContextMenuToolbarProvider"
-        }
-    }
-}
-
-/**
- * Ignore an [DiskWriteViolation] and [DiskReadViolation] in Android's ActivityThread vsync scheduling.
- * This occurs in the framework's internal vsync scheduling mechanism and is beyond
- * application control.
- */
-private data object IgnoreActivityThreadVsyncDiskReadWrite : IgnoreViolationRule {
-    @RequiresApi(Build.VERSION_CODES.P)
-    override fun shouldIgnore(violation: Violation): Boolean {
-        if (violation !is DiskWriteViolation && violation !is DiskReadViolation) return false
-
-        return violation.stackTrace.any {
-            it.className == "android.app.ActivityThread" &&
-                it.methodName == "scheduleVsyncSS"
         }
     }
 }

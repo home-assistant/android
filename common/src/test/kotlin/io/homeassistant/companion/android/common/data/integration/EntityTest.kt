@@ -99,6 +99,45 @@ class EntityTest {
     }
 
     @Nested
+    inner class ClimateRangeAndFanModes {
+        @Test
+        fun `Given climate power feature flags when resolving climate controls then expose only supported actions`() {
+            for (features in listOf(0, 128, 256, 384)) {
+                val controls = checkNotNull(
+                    createEntity(entityId = "climate.thermostat", attributes = mapOf("supported_features" to features))
+                        .getClimateControls(),
+                )
+                assertEquals(features and 256 != 0, controls.supportsTurnOn)
+                assertEquals(features and 128 != 0, controls.supportsTurnOff)
+            }
+        }
+
+        @Test
+        fun `Given supported climate range and fan modes when resolving climate controls then expose them`() {
+            val entity = createEntity(
+                entityId = "climate.dining_room",
+                state = "heat_cool",
+                attributes = mapOf(
+                    "current_temperature" to 72,
+                    "target_temp_low" to 69,
+                    "target_temp_high" to 75,
+                    "target_temp_step" to 1,
+                    "fan_mode" to "auto",
+                    "fan_modes" to listOf("auto", "on"),
+                    "hvac_modes" to listOf("off", "heat", "cool", "heat_cool"),
+                    "supported_features" to EntityExt.CLIMATE_SUPPORT_TARGET_TEMPERATURE_RANGE,
+                ),
+            )
+            val controls = entity.getClimateControls()!!
+            assertEquals(69f, controls.targetTemperatureLow)
+            assertEquals(75f, controls.targetTemperatureHigh)
+            assertEquals("auto", controls.fanMode)
+            assertEquals(listOf("auto", "on"), controls.fanModes)
+            assertTrue(controls.supportsTargetTemperatureRange)
+        }
+    }
+
+    @Nested
     inner class Deserialization {
         private fun entityJson(stateValue: String) = """
             {
