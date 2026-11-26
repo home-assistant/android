@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 57,
-    "identityHash": "96bf886e7f73ada79ea1ee2d736dce5a",
+    "identityHash": "db067de7098e74fbb7253a11c78ab0af",
     "entities": [
       {
         "tableName": "sensor_attributes",
@@ -886,7 +886,7 @@
       },
       {
         "tableName": "thermostat_tiles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `entity_id` TEXT, `refresh_interval` INTEGER, `target_temperature` REAL, `show_entity_name` INTEGER, `show_power_button` INTEGER, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `entity_id` TEXT, `refresh_interval` INTEGER, `target_temperature` REAL, `show_entity_name` INTEGER, `show_power_button` INTEGER, `presumed_power_on` INTEGER, `presumed_power_at` INTEGER, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -917,6 +917,16 @@
           {
             "fieldPath": "showPowerButton",
             "columnName": "show_power_button",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "presumedPowerOn",
+            "columnName": "presumed_power_on",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "presumedPowerAt",
+            "columnName": "presumed_power_at",
             "affinity": "INTEGER"
           }
         ],
@@ -1187,7 +1197,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '96bf886e7f73ada79ea1ee2d736dce5a')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'db067de7098e74fbb7253a11c78ab0af')"
     ]
   }
 }

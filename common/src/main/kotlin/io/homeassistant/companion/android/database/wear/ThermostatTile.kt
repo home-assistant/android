@@ -29,4 +29,10 @@ data class ThermostatTile(
     /** Whether or not to show the power button on the tile. */
     @ColumnInfo(name = "show_power_button")
     val showPowerButton: Boolean? = true,
+    /** Whether the thermostat is presumed to be on after a power toggle, until the server reports it. */
+    @ColumnInfo(name = "presumed_power_on")
+    val presumedPowerOn: Boolean? = null,
+    /** When [presumedPowerOn] was set, in milliseconds since the epoch. */
+    @ColumnInfo(name = "presumed_power_at")
+    val presumedPowerAt: Long? = null,
 )

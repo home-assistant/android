@@ -24,21 +24,25 @@ import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.home.HomeActivity
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-/** How often and how long to poll for the new state after a power toggle, as the server reports it late. */
-private const val TOGGLE_REFRESH_ATTEMPTS = 15
-private val TOGGLE_REFRESH_DELAY = 200.milliseconds
+/** Raw state shown while a turn on is not reported by the server yet, the climate entity then reports its actual mode. */
+private const val PRESUMED_ON_STATE = "heat"
+
+/** How long a presumed power state is shown at most, in case the server never reports it. */
+private val PRESUMED_POWER_TIMEOUT = 30.seconds
+
+/** How soon the system asks for the tile again after a toggle, so the presumed state is replaced by the actual one. */
+private val TOGGLE_FALLBACK_REFRESH = 3.seconds
 
 @AndroidEntryPoint
 class ThermostatTile : TileService() {
@@ -110,6 +114,18 @@ class ThermostatTile : TileService() {
                         checkNotNull(entity)
                         val climateControls = entity.climateControls
 
+                        // A toggle isn't reported by the server right away, so keep showing what the user asked for
+                        val serverOn = entity.rawState != "off"
+                        val presumedAge = System.currentTimeMillis() - (tileConfig.presumedPowerAt ?: 0L)
+                        val pendingOn = tileConfig.presumedPowerOn?.takeIf {
+                            it != serverOn && presumedAge < PRESUMED_POWER_TIMEOUT.inWholeMilliseconds
+                        }
+                        var updatedConfig = tileConfig.copy(
+                            targetTemperature = null,
+                            presumedPowerOn = pendingOn,
+                            presumedPowerAt = tileConfig.presumedPowerAt.takeIf { pendingOn != null },
+                        )
+
                         var targetTemp = tileConfig.targetTemperature ?: climateControls?.targetTemperature
 
                         // The entity reports its unit, which spares opening the websocket for the server config
@@ -130,24 +146,29 @@ class ThermostatTile : TileService() {
                                     "temperature" to updatedTargetTemp,
                                 ),
                             )
-                            val updated = tileConfig.copy(targetTemperature = updatedTargetTemp)
-                            thermostatTileDao.add(updated)
+                            updatedConfig = updatedConfig.copy(targetTemperature = updatedTargetTemp)
                             targetTemp = updatedTargetTemp
-                        } else {
-                            val updated = tileConfig.copy(targetTemperature = null)
-                            thermostatTileDao.add(updated)
                         }
 
-                        var shownEntity: EntityDisplay = entity
+                        var shownOn = pendingOn ?: serverOn
                         if (lastId == TAP_ACTION_TOGGLE) {
+                            // Toggle what is shown, as the server may still report the previous state
                             serverManager.integrationRepository().callAction(
                                 entity.domain,
-                                if (entity.rawState == "off") "turn_on" else "turn_off",
+                                if (shownOn) "turn_off" else "turn_on",
                                 hashMapOf("entity_id" to entity.entityId),
                             )
-                            shownEntity = awaitUpdatedEntity(entity)
-                            targetTemp = shownEntity.climateControls?.targetTemperature
+                            shownOn = !shownOn
+                            updatedConfig = updatedConfig.copy(
+                                presumedPowerOn = shownOn.takeIf { it != serverOn },
+                                presumedPowerAt = System.currentTimeMillis().takeIf { shownOn != serverOn },
+                            )
+                            // The system then asks for the tile again, which replaces the presumed state
+                            tile.setFreshnessIntervalMillis(TOGGLE_FALLBACK_REFRESH.inWholeMilliseconds)
                         }
+                        thermostatTileDao.add(updatedConfig)
+
+                        val shownEntity = if (shownOn == serverOn) entity else presumedEntity(entity, shownOn)
 
                         val name = shownEntity.name.takeIf { tileConfig.showEntityName == true }
 
@@ -183,20 +204,15 @@ class ThermostatTile : TileService() {
             }
         }
 
-    /**
-     * Waits briefly for the server to report the new state after a toggle, so the tile doesn't
-     * redraw the previous one. Falls back to [entity] when the state doesn't change in time.
-     */
-    private suspend fun awaitUpdatedEntity(entity: EntityDisplay): EntityDisplay {
-        repeat(TOGGLE_REFRESH_ATTEMPTS) {
-            delay(TOGGLE_REFRESH_DELAY)
-            val updated = serverManager.integrationRepository().getEntity(entity.entityId)
-            if (updated != null && updated.state != entity.rawState) {
-                return EntityDisplayWithoutContext(entity = updated, name = entity.name)
-            }
-        }
-        return entity
-    }
+    /** The [entity] as it is expected to look once it is turned [on] or off, until the server reports it. */
+    private fun presumedEntity(entity: EntityDisplay, on: Boolean): EntityDisplay = EntityDisplayWithoutContext(
+        entityId = entity.entityId,
+        name = entity.name,
+        icon = entity.icon,
+        statelessIcon = entity.statelessIcon,
+        rawState = if (on) PRESUMED_ON_STATE else "off",
+        climateControls = entity.climateControls?.copy(hvacAction = if (on) "idle" else "off"),
+    )
 
     override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
         serviceScope.future {
