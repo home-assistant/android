@@ -297,6 +297,10 @@
     <string name="filter_updates">Filter updates</string>
     <string name="fullscreen_def">Put application in full screen</string>
     <string name="fullscreen">Fullscreen</string>
+    <string name="full_screen_alarm_channel">Full-screen alarms</string>
+    <string name="full_screen_alarm_dismiss">Dismiss</string>
+    <string name="full_screen_alarm_open">Open</string>
+    <string name="full_screen_alarm_permission_missing">Full-screen alerts are not allowed for this app, so alarms only show as a notification when your phone is locked.</string>
     <string name="screen_orientation_title_settings">Screen orientation</string>
     <string name="screen_orientation_option_label_system">Follow system settings</string>
     <string name="screen_orientation_option_label_portrait">Portrait</string>

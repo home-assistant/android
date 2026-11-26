@@ -24,6 +24,7 @@ import com.vdurmont.emoji.EmojiParser
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.common.R
+import io.homeassistant.companion.android.common.util.CHANNEL_FULL_SCREEN_ALARM
 import io.homeassistant.companion.android.common.util.CHANNEL_GENERAL
 import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.SdkVersion
@@ -66,6 +67,36 @@ object NotificationData {
 
     // special action constants
     const val CLEAR_NOTIFICATION = "clear_notification"
+
+    /**
+     * When `true`, the notification is shown as a full-screen alarm: it rings on the alarm stream until
+     * acknowledged and takes over the screen, even when the device is locked or the screen is off.
+     */
+    const val FULL_SCREEN_ALARM = "full_screen_alarm"
+
+    /** MDI icon (like `mdi:shield-alert`) shown on the full-screen alarm screen. */
+    const val ALARM_ICON = "alarm_icon"
+}
+
+/** Whether this notification data requests a full-screen alarm, see [NotificationData.FULL_SCREEN_ALARM]. */
+fun Map<String, String>.isFullScreenAlarm(): Boolean = this[NotificationData.FULL_SCREEN_ALARM]?.toBoolean() == true
+
+/**
+ * MDI icon name to show on the full-screen alarm screen: [NotificationData.ALARM_ICON], or the notification icon
+ * when not set. Returns `null` when neither is an `mdi:` icon, so the screen shows its default icon.
+ */
+fun Map<String, String>.alarmIconName(): String? =
+    (this[NotificationData.ALARM_ICON] ?: this[NotificationData.NOTIFICATION_ICON])
+        ?.takeIf { it.startsWith(MDI_PREFIX) }
+
+/**
+ * Whether the notification plays the alarm sound through the alarm stream, like an alarm clock. This is the case
+ * for the `alarm_stream` channel and for full-screen alarms without an explicit channel, which use the dedicated
+ * [CHANNEL_FULL_SCREEN_ALARM] channel.
+ */
+fun Map<String, String>.usesAlarmSound(): Boolean {
+    val channel = this[NotificationData.CHANNEL]
+    return channel == NotificationData.ALARM_STREAM || (channel.isNullOrEmpty() && isFullScreenAlarm())
 }
 
 fun createChannelID(channelName: String): String {
@@ -87,6 +118,9 @@ fun handleChannel(
     if (!data[NotificationData.CHANNEL].isNullOrEmpty()) {
         channelID = createChannelID(data[NotificationData.CHANNEL].toString())
         channelName = data[NotificationData.CHANNEL].toString().trim()
+    } else if (data.isFullScreenAlarm()) {
+        channelID = CHANNEL_FULL_SCREEN_ALARM
+        channelName = context.getString(R.string.full_screen_alarm_channel)
     }
 
     // Since android Oreo notification channel is needed.
@@ -97,7 +131,7 @@ fun handleChannel(
             handleImportance(data),
         )
 
-        if (channelName == NotificationData.ALARM_STREAM) {
+        if (channelName == NotificationData.ALARM_STREAM || channelID == CHANNEL_FULL_SCREEN_ALARM) {
             handleChannelSound(context, channel)
         }
 
@@ -108,13 +142,23 @@ fun handleChannel(
     return channelID
 }
 
+/**
+ * Maps the `importance` value of the notification data to a [NotificationManager] importance.
+ *
+ * Full-screen alarms default to [NotificationManager.IMPORTANCE_HIGH], the minimum importance for which
+ * Android honours a full-screen intent.
+ */
 fun handleImportance(data: Map<String, String>): Int {
     return when (data[NotificationData.IMPORTANCE]) {
         "high" -> NotificationManager.IMPORTANCE_HIGH
         "low" -> NotificationManager.IMPORTANCE_LOW
         "max" -> NotificationManager.IMPORTANCE_MAX
         "min" -> NotificationManager.IMPORTANCE_MIN
-        else -> NotificationManager.IMPORTANCE_DEFAULT
+        else -> if (data.isFullScreenAlarm()) {
+            NotificationManager.IMPORTANCE_HIGH
+        } else {
+            NotificationManager.IMPORTANCE_DEFAULT
+        }
     }
 }
 

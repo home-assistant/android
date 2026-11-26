@@ -19,6 +19,7 @@ const val CHANNEL_GENERAL = "general"
 const val CHANNEL_BEACON_MONITOR = "beacon"
 const val CHANNEL_ASSIST_LISTENING = "assist_listening"
 const val CHANNEL_MEDIA_SESSION = "media_session"
+const val CHANNEL_FULL_SCREEN_ALARM = "full_screen_alarm"
 
 /**
  * List of all notification channel IDs created by the app.
@@ -42,4 +43,5 @@ val appCreatedChannels = listOf(
     CHANNEL_BEACON_MONITOR,
     CHANNEL_ASSIST_LISTENING,
     CHANNEL_MEDIA_SESSION,
+    CHANNEL_FULL_SCREEN_ALARM,
 )

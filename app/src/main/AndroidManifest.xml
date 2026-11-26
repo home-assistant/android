@@ -49,6 +49,7 @@
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS"
         tools:ignore="ProtectedPermissions"/>
     <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND" />
@@ -353,6 +354,16 @@
                 <action android:name="androidx.media3.session.MediaSessionService"/>
             </intent-filter>
         </service>
+
+        <!-- Full-screen alarm for notifications sent with full_screen_alarm, shown over the lock screen.
+             Not exported: only reachable through the notification and the app itself. -->
+        <activity android:name=".notifications.alarm.FullScreenAlarmActivity"
+            android:exported="false"
+            android:taskAffinity="io.homeassistant.companion.android.alarm"
+            android:excludeFromRecents="true"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            tools:targetApi="o_mr1" />
 
         <activity android:name=".controls.HaControlsPanelActivity"
             tools:targetApi="upside_down_cake"

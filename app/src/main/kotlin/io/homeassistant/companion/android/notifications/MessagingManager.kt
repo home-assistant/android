@@ -64,6 +64,7 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.UrlState
 import io.homeassistant.companion.android.common.notifications.DeviceCommandData
 import io.homeassistant.companion.android.common.notifications.NotificationData
+import io.homeassistant.companion.android.common.notifications.alarmIconName
 import io.homeassistant.companion.android.common.notifications.clearNotification
 import io.homeassistant.companion.android.common.notifications.commandBeaconMonitor
 import io.homeassistant.companion.android.common.notifications.commandBleTransmitter
@@ -74,9 +75,11 @@ import io.homeassistant.companion.android.common.notifications.handleColor
 import io.homeassistant.companion.android.common.notifications.handleDeleteIntent
 import io.homeassistant.companion.android.common.notifications.handleSmallIcon
 import io.homeassistant.companion.android.common.notifications.handleText
+import io.homeassistant.companion.android.common.notifications.isFullScreenAlarm
 import io.homeassistant.companion.android.common.notifications.parseColor
 import io.homeassistant.companion.android.common.notifications.parseVibrationPattern
 import io.homeassistant.companion.android.common.notifications.prepareText
+import io.homeassistant.companion.android.common.notifications.usesAlarmSound
 import io.homeassistant.companion.android.common.sensors.BluetoothSensorManager
 import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.common.util.FailFast
@@ -97,6 +100,7 @@ import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.launch.intentLaunchWithNavigateTo
+import io.homeassistant.companion.android.notifications.alarm.FullScreenAlarmActivity
 import io.homeassistant.companion.android.sensors.LocationSensorManager
 import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.setHighAccuracyModeIntervalSetting
 import io.homeassistant.companion.android.sensors.LocationSensorManager.Companion.setHighAccuracyModeSetting
@@ -1127,6 +1131,8 @@ class MessagingManager @Inject constructor(
 
         handleLive(notificationBuilder, data)
 
+        val isFullScreenAlarm = handleFullScreenAlarm(notificationBuilder, tag, messageId, data)
+
         val useCarNotification = handleCarUiVisible(context, notificationBuilder, data)
 
         if (!SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
@@ -1141,8 +1147,14 @@ class MessagingManager @Inject constructor(
                 notify(tag, messageId, notificationBuilder)
             }
         } else {
-            notificationManagerCompat.apply {
-                notify(tag, messageId, notificationBuilder.build())
+            val notification = notificationBuilder.build()
+            if (isFullScreenAlarm) {
+                // Keep ringing until the alarm is acknowledged, like an alarm clock
+                notification.flags = notification.flags or Notification.FLAG_INSISTENT
+            }
+            notificationManagerCompat.notify(tag, messageId, notification)
+            if (isFullScreenAlarm) {
+                showFullScreenAlarmIfAllowed(tag, messageId)
             }
         }
 
@@ -1215,6 +1227,60 @@ class MessagingManager @Inject constructor(
         }
     }
 
+    /**
+     * Turns the notification into a full-screen alarm when requested with [NotificationData.FULL_SCREEN_ALARM]:
+     * it takes over the screen when the device is locked or the screen is off, like an incoming call, shows as a
+     * heads-up notification otherwise, and opens the alarm screen when tapped. The original click action stays
+     * available from the alarm screen.
+     *
+     * Not supported on Android Automotive, where full-screen interruptions are not appropriate.
+     *
+     * @return `true` if the notification is a full-screen alarm
+     */
+    private fun handleFullScreenAlarm(
+        builder: NotificationCompat.Builder,
+        tag: String?,
+        messageId: Int,
+        data: Map<String, String>,
+    ): Boolean {
+        if (!data.isFullScreenAlarm() || context.isAutomotive()) return false
+
+        val alarmPendingIntent = PendingIntent.getActivity(
+            context,
+            messageId,
+            FullScreenAlarmActivity.newInstance(context, tag, messageId),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val actionUri = data["clickAction"] ?: "/"
+        if (actionUri != NO_ACTION) {
+            builder.extras.putParcelable(
+                FullScreenAlarmActivity.EXTRA_OPEN_INTENT,
+                createOpenUriPendingIntent(actionUri, data),
+            )
+        }
+        data.alarmIconName()?.let { builder.extras.putString(FullScreenAlarmActivity.EXTRA_ALARM_ICON, it) }
+        builder
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setOngoing(true)
+            .setAutoCancel(false)
+            .setContentIntent(alarmPendingIntent)
+            .setFullScreenIntent(alarmPendingIntent, true)
+        return true
+    }
+
+    /**
+     * Shows the full-screen alarm right away when the app is allowed to display over other apps, so it also takes
+     * over the screen while the device is in use instead of only showing a heads-up notification. Without that
+     * permission Android blocks starting an activity from the background, and the full-screen intent of the
+     * notification remains the only way to show the alarm.
+     */
+    private fun showFullScreenAlarmIfAllowed(tag: String?, messageId: Int) {
+        if (Settings.canDrawOverlays(context)) {
+            context.startActivity(FullScreenAlarmActivity.newInstance(context, tag, messageId))
+        }
+    }
+
     private fun handleCarUiVisible(
         context: Context,
         builder: NotificationCompat.Builder,
@@ -1258,7 +1324,7 @@ class MessagingManager @Inject constructor(
     }
 
     private fun handleSound(builder: NotificationCompat.Builder, data: Map<String, String>) {
-        if (data[NotificationData.CHANNEL] == NotificationData.ALARM_STREAM) {
+        if (data.usesAlarmSound()) {
             builder.setCategory(Notification.CATEGORY_ALARM)
             builder.setSound(
                 RingtoneManager.getActualDefaultRingtoneUri(
@@ -1317,7 +1383,12 @@ class MessagingManager @Inject constructor(
             }
 
             else -> {
-                builder.priority = NotificationCompat.PRIORITY_DEFAULT
+                // Full-screen intents are only honoured for high priority notifications
+                builder.priority = if (data.isFullScreenAlarm()) {
+                    NotificationCompat.PRIORITY_MAX
+                } else {
+                    NotificationCompat.PRIORITY_DEFAULT
+                }
             }
         }
     }
