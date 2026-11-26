@@ -20,7 +20,7 @@ env:
   # renovate: datasource=pypi depName=uv
   UV_VERSION: "0.13.9"
   # renovate: datasource=pypi depName=zizmor
-  ZIZMOR_VERSION: "1.32.0"
+  ZIZMOR_VERSION: "1.33.1"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
