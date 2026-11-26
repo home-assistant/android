@@ -83,7 +83,16 @@ class FullScreenAlarmActivity : BaseActivity() {
     private val notificationId by lazy { intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        showOverLockScreen()
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O_MR1)) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        } else {
+            @Suppress("DEPRECATION")
+            window.addFlags(
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON,
+            )
+        }
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         super.onCreate(savedInstanceState)
 
         setContent {
@@ -104,19 +113,6 @@ class FullScreenAlarmActivity : BaseActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) { followNotification() }
         }
-    }
-
-    private fun showOverLockScreen() {
-        if (SdkVersion.isAtLeast(Build.VERSION_CODES.O_MR1)) {
-            setShowWhenLocked(true)
-            setTurnScreenOn(true)
-        } else {
-            @Suppress("DEPRECATION")
-            window.addFlags(
-                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON,
-            )
-        }
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
     /** Keeps the screen in sync with the notification and closes it once the notification is gone. */
@@ -146,8 +142,9 @@ class FullScreenAlarmActivity : BaseActivity() {
 
     private fun StatusBarNotification.toUiState(): FullScreenAlarmUiState {
         val extras = notification.extras
+        val isDeviceLocked = getSystemService<KeyguardManager>()?.isKeyguardLocked == true
         // Before Android O the device cannot be unlocked from here, so hide the controls requiring it while locked
-        val controlsAvailable = !isDeviceLocked() || SdkVersion.isAtLeast(Build.VERSION_CODES.O)
+        val controlsAvailable = !isDeviceLocked || SdkVersion.isAtLeast(Build.VERSION_CODES.O)
         return FullScreenAlarmUiState(
             icon = extras.getString(EXTRA_ALARM_ICON)?.let { Mdi.fromHaName(it) } ?: Mdi.BellRing,
             title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString().orEmpty(),
@@ -156,20 +153,18 @@ class FullScreenAlarmActivity : BaseActivity() {
                     ?: extras.getCharSequence(Notification.EXTRA_TEXT)
                 )?.toString().orEmpty(),
             canOpen = controlsAvailable && getOpenIntent() != null,
-            actions = if (controlsAvailable) notification.alarmActions() else emptyList(),
-            isFullScreenIntentAllowed = isFullScreenIntentAllowed(),
+            // Actions asking for a text reply need the notification shade instead
+            actions = if (controlsAvailable) {
+                notification.actions.orEmpty().mapIndexedNotNull { index, action ->
+                    FullScreenAlarmAction(index, action.title.toString()).takeIf { action.remoteInputs.isNullOrEmpty() }
+                }
+            } else {
+                emptyList()
+            },
+            isFullScreenIntentAllowed = !SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE) ||
+                getSystemService<NotificationManager>()?.canUseFullScreenIntent() != false,
         )
     }
-
-    /** Actions the screen can show; actions asking for a text reply need the notification shade instead. */
-    private fun Notification.alarmActions(): List<FullScreenAlarmAction> =
-        actions.orEmpty().mapIndexedNotNull { index, action ->
-            if (action.remoteInputs.isNullOrEmpty()) {
-                FullScreenAlarmAction(index = index, title = action.title.toString())
-            } else {
-                null
-            }
-        }
 
     private fun StatusBarNotification.getOpenIntent(): PendingIntent? =
         BundleCompat.getParcelable(notification.extras, EXTRA_OPEN_INTENT, PendingIntent::class.java)
@@ -209,11 +204,6 @@ class FullScreenAlarmActivity : BaseActivity() {
             }
         }
     }
-
-    private fun isFullScreenIntentAllowed(): Boolean = !SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE) ||
-        getSystemService<NotificationManager>()?.canUseFullScreenIntent() != false
-
-    private fun isDeviceLocked(): Boolean = getSystemService<KeyguardManager>()?.isKeyguardLocked == true
 
     /**
      * Runs [block] once the device is unlocked, asking the user to unlock it first if needed. Before Android O
