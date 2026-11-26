@@ -158,32 +158,32 @@ private fun buildHttpEngineFactory(context: Context): DataSource.Factory? {
 
 /**
  * A [DataSource.Factory] that dynamically selects between the best available HTTP stack
- * and OkHttp based on whether mTLS is currently active.
+ * and OkHttp based on whether the TLS setup of the app can only be honored by OkHttp.
  *
- * HttpEngine and Cronet do not support client certificates, so when mTLS is configured
- * this factory falls back to OkHttp which has the [javax.net.ssl.SSLSocketFactory] configured
- * with the client certificate.
+ * HttpEngine and Cronet do not support client certificates and only trust the platform trust
+ * store, so when mTLS is configured or a server trust anchor is stored (Wear OS) this factory falls
+ * back to OkHttp which has the [javax.net.ssl.SSLSocketFactory] configured with both.
  *
- * The mTLS check is performed on every [createDataSource] call so that changes to the
- * certificate configuration (adding or removing mTLS) are picked up without an app restart.
- * The check is not per server, if one server in the current setup of the app is using mTLS
+ * The check is performed on every [createDataSource] call so that changes to the certificate
+ * configuration (adding or removing mTLS or the trust anchor) are picked up without an app restart.
+ * The check is not per server, if one server in the current setup of the app needs OkHttp
  * then we use the OkHttp datasource.
  *
  * @param context application context for initializing HttpEngine/Cronet
- * @param okHttpClient the shared [OkHttpClient] configured with mTLS
- * @param usesMtls called on every [createDataSource] to check if mTLS is currently used
+ * @param okHttpClient the shared [OkHttpClient] configured with mTLS and the server trust anchor
+ * @param requiresOkHttp called on every [createDataSource] to check if OkHttp is currently required
  */
 internal class MtlsAwareDataSourceFactory(
     context: Context,
     okHttpClient: OkHttpClient,
-    private val usesMtls: () -> Boolean,
+    private val requiresOkHttp: () -> Boolean,
 ) : DataSource.Factory {
     private val okHttpDelegate by lazy { OkHttpDataSource.Factory(okHttpClient) }
     private val defaultDelegate by lazy { createDataSourceFactory(context) { okHttpDelegate } }
 
     @OptIn(UnstableApi::class)
     override fun createDataSource(): DataSource {
-        return if (usesMtls()) {
+        return if (requiresOkHttp()) {
             okHttpDelegate
         } else {
             defaultDelegate

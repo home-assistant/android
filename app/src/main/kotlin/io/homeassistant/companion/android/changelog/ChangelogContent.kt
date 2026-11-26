@@ -36,7 +36,12 @@ internal val currentChangelog = Changelog(
             action = ChangelogAction.OpenSensor(FoldableSensorManager.hingeStatus.id),
         ),
     ),
-    improved = listOf(),
+    improved = listOf(
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_wear_user_certificates,
+            platforms = setOf(ChangelogPlatform.WEAR),
+        ),
+    ),
     fixed = listOf(
         ChangelogEntry(
             contentRes = commonR.string.changelog_entry_fix_media_player_widget,

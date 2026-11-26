@@ -33,6 +33,8 @@ import io.homeassistant.companion.android.tiles.ShortcutsTile
 import io.homeassistant.companion.android.tiles.TemplateTile
 import java.security.KeyStore
 import java.security.PrivateKey
+import java.security.cert.CertificateException
+import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
@@ -165,6 +167,7 @@ class PhoneSettingsListener :
     private fun login(dataMap: DataMap) = serviceScope.launch {
         var authId = ""
         var serverId: Int? = null
+        val previousTrustAnchor = keyStoreRepository.getServerTrustAnchorProvider().certificate
         try {
             authId = dataMap.getString("AuthId", "")
             val url = dataMap.getString("URL", "")
@@ -182,9 +185,11 @@ class PhoneSettingsListener :
                     val certificateChain = getCertificateChain(alias).filterIsInstance<X509Certificate>().toTypedArray()
                     val privateKey = getKey(alias, tlsClientCertificatePassword) as PrivateKey
 
-                    keyStoreRepository.store(privateKey, certificateChain)
+                    keyStoreRepository.storeClientCertificate(privateKey, certificateChain)
                 }
             }
+
+            keyStoreRepository.storeServerTrustAnchor(trustedCertificateFrom(dataMap))
 
             val temporaryServer = checkNotNull(
                 serverRegistrationRepository.registerAuthorizationCode(
@@ -225,12 +230,28 @@ class PhoneSettingsListener :
             } catch (e: Exception) {
                 Timber.e(e, "Can't revoke session")
             }
+            keyStoreRepository.storeServerTrustAnchor(previousTrustAnchor)
             launch {
                 sendLoginResult(authId, false, e.stackTraceToString())
             }
         }
 
         sendPhoneData()
+    }
+
+    /**
+     * Returns the trust anchor sent by the phone, or `null` when there is none or it can't be parsed,
+     * in which case the login proceeds without it.
+     */
+    private fun trustedCertificateFrom(dataMap: DataMap): X509Certificate? {
+        val data = dataMap.getByteArray(WearDataMessages.KEY_TLS_SERVER_TRUST_ANCHOR)
+        if (data == null || data.isEmpty()) return null
+        return try {
+            CertificateFactory.getInstance("X.509").generateCertificate(data.inputStream()) as? X509Certificate
+        } catch (e: CertificateException) {
+            Timber.e(e, "Failed to parse the trusted certificate sent by the phone")
+            null
+        }
     }
 
     private suspend fun sendLoginResult(id: String?, success: Boolean, exception: String?) {

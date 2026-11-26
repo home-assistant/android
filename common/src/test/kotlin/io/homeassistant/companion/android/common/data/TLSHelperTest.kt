@@ -1,18 +1,31 @@
 package io.homeassistant.companion.android.common.data
 
+import android.content.Context
+import android.content.pm.PackageManager
+import io.homeassistant.companion.android.common.data.TestCertificates.PRIVATE_CA
+import io.homeassistant.companion.android.common.data.TestCertificates.PRIVATE_CA_LOCALHOST
+import io.homeassistant.companion.android.common.data.TestCertificates.SYSTEM_CA
 import io.homeassistant.companion.android.common.data.keychain.ClientCertProvider
 import io.homeassistant.companion.android.common.data.keychain.ClientCertificate
 import io.homeassistant.companion.android.common.data.keychain.ClientCertificateManager
 import io.homeassistant.companion.android.common.data.keychain.KeyChainRepository
 import io.homeassistant.companion.android.common.data.keychain.KeyStoreRepository
+import io.homeassistant.companion.android.common.data.keychain.ServerTrustAnchorProvider
+import io.homeassistant.companion.android.testing.unit.LocalTlsServer
+import io.mockk.every
 import io.mockk.mockk
+import java.net.HttpURLConnection.HTTP_OK
+import java.net.InetAddress
 import java.security.KeyStore
 import java.security.PrivateKey
-import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
+import javax.net.ssl.SSLHandshakeException
 import kotlinx.coroutines.test.runTest
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.api.assertNull
@@ -21,7 +34,7 @@ class TLSHelperTest {
 
     @Test
     fun `Given a client cert selected on a previous run when creating the mTLS key manager then the cert is loaded before being returned`() = runTest {
-        val certificate = ClientCertificate(mockk(), arrayOf(USER_CA))
+        val certificate = ClientCertificate(mockk(), arrayOf(PRIVATE_CA))
         val keyChain = FakeKeyChainRepository(toLoad = certificate)
         val tlsHelper = tlsHelperOf(keyChain = keyChain)
 
@@ -33,7 +46,7 @@ class TLSHelperTest {
 
     @Test
     fun `Given no cert in the keychain when creating the mTLS key manager then it falls back to the keystore`() = runTest {
-        val certificate = ClientCertificate(mockk(), arrayOf(USER_CA))
+        val certificate = ClientCertificate(mockk(), arrayOf(PRIVATE_CA))
         val keyStore = FakeKeyStoreRepository(toLoad = certificate)
         val tlsHelper = tlsHelperOf(keyStore = keyStore)
 
@@ -51,7 +64,7 @@ class TLSHelperTest {
         assertNull(keyManager.getPrivateKey(null))
         assertNull(keyManager.getCertificateChain(null))
 
-        val certificate = ClientCertificate(mockk(), arrayOf(USER_CA))
+        val certificate = ClientCertificate(mockk(), arrayOf(PRIVATE_CA))
         keyChain.certificate = certificate
 
         assertEquals(certificate.privateKey, keyManager.getPrivateKey(null))
@@ -59,9 +72,69 @@ class TLSHelperTest {
     }
 
     @Test
+    fun `Given a phone when setting up the client then the server trust anchor is not loaded`() = runTest {
+        val keyStore = FakeKeyStoreRepository()
+        val tlsHelper = tlsHelperOf(keyStore = keyStore, isWear = false)
+
+        tlsHelper.setupOkHttpClientSSLSocketFactory(OkHttpClient.Builder())
+
+        assertEquals(0, keyStore.serverTrustAnchorProviderRequests)
+    }
+
+    @Test
+    fun `Given a watch when setting up the client then the server trust anchor is loaded`() = runTest {
+        val keyStore = FakeKeyStoreRepository()
+        val tlsHelper = tlsHelperOf(keyStore = keyStore, isWear = true)
+
+        tlsHelper.setupOkHttpClientSSLSocketFactory(OkHttpClient.Builder())
+
+        assertEquals(1, keyStore.serverTrustAnchorProviderRequests)
+    }
+
+    @Test
+    fun `Given a watch with the server CA as trust anchor when connecting to the server then it succeeds`() = runTest {
+        val keyStore = FakeKeyStoreRepository().apply { serverTrustAnchor = PRIVATE_CA }
+        val client = clientOf(keyStore, isWear = true)
+
+        assertEquals(HTTP_OK, client.connectToNewServer())
+    }
+
+    @Test
+    fun `Given a watch without a trust anchor when connecting to the server then the handshake fails`() = runTest {
+        val client = clientOf(FakeKeyStoreRepository(), isWear = true)
+
+        assertThrows(SSLHandshakeException::class.java) { client.connectToNewServer() }
+    }
+
+    @Test
+    fun `Given a watch when the trust anchor changes after the client was built then new connections follow it`() = runTest {
+        val keyStore = FakeKeyStoreRepository().apply { serverTrustAnchor = PRIVATE_CA }
+        val client = clientOf(keyStore, isWear = true)
+
+        assertEquals(HTTP_OK, client.connectToNewServer())
+
+        keyStore.serverTrustAnchor = null
+        assertThrows(SSLHandshakeException::class.java) { client.connectToNewServer() }
+
+        keyStore.serverTrustAnchor = SYSTEM_CA
+        assertThrows(SSLHandshakeException::class.java) { client.connectToNewServer() }
+
+        keyStore.serverTrustAnchor = PRIVATE_CA
+        assertEquals(HTTP_OK, client.connectToNewServer())
+    }
+
+    @Test
+    fun `Given a phone with the server CA as trust anchor when connecting to the server then the handshake fails`() = runTest {
+        val keyStore = FakeKeyStoreRepository().apply { serverTrustAnchor = PRIVATE_CA }
+        val client = clientOf(keyStore, isWear = false)
+
+        assertThrows(SSLHandshakeException::class.java) { client.connectToNewServer() }
+    }
+
+    @Test
     fun `Given user and system CAs when filtering then only the user CA is kept`() {
         val store = keyStoreOf(
-            "user:1a2b.0" to USER_CA,
+            "user:1a2b.0" to PRIVATE_CA,
             "system:3c4d.0" to SYSTEM_CA,
         )
 
@@ -69,15 +142,15 @@ class TLSHelperTest {
 
         assertNotNull(userCaStore)
         assertEquals(1, userCaStore.size())
-        assertNotNull(userCaStore.getCertificateAlias(USER_CA))
+        assertNotNull(userCaStore.getCertificateAlias(PRIVATE_CA))
         assertNull(userCaStore.getCertificateAlias(SYSTEM_CA))
     }
 
     @Test
     fun `Given several user CAs when filtering then all of them are kept`() {
         val store = keyStoreOf(
-            "user:1a2b.0" to USER_CA,
-            "user:5e6f.0" to USER_CA,
+            "user:1a2b.0" to PRIVATE_CA,
+            "user:5e6f.0" to PRIVATE_CA,
             "system:3c4d.0" to SYSTEM_CA,
         )
 
@@ -102,50 +175,38 @@ class TLSHelperTest {
     private fun tlsHelperOf(
         keyChain: KeyChainRepository = FakeKeyChainRepository(),
         keyStore: KeyStoreRepository = FakeKeyStoreRepository(),
-    ): TLSHelper = TLSHelper(ClientCertificateManager(keyChain, keyStore))
+        isWear: Boolean = false,
+    ): TLSHelper {
+        val context = mockk<Context> {
+            every { packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH) } returns isWear
+        }
+        return TLSHelper(ClientCertificateManager(keyChain, keyStore), keyStore, context)
+    }
+
+    /**
+     * Builds a client the way the app does, through [TLSHelper.setupOkHttpClientSSLSocketFactory]. It only
+     * resolves to the loopback address [LocalTlsServer] listens on, so a failure is the one of the handshake.
+     */
+    private suspend fun clientOf(keyStore: KeyStoreRepository, isWear: Boolean): OkHttpClient {
+        val builder = OkHttpClient.Builder().dns { listOf(InetAddress.getLoopbackAddress()) }
+        tlsHelperOf(keyStore = keyStore, isWear = isWear).setupOkHttpClientSSLSocketFactory(builder)
+        return builder.build()
+    }
+
+    /**
+     * Returns the status code of a `GET` on a new server presenting [PRIVATE_CA_LOCALHOST], only trusted
+     * through [PRIVATE_CA].
+     *
+     * A new server is used for every call because a TLS session resumed with a known server skips the
+     * certificate check, which would hide a change of the trust anchor.
+     */
+    private fun OkHttpClient.connectToNewServer(): Int = LocalTlsServer(PRIVATE_CA_LOCALHOST).use { server ->
+        newCall(Request.Builder().url(server.url).build()).execute().use { it.code }
+    }
 
     private fun keyStoreOf(vararg entries: Pair<String, X509Certificate>): KeyStore {
         return loadKeyStore().apply {
             entries.forEach { (alias, certificate) -> setCertificateEntry(alias, certificate) }
-        }
-    }
-
-    companion object {
-        private val USER_CA = parseCertificate(
-            """
-            -----BEGIN CERTIFICATE-----
-            MIIBgjCCASmgAwIBAgIUK3+GgehOO2LIwFaGYCqBPSfr9gAwCgYIKoZIzj0EAwIw
-            FzEVMBMGA1UEAwwMVGVzdCBVc2VyIENBMB4XDTI2MDYxNTA5MTYxMloXDTM2MDYx
-            MjA5MTYxMlowFzEVMBMGA1UEAwwMVGVzdCBVc2VyIENBMFkwEwYHKoZIzj0CAQYI
-            KoZIzj0DAQcDQgAEuWKQFJagdiv0NG8ROZUjviXdxMAYZVIPiBRtPKZ4xEdZ3TSy
-            7gFe5R6ZRGD65P/554JCVv99Z5UiUdrn3A0Dt6NTMFEwHQYDVR0OBBYEFNTSQ/2z
-            oR4mJW8BfJjWudET1UR+MB8GA1UdIwQYMBaAFNTSQ/2zoR4mJW8BfJjWudET1UR+
-            MA8GA1UdEwEB/wQFMAMBAf8wCgYIKoZIzj0EAwIDRwAwRAIgWRDzptriiK+L11Em
-            KRPW95Y/AAevho3810p++8sAiK8CIBL/aktDSszIPhvngN/YObx9Rsa1X0GhbCur
-            WttX27wB
-            -----END CERTIFICATE-----
-            """.trimIndent(),
-        )
-
-        private val SYSTEM_CA = parseCertificate(
-            """
-            -----BEGIN CERTIFICATE-----
-            MIIBhjCCAS2gAwIBAgIULM9Sv5gifek7RA04cDsow+5DUC8wCgYIKoZIzj0EAwIw
-            GTEXMBUGA1UEAwwOVGVzdCBTeXN0ZW0gQ0EwHhcNMjYwNjE1MDkxNjEyWhcNMzYw
-            NjEyMDkxNjEyWjAZMRcwFQYDVQQDDA5UZXN0IFN5c3RlbSBDQTBZMBMGByqGSM49
-            AgEGCCqGSM49AwEHA0IABIoDRdoHkgePxBTI/FrxNtwmlmw2ASjf0nDsXrGzvaCe
-            Hmopa+Kk+XidaLBFM7uxs01pYfMwfsVM8EFuK4OOsxajUzBRMB0GA1UdDgQWBBR5
-            9mR1Ojk9OqBRX1pZSuaNsSnkuTAfBgNVHSMEGDAWgBR59mR1Ojk9OqBRX1pZSuaN
-            sSnkuTAPBgNVHRMBAf8EBTADAQH/MAoGCCqGSM49BAMCA0cAMEQCIFWTMdMCTVkn
-            0sVpgRzAofWK821vZgz9M2c9KOWLYrQNAiAAlkVuqpbn6Z+KXNvkMteeAyr0sTwn
-            8x92kn3oJNr6WA==
-            -----END CERTIFICATE-----
-            """.trimIndent(),
-        )
-
-        private fun parseCertificate(pem: String): X509Certificate {
-            return CertificateFactory.getInstance("X.509")
-                .generateCertificate(pem.byteInputStream()) as X509Certificate
         }
     }
 }
@@ -189,5 +250,21 @@ private class FakeKeyStoreRepository(private val toLoad: ClientCertificate? = nu
         return this
     }
 
-    override suspend fun store(privateKey: PrivateKey, chain: Array<X509Certificate>): ClientCertificate = ClientCertificate(privateKey, chain).also { certificate = it }
+    override suspend fun storeClientCertificate(privateKey: PrivateKey, chain: Array<X509Certificate>): ClientCertificate = ClientCertificate(privateKey, chain).also { certificate = it }
+
+    var serverTrustAnchorProviderRequests = 0
+        private set
+
+    /** Can be changed at any time, like the anchor of the real repository. */
+    var serverTrustAnchor: X509Certificate? = null
+
+    override suspend fun getServerTrustAnchorProvider(): ServerTrustAnchorProvider {
+        serverTrustAnchorProviderRequests++
+        return object : ServerTrustAnchorProvider {
+            override val certificate: X509Certificate?
+                get() = serverTrustAnchor
+        }
+    }
+
+    override suspend fun storeServerTrustAnchor(certificate: X509Certificate?) = Unit
 }
