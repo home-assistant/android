@@ -307,8 +307,8 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                     swipeDismissableNavController.navigateUp()
                 }
             }
-            todoListTileScreens(mainViewModel, uiState, swipeDismissableNavController)
-            todoListTileValueScreens(mainViewModel, uiState, swipeDismissableNavController, context)
+            todoListTileScreens(mainViewModel, { uiState }, swipeDismissableNavController)
+            todoListTileValueScreens(mainViewModel, { uiState }, swipeDismissableNavController, context)
             composable("$ROUTE_THERMOSTAT_TILE/$SCREEN_SELECT_THERMOSTAT_TILE") {
                 SelectThermostatTileView(
                     tiles = mainViewModel.thermostatTiles.value,
@@ -552,10 +552,13 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
     }
 }
 
-/** The screens to select a to-do list tile and open its settings. */
+/**
+ * The screens to select a to-do list tile and open its settings. [uiState] is read inside the destinations, the
+ * navigation graph is built once so a value passed here would stay the one of that moment.
+ */
 private fun NavGraphBuilder.todoListTileScreens(
     mainViewModel: MainViewModel,
-    uiState: MainViewModel.MainViewUiState,
+    uiState: () -> MainViewModel.MainViewUiState,
     navController: NavHostController,
 ) {
     composable("$ROUTE_TODO_LIST_TILE/$SCREEN_SELECT_TODO_LIST_TILE") {
@@ -581,7 +584,7 @@ private fun NavGraphBuilder.todoListTileScreens(
         val todoTile = mainViewModel.todoListTiles.value.firstOrNull { it.id == tileId }
         SetTodoListTileView(
             tile = todoTile,
-            entityItem = uiState.todoItems.firstOrNull { it.entityId == todoTile?.entityId },
+            entityItem = uiState().todoItems.firstOrNull { it.entityId == todoTile?.entityId },
             onSelectEntity = {
                 navController.navigate(
                     "$ROUTE_TODO_LIST_TILE/$tileId/$SCREEN_SET_TODO_LIST_TILE_ENTITY",
@@ -596,10 +599,10 @@ private fun NavGraphBuilder.todoListTileScreens(
     }
 }
 
-/** The screens to choose the list and the refresh interval of a to-do list tile. */
+/** The screens to choose the list and the refresh interval of a to-do list tile, see [todoListTileScreens]. */
 private fun NavGraphBuilder.todoListTileValueScreens(
     mainViewModel: MainViewModel,
-    uiState: MainViewModel.MainViewUiState,
+    uiState: () -> MainViewModel.MainViewUiState,
     navController: NavHostController,
     context: Context,
 ) {
@@ -610,7 +613,7 @@ private fun NavGraphBuilder.todoListTileValueScreens(
         val tileId = backStackEntry.arguments?.getInt(ARG_SCREEN_TODO_LIST_TILE_ID)
         ChooseEntityView(
             entitiesByDomainOrder = listOf(TODO_DOMAIN),
-            entitiesByDomain = mapOf(TODO_DOMAIN to uiState.todoItems),
+            entitiesByDomain = mapOf(TODO_DOMAIN to uiState().todoItems),
             favoriteEntityIds = emptyList(),
             onNoneClicked = {},
             onEntitySelected = { entity ->

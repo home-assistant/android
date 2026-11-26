@@ -276,6 +276,42 @@ class TodoListViewModelTest {
     }
 
     @Test
+    fun `Given a change the server accepted when the refresh fails then the change stays on screen with a retry`() = runTest {
+        coEvery { webSocket.getTodos("todo.shopping") } returnsMany listOf(todos("todo.shopping", milk), null)
+        coEvery { webSocket.updateTodo("todo.shopping", "1", null, TodoItem.COMPLETED_STATUS) } returns true
+        val viewModel = createViewModel()
+        viewModel.load("todo.shopping")
+        advanceUntilIdle()
+
+        viewModel.setCompleted("todo.shopping", milk, completed = true)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(listOf(milk.copy(status = TodoItem.COMPLETED_STATUS)), state.items)
+        assertTrue(state.hasLoadError)
+        assertFalse(state.hasActionError)
+    }
+
+    @Test
+    fun `Given two refreshes of a list when the older answers last then its items are ignored`() = runTest {
+        val slowAnswer = CompletableDeferred<GetTodosResponse?>()
+        var calls = 0
+        coEvery { webSocket.getTodos("todo.shopping") } coAnswers {
+            if (calls++ == 0) slowAnswer.await() else todos("todo.shopping", bread)
+        }
+        val viewModel = createViewModel()
+
+        viewModel.load("todo.shopping")
+        advanceUntilIdle()
+        viewModel.load("todo.shopping")
+        advanceUntilIdle()
+        slowAnswer.complete(todos("todo.shopping", milk))
+        advanceUntilIdle()
+
+        assertEquals(listOf(bread), viewModel.uiState.value.items)
+    }
+
+    @Test
     fun `Given to-do lists on the server when observing then they are listed by name`() = runTest {
         givenListsStates(
             EntityDisplayState.Loaded(listOf(fakeList("todo.b", "Zoo"), fakeList("todo.a", "Home"))),

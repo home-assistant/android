@@ -6,11 +6,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -21,6 +23,7 @@ import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
 import dagger.hilt.android.AndroidEntryPoint
+import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.home.HomeActivity
 import io.homeassistant.companion.android.home.TodoListViewModel
@@ -112,19 +115,33 @@ class TodoListActivity : ComponentActivity() {
                         arguments = listOf(navArgument(ARG_ENTITY_ID) { type = NavType.StringType }),
                     ) { backStackEntry ->
                         val entityId = backStackEntry.arguments?.getString(ARG_ENTITY_ID) ?: return@composable
-                        LaunchedEffect(entityId) { viewModel.load(entityId) }
-                        TodoListView(
-                            listName = lists.firstOrNull { it.entityId == entityId }?.name ?: entityId,
-                            state = state,
-                            onSetCompleted = { item, completed -> viewModel.setCompleted(entityId, item, completed) },
-                            onAddItem = { viewModel.addItem(entityId, it) },
-                            onRemoveItem = { viewModel.removeItem(entityId, it) },
-                            onClearCompleted = { viewModel.clearCompleted(entityId) },
-                            onRetry = { viewModel.load(entityId) },
-                        )
+                        TodoListDestination(entityId, lists, state, viewModel)
                     }
                 }
             }
         }
     }
+}
+
+/** The items of one list, reloaded each time the screen resumes: they can change on the phone or on a tile. */
+@Composable
+private fun TodoListDestination(
+    entityId: String,
+    lists: List<EntityDisplay>,
+    state: TodoListViewModel.UiState,
+    viewModel: TodoListViewModel,
+) {
+    LifecycleResumeEffect(entityId) {
+        viewModel.load(entityId)
+        onPauseOrDispose {}
+    }
+    TodoListView(
+        listName = lists.firstOrNull { it.entityId == entityId }?.name ?: entityId,
+        state = state,
+        onSetCompleted = { item, completed -> viewModel.setCompleted(entityId, item, completed) },
+        onAddItem = { viewModel.addItem(entityId, it) },
+        onRemoveItem = { viewModel.removeItem(entityId, it) },
+        onClearCompleted = { viewModel.clearCompleted(entityId) },
+        onRetry = { viewModel.load(entityId) },
+    )
 }

@@ -37,10 +37,16 @@ import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.guava.future
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import timber.log.Timber
+
+private const val MAX_VISIBLE_ITEMS = 4
+private const val ITEM_PADDING_DP = 3f
+private const val CLICK_COMPLETE_PREFIX = "complete:"
+private const val CLICK_OPEN_LIST = "open_list"
 
 /** A tile showing the open items of a Home Assistant to-do list, tap an item to complete it. */
 @AndroidEntryPoint
@@ -49,14 +55,17 @@ class TodoListTile : TileService() {
     companion object {
         private const val TAG = "TodoListTile"
         const val DEFAULT_REFRESH_INTERVAL = 600L
-        private const val MAX_VISIBLE_ITEMS = 4
-        private const val ITEM_PADDING_DP = 3f
-        private const val CLICK_COMPLETE_PREFIX = "complete:"
-        private const val CLICK_OPEN_LIST = "open_list"
     }
 
     private val serviceJob = Job()
     private val serviceScope = CoroutineScope(serviceJob)
+
+    // Not cancelled with the service, a removal asked right before it is destroyed still has to be written
+    private val configScope = CoroutineScope(SupervisorJob())
+
+    // The last write of the tile configuration, the next write and the tile requests wait for it
+    @Volatile
+    private var configWrite: Job = Job().apply { complete() }
 
     @Inject
     lateinit var serverManager: ServerManager
@@ -76,6 +85,7 @@ class TodoListTile : TileService() {
     override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
             val tileId = requestParams.tileId
+            configWrite.join()
             val tileConfig = todoListTileDao.get(tileId)
             val lastId = requestParams.currentState.lastClickableId
 
@@ -164,14 +174,42 @@ class TodoListTile : TileService() {
                 .build()
         }
 
-    override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) = runBlocking {
-        if (todoListTileDao.get(requestParams.tileId) == null) {
-            todoListTileDao.add(TodoListTile(id = requestParams.tileId))
+    override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) {
+        writeConfig {
+            if (todoListTileDao.get(requestParams.tileId) == null) {
+                todoListTileDao.add(TodoListTile(id = requestParams.tileId))
+            }
         }
     }
 
-    override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) = runBlocking {
-        todoListTileDao.delete(requestParams.tileId)
+    override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) {
+        writeConfig { todoListTileDao.delete(requestParams.tileId) }
+    }
+
+    // The signature, Void included, is the one of TileService
+    @Suppress("ForbiddenVoid")
+    override fun onRecentInteractionEventsAsync(
+        events: List<EventBuilders.TileInteractionEvent>,
+    ): ListenableFuture<Void?> = serviceScope.future {
+        requestUpdateOnEnter(events) { tileId ->
+            configWrite.join()
+            todoListTileDao.get(tileId)?.refreshInterval == REFRESH_INTERVAL_ON_VIEWED.toLong()
+        }
+        null
+    }
+
+    private fun writeConfig(write: suspend () -> Unit) {
+        val previous = configWrite
+        configWrite = configScope.launch {
+            previous.join()
+            try {
+                write()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.e(e, "Unable to write the configuration of the to-do list tile")
+            }
+        }
     }
 
     override fun onDestroy() {
@@ -193,7 +231,7 @@ class TodoListTile : TileService() {
                             .setColor(ColorBuilders.argb(getColor(commonR.color.colorPrimary)))
                             .build(),
                     )
-                    .setModifiers(clickModifiers(CLICK_OPEN_LIST, openListAction(entityId)))
+                    .setModifiers(clickModifiers(CLICK_OPEN_LIST, openListAction(packageName, entityId)))
                     .build(),
             )
             .addContent(LayoutElementBuilders.Spacer.Builder().setHeight(DimensionBuilders.dp(6f)).build())
@@ -210,7 +248,7 @@ class TodoListTile : TileService() {
             column.addContent(
                 LayoutElementBuilders.Text.Builder()
                     .setText(getString(commonR.string.todo_list_tile_more, items.size - MAX_VISIBLE_ITEMS))
-                    .setModifiers(clickModifiers(CLICK_OPEN_LIST, openListAction(entityId)))
+                    .setModifiers(clickModifiers(CLICK_OPEN_LIST, openListAction(packageName, entityId)))
                     .build(),
             )
         }
@@ -223,47 +261,47 @@ class TodoListTile : TileService() {
                 .build(),
         )
     }
+}
 
-    private fun itemRow(item: TodoItem): LayoutElementBuilders.Text {
-        val key = item.uid ?: item.summary
-        val modifiers = if (key != null) {
-            clickModifiers(
-                "$CLICK_COMPLETE_PREFIX$key",
-                ActionBuilders.LoadAction.Builder().build(),
-                paddingDp = ITEM_PADDING_DP,
-            )
-        } else {
-            ModifiersBuilders.Modifiers.Builder().build()
-        }
-        return LayoutElementBuilders.Text.Builder()
-            .setText("○ ${item.summary.orEmpty()}")
-            .setMaxLines(1)
-            .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE_END)
-            .setModifiers(modifiers)
-            .build()
+private fun itemRow(item: TodoItem): LayoutElementBuilders.Text {
+    val key = item.uid ?: item.summary
+    val modifiers = if (key != null) {
+        clickModifiers(
+            "$CLICK_COMPLETE_PREFIX$key",
+            ActionBuilders.LoadAction.Builder().build(),
+            paddingDp = ITEM_PADDING_DP,
+        )
+    } else {
+        ModifiersBuilders.Modifiers.Builder().build()
     }
+    return LayoutElementBuilders.Text.Builder()
+        .setText("○ ${item.summary.orEmpty()}")
+        .setMaxLines(1)
+        .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE_END)
+        .setModifiers(modifiers)
+        .build()
+}
 
-    private fun openListAction(entityId: String) = ActionBuilders.LaunchAction.Builder()
-        .setAndroidActivity(
-            ActionBuilders.AndroidActivity.Builder()
-                .setPackageName(applicationContext.packageName)
-                .setClassName(TodoListActivity::class.java.name)
-                .addKeyToExtraMapping(
-                    TodoListActivity.EXTRA_ENTITY_ID,
-                    ActionBuilders.AndroidStringExtra.Builder().setValue(entityId).build(),
-                )
+private fun openListAction(packageName: String, entityId: String) = ActionBuilders.LaunchAction.Builder()
+    .setAndroidActivity(
+        ActionBuilders.AndroidActivity.Builder()
+            .setPackageName(packageName)
+            .setClassName(TodoListActivity::class.java.name)
+            .addKeyToExtraMapping(
+                TodoListActivity.EXTRA_ENTITY_ID,
+                ActionBuilders.AndroidStringExtra.Builder().setValue(entityId).build(),
+            )
+            .build(),
+    )
+    .build()
+
+private fun clickModifiers(id: String, action: ActionBuilders.Action, paddingDp: Float = 0f) =
+    ModifiersBuilders.Modifiers.Builder()
+        .setClickable(Clickable.Builder().setId(id).setOnClick(action).build())
+        .setPadding(
+            ModifiersBuilders.Padding.Builder()
+                .setTop(DimensionBuilders.dp(paddingDp))
+                .setBottom(DimensionBuilders.dp(paddingDp))
                 .build(),
         )
         .build()
-
-    private fun clickModifiers(id: String, action: ActionBuilders.Action, paddingDp: Float = 0f) =
-        ModifiersBuilders.Modifiers.Builder()
-            .setClickable(Clickable.Builder().setId(id).setOnClick(action).build())
-            .setPadding(
-                ModifiersBuilders.Padding.Builder()
-                    .setTop(DimensionBuilders.dp(paddingDp))
-                    .setBottom(DimensionBuilders.dp(paddingDp))
-                    .build(),
-            )
-            .build()
-}

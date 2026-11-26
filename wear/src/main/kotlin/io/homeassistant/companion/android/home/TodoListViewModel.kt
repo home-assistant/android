@@ -12,7 +12,6 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.GetTodosResponse.TodoItem
 import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,11 +26,17 @@ private const val REMOVE_COMPLETED_ACTION = "remove_completed_items"
 private const val KEY_ENTITY_ID = "entity_id"
 private const val KEY_ITEM = "item"
 
+/** What a modification does to the items of the open list, applied on screen right away. */
+private typealias ItemsChange = (List<TodoItem>) -> List<TodoItem>
+
 /** Calls a service of the to-do domain, throwing when Home Assistant does not accept it. */
 private suspend fun ServerManager.callTodoAction(action: String, data: Map<String, Any?>): Boolean {
     integrationRepository().callAction(TODO_DOMAIN, action, data)
     return true
 }
+
+/** What Home Assistant identifies an item by: its uid, or its summary when it has none. */
+private fun TodoItem.key(): String? = uid ?: summary
 
 /** Loads and modifies the items of a Home Assistant to-do list for the list screen. */
 @HiltViewModel
@@ -75,13 +80,14 @@ class TodoListViewModel @Inject constructor(
     // Incremented each time another list is opened, to ignore the late results of the previous one
     private var generation = 0
 
+    // Incremented by each refresh of the items, only the answer of the latest one is used
+    private var refreshSequence = 0
+
     // Modifications sent and not yet answered for the open list, their optimistic result is on screen
     private var pendingModifications = 0
 
-    // The items of the open list as the server last returned them
+    // The items of the open list as the server last returned them, with the modifications it acknowledged since
     private var confirmedItems: List<TodoItem> = emptyList()
-
-    private var loadJob: Job? = null
 
     /** Keeps [lists] current until cancelled, observing again when [retryLists] is called. */
     suspend fun observeLists() {
@@ -121,19 +127,15 @@ class TodoListViewModel @Inject constructor(
         _uiState.update {
             if (switching) UiState(entityId = entityId, isLoading = true) else it.copy(hasLoadError = false)
         }
-        loadJob?.cancel()
         val requestGeneration = generation
-        loadJob = viewModelScope.launch { fetch(entityId, requestGeneration) }
+        viewModelScope.launch { fetch(entityId, requestGeneration) }
     }
 
     fun setCompleted(entityId: String, item: TodoItem, completed: Boolean) {
         val key = item.key() ?: return
         val status = if (completed) TodoItem.COMPLETED_STATUS else TodoItem.NEEDS_ACTION_STATUS
-        // Optimistic update, the fetch following the call restores the server state on failure
-        updateOpenList(entityId) { state ->
-            state.copy(items = state.items.map { if (it.key() == key) it.copy(status = status) else it })
-        }
-        modify(entityId) { serverManager.webSocketRepository().updateTodo(entityId, key, null, status) }
+        val change: ItemsChange = { items -> items.map { if (it.key() == key) it.copy(status = status) else it } }
+        modify(entityId, change) { serverManager.webSocketRepository().updateTodo(entityId, key, null, status) }
     }
 
     fun addItem(entityId: String, summary: String) {
@@ -146,26 +148,29 @@ class TodoListViewModel @Inject constructor(
 
     fun removeItem(entityId: String, item: TodoItem) {
         val key = item.key() ?: return
-        updateOpenList(entityId) { state -> state.copy(items = state.items.filterNot { it.key() == key }) }
-        modify(entityId) {
+        val change: ItemsChange = { items -> items.filterNot { it.key() == key } }
+        modify(entityId, change) {
             serverManager.callTodoAction(REMOVE_ITEM_ACTION, mapOf(KEY_ENTITY_ID to entityId, KEY_ITEM to key))
         }
     }
 
     fun clearCompleted(entityId: String) {
-        updateOpenList(entityId) { state ->
-            state.copy(items = state.items.filterNot { it.status == TodoItem.COMPLETED_STATUS })
+        val change: ItemsChange = { items -> items.filterNot { it.status == TodoItem.COMPLETED_STATUS } }
+        modify(entityId, change) {
+            serverManager.callTodoAction(REMOVE_COMPLETED_ACTION, mapOf(KEY_ENTITY_ID to entityId))
         }
-        modify(entityId) { serverManager.callTodoAction(REMOVE_COMPLETED_ACTION, mapOf(KEY_ENTITY_ID to entityId)) }
     }
 
-    private fun updateOpenList(entityId: String, transform: (UiState) -> UiState) {
-        _uiState.update { if (it.entityId == entityId) transform(it) else it }
-    }
-
-    private fun modify(entityId: String, call: suspend () -> Boolean) {
+    /**
+     * Sends [call], showing [change] on screen right away. Once the server acknowledged it the change is part of the
+     * confirmed items, so a refresh failing afterwards does not undo it, and a refusal is not kept there.
+     */
+    private fun modify(entityId: String, change: ItemsChange? = null, call: suspend () -> Boolean) {
         val isOpenList = _uiState.value.entityId == entityId
-        if (isOpenList) pendingModifications++
+        if (isOpenList) {
+            pendingModifications++
+            if (change != null) _uiState.update { it.copy(items = change(it.items)) }
+        }
         val requestGeneration = generation
         viewModelScope.launch {
             val success = try {
@@ -179,12 +184,14 @@ class TodoListViewModel @Inject constructor(
             // Another list is open now, its state is not ours to change
             if (!isOpenList || requestGeneration != generation) return@launch
             pendingModifications = (pendingModifications - 1).coerceAtLeast(0)
+            if (success && change != null) confirmedItems = change(confirmedItems)
             _uiState.update { it.copy(hasActionError = !success) }
             fetch(entityId, requestGeneration)
         }
     }
 
     private suspend fun fetch(entityId: String, requestGeneration: Int) {
+        val sequence = ++refreshSequence
         val items = try {
             serverManager.webSocketRepository().getTodos(entityId)?.response?.get(entityId)?.items
         } catch (e: CancellationException) {
@@ -193,7 +200,8 @@ class TodoListViewModel @Inject constructor(
             Timber.e(e, "Unable to load to-do list $entityId")
             null
         }
-        if (requestGeneration != generation) return
+        // Another list is open or a newer refresh was started, this answer may be older than what is shown
+        if (requestGeneration != generation || sequence != refreshSequence) return
         if (items != null) confirmedItems = items
         // The answer to a modification still waiting would drop its optimistic result, the last one wins
         if (pendingModifications > 0) {
@@ -209,7 +217,4 @@ class TodoListViewModel @Inject constructor(
             }
         }
     }
-
-    /** What Home Assistant identifies an item by: its uid, or its summary when it has none. */
-    private fun TodoItem.key(): String? = uid ?: summary
 }
