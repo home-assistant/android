@@ -1,9 +1,11 @@
 package io.homeassistant.companion.android.changelog.navigation
 
+import android.content.Context
 import androidx.compose.material3.Text
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -11,6 +13,7 @@ import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.testing.TestNavHostController
+import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.HiltTestApplication
@@ -21,6 +24,7 @@ import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
 import io.homeassistant.companion.android.frontend.navigation.FrontendRoute
 import io.homeassistant.companion.android.frontend.navigation.FrontendTarget
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit4Rule
+import io.homeassistant.companion.android.testing.unit.seedFakeAndroidId
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.compose.performTwoQuickClicks
 import javax.inject.Inject
@@ -58,6 +62,7 @@ internal class ChangelogNavigationTest {
 
     @Before
     fun setup() {
+        getApplicationContext<Context>().seedFakeAndroidId()
         hiltRule.inject()
     }
 
@@ -95,6 +100,20 @@ internal class ChangelogNavigationTest {
         }
     }
 
+    /**
+     * Waits for the navigation to the changelog and for its content to be displayed. The ViewModel
+     * coroutine runs on the controlled Main dispatcher but hops to real dispatchers while resolving
+     * the content, so keep advancing until the "Got it" button is there.
+     */
+    private fun TestScope.awaitChangelogContent() {
+        composeTestRule.waitUntil { isOnChangelog() }
+        val gotIt = composeTestRule.stringResource(commonR.string.changelog_got_it)
+        composeTestRule.waitUntil {
+            advanceUntilIdle()
+            composeTestRule.onAllNodesWithText(gotIt).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
     private fun isOnChangelog(): Boolean = navController.currentBackStackEntry?.destination?.hasRoute<ChangelogRoute>() == true
 
     @Test
@@ -102,7 +121,7 @@ internal class ChangelogNavigationTest {
         seedLastSeenVersionCode(BuildConfig.VERSION_CODE - 1)
 
         setContent()
-        composeTestRule.waitUntil { isOnChangelog() }
+        awaitChangelogContent()
 
         composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.changelog_screen_title))
             .assertIsDisplayed()
@@ -137,7 +156,7 @@ internal class ChangelogNavigationTest {
         seedLastSeenVersionCode(BuildConfig.VERSION_CODE - 1)
 
         setContent()
-        composeTestRule.waitUntil { isOnChangelog() }
+        awaitChangelogContent()
 
         composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.changelog_got_it))
             .performTwoQuickClicks()
@@ -151,7 +170,7 @@ internal class ChangelogNavigationTest {
         seedLastSeenVersionCode(BuildConfig.VERSION_CODE - 1)
 
         setContent()
-        composeTestRule.waitUntil { isOnChangelog() }
+        awaitChangelogContent()
 
         composeTestRule.onNodeWithText(composeTestRule.stringResource(commonR.string.changelog_got_it))
             .performClick()

@@ -17,6 +17,17 @@ enum class ChangelogPlatform(@field:StringRes val labelRes: Int) {
 }
 
 /**
+ * The build flavor a changelog entry can be restricted to.
+ *
+ * @property flavorName The name of the Gradle flavor, `null` when the entry is not restricted.
+ */
+enum class ChangelogFlavor(val flavorName: String?) {
+    FULL("full"),
+    MINIMAL("minimal"),
+    NONE(null),
+}
+
+/**
  * The kinds of changes a changelog groups its entries under, each fully describing how its
  * section header is displayed.
  *
@@ -42,6 +53,12 @@ sealed interface ChangelogAction {
     /** Opens the settings on the screen targeted by [deeplink]. */
     data class OpenSettings(val deeplink: SettingsActivity.Deeplink) : ChangelogAction
 
+    /**
+     * Opens the settings of the sensor [sensorId]. The action is only offered on devices whose
+     * sensor manager has the sensor; everywhere else the entry is shown without it.
+     */
+    data class OpenSensor(val sensorId: String) : ChangelogAction
+
     /** Opens the configuration screen of [widgetType] without a preselected entity. */
     data class OpenWidgetConfig(val widgetType: WidgetType) : ChangelogAction
 
@@ -60,12 +77,16 @@ sealed interface ChangelogAction {
  * the entry's [platforms]; on any other platform the entry should be shown without its action. Use it for
  * actions whose target does not exist on every platform, such as a deeplink to a platform-specific
  * sensor or screen.
+ * @property requiresFlavor The only flavor the entry is shown on, [ChangelogFlavor.NONE] to show it on
+ * every flavor. Use it for changes that only exist in one flavor, such as those relying on Google Play
+ * Services.
  */
 data class ChangelogEntry(
     @param:StringRes val contentRes: Int,
     val platforms: Set<ChangelogPlatform>,
     val action: ChangelogAction? = null,
     val actionRequiresPlatform: Boolean = false,
+    val requiresFlavor: ChangelogFlavor = ChangelogFlavor.NONE,
 )
 
 /**
