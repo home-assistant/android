@@ -8,6 +8,8 @@ import android.os.Build
 import android.os.Looper
 import android.util.Rational
 import android.view.WindowManager
+import androidx.biometric.BiometricPrompt
+import androidx.biometric.biometricClientCallback
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
@@ -111,7 +113,7 @@ class LaunchActivityTest {
 
         ActivityScenario.launch(LaunchActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
-                pipViewModelOf(activity).onPipReadinessChanged(
+                launchViewModelOf(activity).onPipReadinessChanged(
                     PipReadiness(aspectRatio = Rational(16, 9)),
                 )
 
@@ -141,7 +143,7 @@ class LaunchActivityTest {
 
         ActivityScenario.launch(LaunchActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
-                pipViewModelOf(activity).onPipReadinessChanged(
+                launchViewModelOf(activity).onPipReadinessChanged(
                     PipReadiness(aspectRatio = Rational(16, 9)),
                 )
 
@@ -227,13 +229,76 @@ class LaunchActivityTest {
         }
     }
 
+    @Test
+    fun `Given a rejected biometric attempt when authentication later succeeds then the app stays locked until success unlocks it`() {
+        enableAppLock()
+
+        ActivityScenario.launch(LaunchActivity::class.java).use { scenario ->
+            shadowOf(Looper.getMainLooper()).idle()
+            scenario.onActivity { activity ->
+                val viewModel = launchViewModelOf(activity)
+                val callback = requireNotNull(activity.biometricClientCallback())
+
+                assertTrue(viewModel.isAppLocked.value)
+
+                callback.onAuthenticationFailed()
+                shadowOf(Looper.getMainLooper()).idle()
+
+                assertFalse(activity.isFinishing)
+                assertTrue(viewModel.isAppLocked.value)
+
+                callback.onAuthenticationSucceeded(mockk(relaxed = true))
+                shadowOf(Looper.getMainLooper()).idle()
+
+                assertFalse(viewModel.isAppLocked.value)
+            }
+        }
+    }
+
+    @Test
+    fun `Given a biometric error when authenticating then the activity finishes`() {
+        assertTerminalBiometricErrorFinishesActivity(BiometricPrompt.ERROR_LOCKOUT)
+    }
+
+    @Test
+    fun `Given the user cancels biometric authentication then the activity finishes`() {
+        assertTerminalBiometricErrorFinishesActivity(BiometricPrompt.ERROR_USER_CANCELED)
+    }
+
     private fun setPipFeatureAvailable(available: Boolean) {
         val context = ApplicationProvider.getApplicationContext<Context>()
         shadowOf(context.packageManager)
             .setSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE, available)
     }
 
-    private fun pipViewModelOf(activity: LaunchActivity): LaunchViewModel = ViewModelProvider(activity)[LaunchViewModel::class.java]
+    private fun launchViewModelOf(activity: LaunchActivity): LaunchViewModel = ViewModelProvider(activity)[LaunchViewModel::class.java]
+
+    private fun enableAppLock() {
+        val server = mockk<Server>(relaxed = true) { every { id } returns 1 }
+        every { serverManager.serversFlow } returns flowOf(listOf(server))
+        coEvery { serverManager.getServer(any<Int>()) } returns server
+        coEvery { serverManager.integrationRepository(any()) } returns mockk(relaxed = true) {
+            coEvery { isAppLocked() } returns true
+        }
+        coEvery { serverManager.authenticationRepository(any()) } returns mockk {
+            every { lockEnabledRawFlow() } returns flowOf(true)
+        }
+    }
+
+    private fun assertTerminalBiometricErrorFinishesActivity(errorCode: Int) {
+        enableAppLock()
+
+        ActivityScenario.launch(LaunchActivity::class.java).use { scenario ->
+            shadowOf(Looper.getMainLooper()).idle()
+            scenario.onActivity { activity ->
+                val callback = requireNotNull(activity.biometricClientCallback())
+
+                callback.onAuthenticationError(errorCode, "error")
+
+                assertTrue(activity.isFinishing)
+            }
+        }
+    }
 
     // `Activity.onUserLeaveHint` is `protected`, so reflect into Activity to dispatch through
     // the override. ActivityScenario does not expose a "user leaving" lifecycle helper.
