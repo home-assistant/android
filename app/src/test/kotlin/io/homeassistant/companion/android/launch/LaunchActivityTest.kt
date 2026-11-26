@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Looper
 import android.util.Rational
+import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
@@ -111,7 +112,7 @@ class LaunchActivityTest {
 
         ActivityScenario.launch(LaunchActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
-                pipViewModelOf(activity).onPipReadinessChanged(
+                viewModelOf(activity).onPipReadinessChanged(
                     PipReadiness(aspectRatio = Rational(16, 9)),
                 )
 
@@ -141,7 +142,7 @@ class LaunchActivityTest {
 
         ActivityScenario.launch(LaunchActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
-                pipViewModelOf(activity).onPipReadinessChanged(
+                viewModelOf(activity).onPipReadinessChanged(
                     PipReadiness(aspectRatio = Rational(16, 9)),
                 )
 
@@ -227,13 +228,34 @@ class LaunchActivityTest {
         }
     }
 
+    @Test
+    fun `Given the content covered when a key is dispatched then it is consumed before reaching the content`() {
+        val server = mockk<Server>(relaxed = true) { every { id } returns 1 }
+        every { serverManager.serversFlow } returns flowOf(listOf(server))
+        coEvery { serverManager.getServer(any<Int>()) } returns server
+        coEvery { serverManager.authenticationRepository(any()) } returns mockk {
+            every { lockEnabledRawFlow() } returns flowOf(true)
+        }
+        coEvery { serverManager.integrationRepository(any()) } returns mockk(relaxed = true) {
+            coEvery { isAppLocked() } returns true
+        }
+
+        ActivityScenario.launch(LaunchActivity::class.java).use { scenario ->
+            shadowOf(Looper.getMainLooper()).idle()
+            scenario.onActivity { activity ->
+                assertTrue(viewModelOf(activity).appLockState.value.isCovered)
+                assertTrue(activity.dispatchKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER)))
+            }
+        }
+    }
+
     private fun setPipFeatureAvailable(available: Boolean) {
         val context = ApplicationProvider.getApplicationContext<Context>()
         shadowOf(context.packageManager)
             .setSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE, available)
     }
 
-    private fun pipViewModelOf(activity: LaunchActivity): LaunchViewModel = ViewModelProvider(activity)[LaunchViewModel::class.java]
+    private fun viewModelOf(activity: LaunchActivity): LaunchViewModel = ViewModelProvider(activity)[LaunchViewModel::class.java]
 
     // `Activity.onUserLeaveHint` is `protected`, so reflect into Activity to dispatch through
     // the override. ActivityScenario does not expose a "user leaving" lifecycle helper.

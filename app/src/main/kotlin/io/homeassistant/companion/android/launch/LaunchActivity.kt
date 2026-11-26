@@ -8,6 +8,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
+import android.view.KeyEvent
 import android.view.ViewTreeObserver
 import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.setContent
@@ -24,6 +25,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.semantics
 import androidx.core.content.IntentCompat
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
@@ -204,7 +207,7 @@ class LaunchActivity : AppCompatActivity() {
                 val navController = rememberNavController()
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                 val isFullScreen by viewModel.isFullScreen.collectAsStateWithLifecycle()
-                val isAppLocked by viewModel.isAppLocked.collectAsStateWithLifecycle()
+                val appLockState by viewModel.appLockState.collectAsStateWithLifecycle()
                 val hazeState = rememberHazeState()
                 val snackbarHostState = remember { SnackbarHostState() }
 
@@ -224,11 +227,11 @@ class LaunchActivity : AppCompatActivity() {
                     snackbarHostState = snackbarHostState,
                     onRequestFullscreen = viewModel::onFullscreenRequested,
                     onPipReadinessChanged = viewModel::onPipReadinessChanged,
-                    modifier = Modifier.hazeSource(hazeState),
+                    modifier = Modifier.hazeSource(hazeState).hideFromAccessibility(appLockState.isCovered),
                 )
 
                 // We don't apply the overlay on top of the dialogs
-                if (isAppLocked) {
+                if (appLockState.isCovered) {
                     HazeLockOverlay(hazeState)
                 }
 
@@ -237,7 +240,7 @@ class LaunchActivity : AppCompatActivity() {
                     LaunchUiState.WearUnsupported -> WearUnsupportedDialog(onBackClick = ::finish)
                     LaunchUiState.Loading, is LaunchUiState.Ready -> {
                         AppLockEffect(
-                            isAppLocked = isAppLocked,
+                            isAppLocked = appLockState is AppLockUiState.Locked,
                             onAuthSucceeded = viewModel::onAuthenticated,
                         )
                     }
@@ -285,7 +288,23 @@ class LaunchActivity : AppCompatActivity() {
         super.onStop()
         viewModel.onAppPaused()
     }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        // While covered, keys must not reach the content either, except Back, which still navigates
+        return viewModel.appLockState.value.isCovered &&
+            event.keyCode != KeyEvent.KEYCODE_BACK ||
+            super.dispatchKeyEvent(event)
+    }
 }
+
+/**
+ * Hides this content from accessibility services, which act on views without touches, while [hidden].
+ *
+ * The lock overlay drawn over the content only takes touches and otherwise leaves it in the
+ * accessibility tree, so the content itself is hidden while covered.
+ */
+private fun Modifier.hideFromAccessibility(hidden: Boolean): Modifier =
+    if (hidden) semantics { hideFromAccessibility() } else this
 
 /**
  * Triggers biometric authentication when the app is locked.
