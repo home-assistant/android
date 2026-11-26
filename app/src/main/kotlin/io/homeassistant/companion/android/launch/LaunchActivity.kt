@@ -234,7 +234,9 @@ class LaunchActivity : AppCompatActivity() {
 
                 when (uiState) {
                     LaunchUiState.NetworkUnavailable -> NetworkUnavailableDialog(onBackClick = ::finish)
+
                     LaunchUiState.WearUnsupported -> WearUnsupportedDialog(onBackClick = ::finish)
+
                     LaunchUiState.Loading, is LaunchUiState.Ready -> {
                         AppLockEffect(
                             isAppLocked = isAppLocked,
@@ -302,6 +304,7 @@ private fun AppLockEffect(isAppLocked: Boolean, onAuthSucceeded: () -> Unit) {
             when (result) {
                 AuthenticationResult.ERROR, AuthenticationResult.CANCELED -> activity.finishAffinity()
                 AuthenticationResult.SUCCESS -> onAuthSucceeded()
+                AuthenticationResult.FAILED -> Unit
             }
         }
     }

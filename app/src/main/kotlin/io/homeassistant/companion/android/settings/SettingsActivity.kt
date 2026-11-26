@@ -116,14 +116,23 @@ class SettingsActivity : BaseActivity() {
                             } else {
                                 SettingsFragment::class.java
                             }
+
                             Deeplink.Developer -> DeveloperSettingsFragment::class.java
+
                             is Deeplink.HomeNetwork -> SsidFragment::class.java
+
                             Deeplink.NotificationHistory -> NotificationHistoryFragment::class.java
+
                             is Deeplink.Sensor -> SensorDetailFragment::class.java
+
                             is Deeplink.QSTile -> ManageTilesFragment::class.java
+
                             Deeplink.AssistSettings -> AssistSettingsFragment::class.java
+
                             Deeplink.Gestures -> GesturesFragment::class.java
+
                             Deeplink.MediaControls -> MediaControlsSettingsFragment::class.java
+
                             null -> SettingsFragment::class.java
                         },
                         when (settingsNavigation) {
@@ -198,6 +207,11 @@ class SettingsActivity : BaseActivity() {
         val isExtAuth = (externalAuthCallback != null)
         Timber.d("settingsActivityAuthenticationResult(): authenticating: $authenticating, externalAuth: $isExtAuth")
 
+        if (result == AuthenticationResult.FAILED) {
+            Timber.d("Authentication attempt not recognized, retry allowed")
+            return
+        }
+
         externalAuthCallback?.let {
             if (it(result)) {
                 externalAuthCallback = null
@@ -212,11 +226,15 @@ class SettingsActivity : BaseActivity() {
                     blurView.setBlurEnabled(false)
                     setAppActive(true)
                 }
+
                 AuthenticationResult.CANCELED -> {
                     Timber.d("Authentication canceled by user, closing activity")
                     finishAffinity()
                 }
-                AuthenticationResult.ERROR -> Timber.d("Authentication failed, retry attempts allowed")
+
+                AuthenticationResult.ERROR -> Timber.d("Authentication error, prompt dismissed")
+
+                AuthenticationResult.FAILED -> Unit
             }
         }
     }
@@ -259,6 +277,7 @@ class SettingsActivity : BaseActivity() {
                 onBackPressedDispatcher.onBackPressed()
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }

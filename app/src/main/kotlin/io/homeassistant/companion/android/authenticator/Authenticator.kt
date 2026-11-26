@@ -12,6 +12,7 @@ class Authenticator(fragmentActivity: FragmentActivity, callback: (Authenticatio
             ERROR,
             SUCCESS,
             CANCELED,
+            FAILED,
         }
 
         const val AUTH_TYPES = Authenticators.DEVICE_CREDENTIAL or Authenticators.BIOMETRIC_WEAK
@@ -33,7 +34,7 @@ class Authenticator(fragmentActivity: FragmentActivity, callback: (Authenticatio
             }
             override fun onAuthenticationFailed() {
                 super.onAuthenticationFailed()
-                callback(AuthenticationResult.ERROR)
+                callback(AuthenticationResult.FAILED)
             }
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                 super.onAuthenticationSucceeded(result)
