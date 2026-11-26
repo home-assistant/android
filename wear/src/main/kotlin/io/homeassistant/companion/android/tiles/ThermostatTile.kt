@@ -30,13 +30,10 @@ import io.homeassistant.companion.android.tiles.ThermostatTileIds.ICON_ENHANCED_
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.ICON_FAN
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.ICON_FAN_OFF
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.ICON_HEAT
-import io.homeassistant.companion.android.tiles.ThermostatTileIds.ICON_POWER
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_ACTION_DOWN
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_ACTION_UP
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_FAN
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_MODE_PREFIX
-import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_POWER_OFF
-import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_POWER_ON
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -82,16 +79,19 @@ class ThermostatTile : TileService() {
     @Inject
     lateinit var commandCoordinator: ThermostatCommandCoordinator
 
+    private suspend fun shouldShowInvitation(config: ThermostatTile?, tileId: Int): Boolean {
+        if (config == null || config.layoutStyle != "classic" || config.entityId.isNullOrBlank()) return false
+        return !wearPrefsRepository.isThermostatLayoutInvitationAcknowledged(tileId)
+    }
+
     override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
             val tileId = requestParams.tileId
             val invitationChoice = requestParams.currentState.lastClickableId
             val tileConfig = thermostatSettingsMutex.withLock {
                 val config = thermostatTileDao.get(tileId) ?: return@withLock null
-                if (config.layoutStyle == "classic" &&
-                    !config.entityId.isNullOrBlank() &&
-                    invitationChoice in listOf("thermostat_invitation_accept", "thermostat_invitation_decline") &&
-                    !wearPrefsRepository.isThermostatLayoutInvitationAcknowledged(tileId)
+                if (invitationChoice in listOf("thermostat_invitation_accept", "thermostat_invitation_decline") &&
+                    shouldShowInvitation(config, tileId)
                 ) {
                     val updated = if (invitationChoice == "thermostat_invitation_accept") {
                         config.copy(layoutStyle = "enhanced").also { thermostatTileDao.add(it) }
@@ -116,14 +116,10 @@ class ThermostatTile : TileService() {
             }
 
             val tile = Tile.Builder()
-                .setResourcesVersion("$TAG.resources.v4")
+                .setResourcesVersion("$TAG.resources.v5")
                 .setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(freshness))
 
-            if (tileConfig != null &&
-                tileConfig.layoutStyle == "classic" &&
-                !tileConfig.entityId.isNullOrBlank() &&
-                !wearPrefsRepository.isThermostatLayoutInvitationAcknowledged(tileId)
-            ) {
+            if (shouldShowInvitation(tileConfig, tileId)) {
                 return@future tile.setTileTimeline(
                     thermostatInvitationTimeline(this@ThermostatTile, requestParams),
                 ).build()
@@ -203,8 +199,7 @@ class ThermostatTile : TileService() {
                                     val high = waitingCommand?.high ?: checkNotNull(controls.targetTemperatureHigh)
                                     val revised = ThermostatTemperatureLogic.shiftRange(
                                         delta,
-                                        low,
-                                        high,
+                                        low to high,
                                         min,
                                         max,
                                         step,
@@ -245,21 +240,6 @@ class ThermostatTile : TileService() {
                                         null,
                                         proposed,
                                     )
-                                }
-                                tileConfig.layoutStyle == "classic" &&
-                                    waitingCommand == null &&
-                                    lastId == TAP_POWER_ON &&
-                                    entity.rawState == "off" &&
-                                    controls.supportsTurnOn -> {
-                                    commandCoordinator.submitPower(tileId, target, true)
-                                }
-                                tileConfig.layoutStyle == "classic" &&
-                                    tileConfig.showPowerButton &&
-                                    waitingCommand == null &&
-                                    lastId == TAP_POWER_OFF &&
-                                    entity.rawState != "off" &&
-                                    controls.supportsTurnOff -> {
-                                    commandCoordinator.submitPower(tileId, target, false)
                                 }
                                 tileConfig.layoutStyle != "classic" &&
                                     tileConfig.showHvacModes &&
@@ -444,7 +424,6 @@ class ThermostatTile : TileService() {
             }
             addDrawable(RESOURCE_REFRESH, R.drawable.ic_refresh)
             addDrawable(ICON_HEAT, R.drawable.ic_thermostat_flame_two_tone)
-            addDrawable(ICON_POWER, R.drawable.ic_thermostat_power)
             addMdi(ICON_COOL, Mdi.Snowflake.toBitmap(iconSizePx, 0xFF38BDF8.toInt()))
             addMdi(ICON_FAN, Mdi.Fan.toBitmap(iconSizePx, 0xFF22C55E.toInt()))
             addMdi(ICON_FAN_OFF, Mdi.FanOff.toBitmap(iconSizePx, 0xFF9CA3AF.toInt()))

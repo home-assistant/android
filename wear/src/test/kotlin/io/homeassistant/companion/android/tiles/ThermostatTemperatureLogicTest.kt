@@ -29,11 +29,15 @@ class ThermostatTemperatureLogicTest {
 
     @Test
     fun `classic range preserves separation and respects limits`() {
-        assertEquals(74f to 79f, ThermostatTemperatureLogic.shiftRange(1f, 73f, 78f, 50f, 90f, 1f))
-        assertEquals(72f to 77f, ThermostatTemperatureLogic.shiftRange(-1f, 73f, 78f, 50f, 90f, 1f))
-        assertEquals(85f to 90f, ThermostatTemperatureLogic.shiftRange(3f, 84f, 89f, 50f, 90f, 1f))
-        assertEquals(50f to 55f, ThermostatTemperatureLogic.shiftRange(-3f, 51f, 56f, 50f, 90f, 1f))
-        assertEquals(85f to 90f, ThermostatTemperatureLogic.shiftRange(1f, 85f, 90f, 50f, 90f, 1f))
-        assertEquals(18.5f to 22.5f, ThermostatTemperatureLogic.shiftRange(0.5f, 18f, 22f, 5f, 30f, 0.5f))
+        assertEquals(74f to 79f, ThermostatTemperatureLogic.shiftRange(1f, 73f to 78f, 50f, 90f, 1f))
+        assertEquals(72f to 77f, ThermostatTemperatureLogic.shiftRange(-1f, 73f to 78f, 50f, 90f, 1f))
+        assertEquals(85f to 90f, ThermostatTemperatureLogic.shiftRange(3f, 84f to 89f, 50f, 90f, 1f))
+        assertEquals(50f to 55f, ThermostatTemperatureLogic.shiftRange(-3f, 51f to 56f, 50f, 90f, 1f))
+        assertEquals(85f to 90f, ThermostatTemperatureLogic.shiftRange(1f, 85f to 90f, 50f, 90f, 1f))
+        assertEquals(18.5f to 22.5f, ThermostatTemperatureLogic.shiftRange(0.5f, 18f to 22f, 5f, 30f, 0.5f))
+        assertEquals(73f to 78f, ThermostatTemperatureLogic.shiftRange(1f, 73f to 78f, 50f, 90f, 0f))
+        assertEquals(49f to 55f, ThermostatTemperatureLogic.shiftRange(1f, 49f to 55f, 50f, 90f, 1f))
+        assertEquals(85f to 91f, ThermostatTemperatureLogic.shiftRange(1f, 85f to 91f, 50f, 90f, 1f))
+        assertEquals(78f to 73f, ThermostatTemperatureLogic.shiftRange(1f, 78f to 73f, 50f, 90f, 1f))
     }
 }

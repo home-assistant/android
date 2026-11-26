@@ -20,23 +20,19 @@ import io.homeassistant.companion.android.tiles.ThermostatTileIds.ICON_ENHANCED_
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.ICON_FAN
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.ICON_FAN_OFF
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.ICON_HEAT
-import io.homeassistant.companion.android.tiles.ThermostatTileIds.ICON_POWER
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_ACTION_DOWN
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_ACTION_UP
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_FAN
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_MODE_PREFIX
-import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_POWER_OFF
-import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_POWER_ON
 import kotlin.math.roundToInt
 
 private const val ACTIVITY_TEXT_SP = 11f
 private const val BUTTON_CORNER_DP = 14f
 private const val BUTTON_TEXT_SP = 14f
 private const val CLASSIC_BUTTON_GAP_DP = 20f
-private const val CLASSIC_COMPACT_BUTTON_DP = 40f
 private const val CLASSIC_CONTROL_GAP_DP = 10f
 private const val CLASSIC_NAME_ARC_DP = 30f
-private const val CLASSIC_POWER_GAP_DP = 6f
+private const val CLASSIC_RANGE_TEXT_SP = 22f
 private const val CLASSIC_TARGET_TEXT_SP = 30f
 private const val AUTO_CURRENT_TEXT_SP = 26f
 private const val COMPACT_ACTIVITY_TEXT_SP = 10f
@@ -71,8 +67,6 @@ internal object ThermostatTileIds {
     const val TAP_ACTION_DOWN = "Down"
     const val TAP_MODE_PREFIX = "Mode:"
     const val TAP_FAN = "CycleFan"
-    const val TAP_POWER_ON = "PowerOn"
-    const val TAP_POWER_OFF = "PowerOff"
 
     // Stable ProtoLayout resource IDs; the tile's resource version changes only when icons change.
     const val ICON_HEAT = "thermostat_heat_v1"
@@ -80,7 +74,6 @@ internal object ThermostatTileIds {
     const val ICON_FAN = "thermostat_fan_v1"
     const val ICON_FAN_OFF = "thermostat_fan_off_v1"
     const val ICON_ENHANCED_POWER = "thermostat_enhanced_power_v1"
-    const val ICON_POWER = "thermostat_power_v1"
 }
 
 /** Builds thermostat timelines without performing network requests or writing configuration. */
@@ -104,18 +97,10 @@ internal class ThermostatTileViews(private val context: Context) {
         val entityName = if (tileConfig.showEntityName == true) entity.name else ""
         val controls = entity.climateControls
         val units = ThermostatDisplayUnits(temperatureUnit, tileConfig.temperatureUnit)
-        val showPower =
-            (tileConfig.showPowerButton || (entity.rawState == "off" && controls?.supportsTurnOn == true)) &&
-                (controls?.supportsTurnOn == true || controls?.supportsTurnOff == true)
-        val available = entity.rawState !in listOf("unavailable", "unknown")
-        val powerOn = entity.rawState != "off"
-        val powerEnabled = available &&
-            pending?.status != ThermostatCommandCoordinator.Pending.Status.WAITING &&
-            (if (powerOn) controls?.supportsTurnOff == true else controls?.supportsTurnOn == true)
+        val available = entity.rawState !in listOf("off", "unavailable", "unknown")
         val classicRangeMode = entity.rawState == "heat_cool"
         val rangeAvailable = controls?.targetTemperatureLow != null && controls.targetTemperatureHigh != null
         val temperatureEnabled = available &&
-            powerOn &&
             (if (classicRangeMode) rangeAvailable else controls?.targetTemperature != null) &&
             !(
                 pending?.status == ThermostatCommandCoordinator.Pending.Status.WAITING &&
@@ -165,7 +150,9 @@ internal class ThermostatTileViews(private val context: Context) {
                                 )
                                 .setFontStyle(
                                     LayoutElementBuilders.FontStyle.Builder().setSize(
-                                        DimensionBuilders.sp(if (classicRangeMode) 22f else CLASSIC_TARGET_TEXT_SP),
+                                        DimensionBuilders.sp(
+                                            if (classicRangeMode) CLASSIC_RANGE_TEXT_SP else CLASSIC_TARGET_TEXT_SP,
+                                        ),
                                     ).build(),
                                 )
                                 .build(),
@@ -189,17 +176,9 @@ internal class ThermostatTileViews(private val context: Context) {
                         )
                         .addContent(
                             LayoutElementBuilders.Row.Builder()
-                                .addContent(getTempButton(temperatureEnabled, TAP_ACTION_DOWN, actionPrefix, showPower))
-                                .apply {
-                                    if (showPower) {
-                                        addContent(horizontalGap(CLASSIC_POWER_GAP_DP))
-                                        addContent(classicPowerButton(powerOn, powerEnabled, actionPrefix))
-                                        addContent(horizontalGap(CLASSIC_POWER_GAP_DP))
-                                    } else {
-                                        addContent(horizontalGap(CLASSIC_BUTTON_GAP_DP))
-                                    }
-                                }
-                                .addContent(getTempButton(temperatureEnabled, TAP_ACTION_UP, actionPrefix, showPower))
+                                .addContent(getTempButton(temperatureEnabled, TAP_ACTION_DOWN, actionPrefix))
+                                .addContent(horizontalGap(CLASSIC_BUTTON_GAP_DP))
+                                .addContent(getTempButton(temperatureEnabled, TAP_ACTION_UP, actionPrefix))
                                 .build(),
                         )
                         .build(),
@@ -244,40 +223,7 @@ internal class ThermostatTileViews(private val context: Context) {
         )
     }
 
-    private fun classicPowerButton(powerOn: Boolean, enabled: Boolean, actionPrefix: String): LayoutElement {
-        val clickable = Clickable.Builder()
-        if (enabled) {
-            clickable.setOnClick(ActionBuilders.LoadAction.Builder().build())
-                .setId(actionPrefix + (if (powerOn) TAP_POWER_OFF else TAP_POWER_ON))
-        }
-        return Button.Builder(context, clickable.build())
-            .setSize(CLASSIC_COMPACT_BUTTON_DP)
-            .setIconContent(ICON_POWER)
-            .setContentDescription(
-                context.getString(
-                    if (powerOn) commonR.string.thermostat_tile_turn_off else commonR.string.thermostat_tile_turn_on,
-                ),
-            )
-            .setButtonColors(
-                ButtonColors(
-                    ColorBuilders.argb(
-                        context.getColor(
-                            if (enabled &&
-                                powerOn
-                            ) {
-                                commonR.color.colorPrimary
-                            } else {
-                                commonR.color.colorDeviceControlsOff
-                            },
-                        ),
-                    ),
-                    ColorBuilders.argb(0xFFFFFFFF.toInt()),
-                ),
-            )
-            .build()
-    }
-
-    private fun getTempButton(enabled: Boolean, action: String, actionPrefix: String, compact: Boolean): LayoutElement {
+    private fun getTempButton(enabled: Boolean, action: String, actionPrefix: String): LayoutElement {
         val clickable = Clickable.Builder()
         if (enabled) {
             clickable.setOnClick(ActionBuilders.LoadAction.Builder().build())
@@ -285,7 +231,6 @@ internal class ThermostatTileViews(private val context: Context) {
         }
 
         return Button.Builder(context, clickable.build())
-            .apply { if (compact) setSize(CLASSIC_COMPACT_BUTTON_DP) }
             .setTextContent(if (action == TAP_ACTION_DOWN) "−" else "+")
             .setContentDescription(
                 context.getString(

@@ -31,6 +31,9 @@ import io.homeassistant.companion.android.splash.SplashActivity
 const val RESOURCE_REFRESH = "refresh"
 const val MODIFIER_CLICK_REFRESH = "refresh"
 
+private const val INVITATION_MESSAGE_GAP_DP = 6f
+private const val INVITATION_CHOICE_GAP_DP = 4f
+
 /** Performs a [VibrationEffect.EFFECT_CLICK] or equivalent on older Android versions */
 fun hapticClick(context: Context) {
     if (SdkVersion.isAtLeast(Build.VERSION_CODES.S)) {
@@ -244,11 +247,19 @@ internal fun thermostatInvitationTimeline(context: Context, requestParams: Reque
                             .setColor(argb(theme.onSurface))
                             .build(),
                     )
-                    .addContent(LayoutElementBuilders.Spacer.Builder().setHeight(DimensionBuilders.dp(6f)).build())
+                    .addContent(
+                        LayoutElementBuilders.Spacer.Builder().setHeight(
+                            DimensionBuilders.dp(INVITATION_MESSAGE_GAP_DP),
+                        ).build(),
+                    )
                     .addContent(
                         choice(commonR.string.thermostat_tile_invitation_accept, "thermostat_invitation_accept"),
                     )
-                    .addContent(LayoutElementBuilders.Spacer.Builder().setHeight(DimensionBuilders.dp(4f)).build())
+                    .addContent(
+                        LayoutElementBuilders.Spacer.Builder().setHeight(
+                            DimensionBuilders.dp(INVITATION_CHOICE_GAP_DP),
+                        ).build(),
+                    )
                     .addContent(
                         choice(commonR.string.thermostat_tile_invitation_decline, "thermostat_invitation_decline"),
                     )

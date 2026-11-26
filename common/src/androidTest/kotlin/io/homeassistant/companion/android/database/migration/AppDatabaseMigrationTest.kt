@@ -84,7 +84,7 @@ class AppDatabaseMigrationTest {
         helper.runMigrationsAndValidate(DATABASE_VERSION, migrationPath(context).toList()).use { connection ->
             connection.prepare(
                 "SELECT entity_id, refresh_interval, target_temperature, show_entity_name, layout_style, " +
-                    "show_power_button, show_secondary_buttons, secondary_step, temperature_unit, " +
+                    "show_secondary_buttons, secondary_step, temperature_unit, " +
                     "show_hvac_modes, show_fan_control, show_activity FROM thermostat_tiles WHERE id = 8",
             ).use {
                 assertTrue(it.step())
@@ -94,12 +94,11 @@ class AppDatabaseMigrationTest {
                 assertEquals(0, it.getInt(3))
                 assertEquals("classic", it.getText(4))
                 assertEquals(0, it.getInt(5))
-                assertEquals(0, it.getInt(6))
-                assertEquals(3, it.getInt(7))
-                assertEquals("default", it.getText(8))
+                assertEquals(3, it.getInt(6))
+                assertEquals("default", it.getText(7))
+                assertEquals(1, it.getInt(8))
                 assertEquals(1, it.getInt(9))
                 assertEquals(1, it.getInt(10))
-                assertEquals(1, it.getInt(11))
             }
         }
     }

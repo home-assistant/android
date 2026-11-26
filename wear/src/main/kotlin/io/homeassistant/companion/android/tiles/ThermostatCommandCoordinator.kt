@@ -393,17 +393,6 @@ class ThermostatCommandCoordinator internal constructor(
     ) { entity -> entity.rawState == mode }
 
     @WorkerThread
-    fun submitPower(tileId: Int, target: Target, turnOn: Boolean) = submit(
-        tileId,
-        target,
-        if (turnOn) "turn_on" else "turn_off",
-        mapOf("entity_id" to target.entityId),
-        if (turnOn) "on" else "off",
-    ) { entity ->
-        if (turnOn) entity.rawState !in listOf("off", "unavailable", "unknown") else entity.rawState == "off"
-    }
-
-    @WorkerThread
     fun submitFan(tileId: Int, target: Target, mode: String) = submit(
         tileId,
         target,

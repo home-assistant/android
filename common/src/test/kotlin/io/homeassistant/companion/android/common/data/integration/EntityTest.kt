@@ -101,18 +101,6 @@ class EntityTest {
     @Nested
     inner class ClimateRangeAndFanModes {
         @Test
-        fun `Given climate power feature flags when resolving climate controls then expose only supported actions`() {
-            for (features in listOf(0, 128, 256, 384)) {
-                val controls = checkNotNull(
-                    createEntity(entityId = "climate.thermostat", attributes = mapOf("supported_features" to features))
-                        .getClimateControls(),
-                )
-                assertEquals(features and 256 != 0, controls.supportsTurnOn)
-                assertEquals(features and 128 != 0, controls.supportsTurnOff)
-            }
-        }
-
-        @Test
         fun `Given supported climate range and fan modes when resolving climate controls then expose them`() {
             val entity = createEntity(
                 entityId = "climate.dining_room",

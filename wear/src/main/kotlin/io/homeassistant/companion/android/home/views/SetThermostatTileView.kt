@@ -127,11 +127,6 @@ fun SetThermostatTileView(
                 )
             }
             temperatureUnitSetting(tile, onPreferencesChanged)
-            if (tile != null && tile.layoutStyle == "classic") {
-                settingSwitch(commonR.string.setting_thermostat_power_button_on_tile, tile.showPowerButton) { enabled ->
-                    onPreferencesChanged(tile.id) { it.copy(showPowerButton = enabled) }
-                }
-            }
             if (tile?.layoutStyle == "enhanced") {
                 enhancedSettings(tile, onPreferencesChanged)
             }

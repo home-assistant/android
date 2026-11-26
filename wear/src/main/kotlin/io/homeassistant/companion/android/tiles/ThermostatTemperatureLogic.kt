@@ -36,13 +36,14 @@ internal object ThermostatTemperatureLogic {
     /** Move both setpoints together without changing their separation. */
     fun shiftRange(
         delta: Float,
-        low: Float,
-        high: Float,
+        setpoints: Pair<Float, Float>,
         minimum: Float,
         maximum: Float,
         step: Float,
     ): Pair<Float, Float> {
-        if (step <= 0f || low < minimum || high > maximum || low > high) return low to high
+        val (low, high) = setpoints
+        val invalidRange = low < minimum || high > maximum || low > high
+        if (step <= 0f || invalidRange) return setpoints
         val minimumSteps = ceil((minimum - low) / step)
         val maximumSteps = floor((maximum - high) / step)
         val shift = round(delta / step).coerceIn(minimumSteps, maximumSteps) * step

@@ -31,11 +31,10 @@ class ThermostatTileViewsTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val views = ThermostatTileViews(context)
     private val prefix = ThermostatCommandCoordinator.Target(1, "climate.living_room").actionPrefix
-    private val config = ThermostatTile(id = 10, entityId = "climate.living_room", showPowerButton = true)
+    private val config = ThermostatTile(id = 10, entityId = "climate.living_room")
 
     private fun thermostat(
         state: String = "heat",
-        supportsPower: Boolean = true,
         hvacAction: String = if (state == "heat") "heating" else "idle",
         fanMode: String = "auto",
     ) = EntityDisplayWithoutContext(
@@ -57,8 +56,6 @@ class ThermostatTileViewsTest {
             targetTemperatureHigh = 22f,
             fanMode = fanMode,
             fanModes = listOf("auto", "on"),
-            supportsTurnOn = supportsPower,
-            supportsTurnOff = supportsPower,
         ),
     )
 
@@ -78,19 +75,15 @@ class ThermostatTileViewsTest {
         .map { it.removePrefix(prefix) }
         .toSet()
 
-    private fun classic(state: String = "heat", showPower: Boolean = true, supportsPower: Boolean = true) = views.classicTimeline(config.copy(showPowerButton = showPower), thermostat(state, supportsPower), "°C", null, prefix)
+    private fun classic(state: String = "heat") = views.classicTimeline(config, thermostat(state), "°C", null, prefix)
 
     @Test
-    fun `classic retains the two original controls when power is hidden or unsupported`() {
-        assertEquals(setOf("Down", "Up"), classic(showPower = false).actions())
-        assertEquals(setOf("Down", "Up"), classic(supportsPower = false).actions())
-    }
-
-    @Test
-    fun `classic power control respects thermostat state`() {
-        assertEquals(setOf("Down", "Up", "PowerOff"), classic().actions())
-        assertEquals(setOf("PowerOn"), classic(state = "off").actions())
+    fun `classic retains the original adjustment controls without power actions`() {
+        assertEquals(setOf("Down", "Up"), classic().actions())
+        assertEquals(setOf("Down", "Up"), classic(state = "cool").actions())
+        assertTrue(classic(state = "off").actions().isEmpty())
         assertTrue(classic(state = "unavailable").actions().isEmpty())
+        assertTrue(classic(state = "unknown").actions().isEmpty())
     }
 
     @Test
@@ -203,13 +196,6 @@ class ThermostatTileViewsTest {
         val timeline = classic(state = "heat_cool")
         val texts = timeline.elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
         assertTrue("18.0–22.0 °C" in texts)
-        assertEquals(setOf("Down", "Up", "PowerOff"), timeline.actions())
-        assertEquals(setOf("Down", "Up"), classic(state = "heat_cool", showPower = false).actions())
-    }
-
-    @Test
-    fun `classic off exposes power even when hidden in settings`() {
-        assertEquals(setOf("PowerOn"), classic(state = "off", showPower = false).actions())
-        assertTrue(classic(state = "off", showPower = false, supportsPower = false).actions().isEmpty())
+        assertEquals(setOf("Down", "Up"), timeline.actions())
     }
 }
