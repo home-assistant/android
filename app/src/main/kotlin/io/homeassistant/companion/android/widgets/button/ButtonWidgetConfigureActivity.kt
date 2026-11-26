@@ -75,6 +75,18 @@ import io.homeassistant.companion.android.widgets.common.WidgetUtils
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
+internal data class ButtonWidgetConfigureCallbacks(
+    val onActionTextUpdated: (String) -> Unit,
+    val onServerSelected: (Int) -> Unit,
+    val onDynamicFieldUpdated: (Int, String) -> Unit,
+    val onAddFieldDialogOkClicked: (Int, ActionFieldBinder) -> Unit,
+    val onIconSelected: (MdiIcon) -> Unit,
+    val onLabelUpdated: (String) -> Unit,
+    val onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
+    val onTextColorSelected: (Int) -> Unit,
+    val onRequireAuthenticationChecked: (Boolean) -> Unit,
+)
+
 @AndroidEntryPoint
 class ButtonWidgetConfigureActivity : BaseActivity() {
     private val viewModel: ButtonWidgetViewModel by viewModels()
@@ -88,11 +100,8 @@ class ButtonWidgetConfigureActivity : BaseActivity() {
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Set the result to CANCELED.  This will cause the widget host to cancel
-        // out of the widget placement if the user presses the back button.
         setResult(RESULT_CANCELED)
 
-        // Find the widget id from the intent.
         val appWidgetId =
             intent.extras?.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
                 ?: AppWidgetManager.INVALID_APPWIDGET_ID
@@ -101,7 +110,6 @@ class ButtonWidgetConfigureActivity : BaseActivity() {
             false,
         ) ?: false
 
-        // If this activity was started with an intent without an app widget ID, finish with an error.
         if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID && !requestLauncherSetup) {
             finish()
             return
@@ -110,8 +118,26 @@ class ButtonWidgetConfigureActivity : BaseActivity() {
         viewModel.onSetup(appWidgetId, requestLauncherSetup, supportedTextColors)
 
         setContent {
+            val state by viewModel.uiState.collectAsStateWithLifecycle()
+            val callbacks = remember(viewModel) {
+                ButtonWidgetConfigureCallbacks(
+                    onActionTextUpdated = viewModel::updateActionText,
+                    onServerSelected = viewModel::setServer,
+                    onDynamicFieldUpdated = viewModel::updateDynamicField,
+                    onAddFieldDialogOkClicked = viewModel::addDynamicField,
+                    onIconSelected = viewModel::selectIcon,
+                    onLabelUpdated = { viewModel.updateOption(label = it) },
+                    onBackgroundTypeSelected = { viewModel.updateOption(selectedBackgroundType = it) },
+                    onTextColorSelected = { viewModel.updateOption(textColorIndex = it) },
+                    onRequireAuthenticationChecked = { viewModel.updateOption(requiresAuthentication = it) },
+                )
+            }
             HATheme {
-                ButtonWidgetConfigureScreen(viewModel, { onAddWidgetClicked() })
+                ButtonWidgetConfigureView(
+                    state = state,
+                    callbacks = callbacks,
+                    onAddWidgetClicked = { onAddWidgetClicked() },
+                )
             }
         }
     }
@@ -122,10 +148,17 @@ class ButtonWidgetConfigureActivity : BaseActivity() {
                 if (SdkVersion.isAtLeast(Build.VERSION_CODES.O)) {
                     requestPinWidget()
                 } else {
-                    showAddWidgetError()
+                    Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG).show()
                 }
             } else {
-                onUpdateWidget()
+                try {
+                    viewModel.updateWidgetConfiguration()
+                    setResult(RESULT_OK)
+                    viewModel.updateWidget(this@ButtonWidgetConfigureActivity)
+                    finish()
+                } catch (_: Exception) {
+                    Toast.makeText(applicationContext, commonR.string.widget_update_error, Toast.LENGTH_LONG).show()
+                }
             }
         }
     }
@@ -133,91 +166,23 @@ class ButtonWidgetConfigureActivity : BaseActivity() {
     @SuppressLint("ObsoleteSdkInt")
     @RequiresApi(Build.VERSION_CODES.O)
     private fun requestPinWidget() {
-        val context = this@ButtonWidgetConfigureActivity
         lifecycleScope.launch {
-            viewModel.requestWidgetCreation(context)
+            viewModel.requestWidgetCreation(this@ButtonWidgetConfigureActivity)
             finish()
         }
     }
-
-    private suspend fun onUpdateWidget() {
-        try {
-            viewModel.updateWidgetConfiguration()
-            setResult(RESULT_OK)
-            viewModel.updateWidget(this@ButtonWidgetConfigureActivity)
-            finish()
-        } catch (_: Exception) {
-            showUpdateWidgetError()
-        }
-    }
-
-    private fun showAddWidgetError() {
-        Toast.makeText(applicationContext, commonR.string.widget_creation_error, Toast.LENGTH_LONG).show()
-    }
-
-    private fun showUpdateWidgetError() {
-        Toast.makeText(applicationContext, commonR.string.widget_update_error, Toast.LENGTH_LONG).show()
-    }
-}
-
-@Composable
-private fun ButtonWidgetConfigureScreen(viewModel: ButtonWidgetViewModel, onAddWidgetClicked: () -> Unit) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-    ButtonWidgetConfigureView(
-        actionText = state.actionText,
-        onActionTextUpdated = viewModel::updateActionText,
-        servers = state.servers,
-        selectedServerId = state.selectedServerId,
-        onServerSelected = viewModel::setServer,
-        serverActions = state.serverActions,
-        dynamicFields = state.dynamicFields,
-        onDynamicFieldUpdated = viewModel::updateDynamicField,
-        domainEntities = state.domainEntities,
-        icon = state.selectedIcon,
-        onIconSelected = viewModel::selectIcon,
-        onAddFieldDialogOkClicked = viewModel::addDynamicField,
-        label = state.label,
-        onLabelUpdated = viewModel::updateLabel,
-        textColorIndex = state.textColorIndex,
-        onTextColorSelected = viewModel::updateTextColorIndex,
-        selectedBackgroundType = state.selectedBackgroundType,
-        onBackgroundTypeSelected = viewModel::updateSelectedBackgroundType,
-        isRequireAuthenticationChecked = state.requiresAuthentication,
-        onRequireAuthenticationChecked = viewModel::setRequiresAuthentication,
-        isUpdatingWidget = state.isUpdating ?: false,
-        onAddWidgetClicked = onAddWidgetClicked,
-    )
 }
 
 @Composable
 private fun ButtonWidgetConfigureView(
-    actionText: String,
-    onActionTextUpdated: (String) -> Unit,
-    servers: List<Server>,
-    selectedServerId: Int?,
-    onServerSelected: (Int) -> Unit,
-    serverActions: List<Action>,
-    dynamicFields: List<ActionFieldBinder>,
-    onDynamicFieldUpdated: (Int, String) -> Unit,
-    domainEntities: List<String>,
-    icon: MdiIcon,
-    onIconSelected: (MdiIcon) -> Unit,
-    onAddFieldDialogOkClicked: (Int, ActionFieldBinder) -> Unit,
-    label: String,
-    onLabelUpdated: (String) -> Unit,
-    selectedBackgroundType: WidgetBackgroundType,
-    onBackgroundTypeSelected: (WidgetBackgroundType) -> Unit,
-    textColorIndex: Int,
-    onTextColorSelected: (Int) -> Unit,
-    isRequireAuthenticationChecked: Boolean,
-    onRequireAuthenticationChecked: (Boolean) -> Unit,
-    isUpdatingWidget: Boolean,
+    state: ButtonWidgetViewModel.ButtonWidgetUiState,
+    callbacks: ButtonWidgetConfigureCallbacks,
     onAddWidgetClicked: () -> Unit,
 ) {
     var showAddFieldDialog by remember { mutableStateOf(false) }
     var showIconDialog by remember { mutableStateOf(false) }
     val activity = LocalActivity.current
-    Timber.i("Selected Server: $selectedServerId")
+    Timber.i("Selected Server: ${state.selectedServerId}")
     Scaffold(
         topBar = {
             HATopBar(
@@ -226,101 +191,142 @@ private fun ButtonWidgetConfigureView(
             )
         },
     ) { contentPadding ->
-        Column(
+        ConfigureFormContent(
+            state = state,
+            callbacks = callbacks,
+            showAddFieldDialog = showAddFieldDialog,
+            onShowAddFieldDialogChange = { showAddFieldDialog = it },
+            showIconDialog = showIconDialog,
+            onShowIconDialogChange = { showIconDialog = it },
+            onAddWidgetClicked = onAddWidgetClicked,
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
                 .windowInsetsPadding(safeBottomWindowInsets())
                 .padding(contentPadding)
                 .padding(all = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (showAddFieldDialog) {
-                AddFieldDialog(
-                    action = actionText,
-                    onCancel = {
-                        showAddFieldDialog = false
-                    },
-                    onOk = { actionField ->
-                        if (dynamicFields.any {
-                                it.field == actionText
-                            }
-                        ) {
-                            showAddFieldDialog = false
-                            return@AddFieldDialog
-                        }
+        )
+    }
+}
 
-                        onAddFieldDialogOkClicked(dynamicFields.size, actionField)
-                        showAddFieldDialog = false
-                    },
-                    modifier = Modifier,
-                )
-            }
-
-            if (showIconDialog) {
-                IconDialog(
-                    onSelect = {
-                        showIconDialog = false
-                        onIconSelected(it)
-                    },
-                    onDismissRequest = { showIconDialog = false },
-                )
-            }
-
-            if (servers.size > 1) {
-                ServerSelector(
-                    servers = servers,
-                    selectedServerId = selectedServerId,
-                    onServerSelected = onServerSelected,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-
-            ActionTextFieldInput(actionText, onActionTextUpdated, serverActions)
-
-            if (dynamicFields.isNotEmpty()) {
-                dynamicFields.forEachIndexed { index, fieldBinder ->
-                    DynamicFieldInput(index, fieldBinder, domainEntities, onDynamicFieldUpdated)
+@Composable
+private fun ConfigureDialogsSection(
+    state: ButtonWidgetViewModel.ButtonWidgetUiState,
+    callbacks: ButtonWidgetConfigureCallbacks,
+    showAddFieldDialog: Boolean,
+    onShowAddFieldDialogChange: (Boolean) -> Unit,
+    showIconDialog: Boolean,
+    onShowIconDialogChange: (Boolean) -> Unit,
+) {
+    if (showAddFieldDialog) {
+        AddFieldDialog(
+            action = state.actionText,
+            onCancel = { onShowAddFieldDialogChange(false) },
+            onOk = { actionField ->
+                if (!state.dynamicFields.any { it.field == state.actionText }) {
+                    callbacks.onAddFieldDialogOkClicked(state.dynamicFields.size, actionField)
                 }
-            }
+                onShowAddFieldDialogChange(false)
+            },
+        )
+    }
 
-            HAAccentButton(
-                text = stringResource(commonR.string.add_action_data_field),
-                onClick = { showAddFieldDialog = true },
-                modifier = Modifier.align(Alignment.End),
-            )
+    if (showIconDialog) {
+        IconDialog(
+            onSelect = {
+                onShowIconDialogChange(false)
+                callbacks.onIconSelected(it)
+            },
+            onDismissRequest = { onShowIconDialogChange(false) },
+        )
+    }
+}
 
-            IconSelector(
-                icon = icon,
-                onIconSelectorClicked = {
-                    showIconDialog = true
-                },
-            )
+@Composable
+private fun ConfigureActionFieldsSection(
+    state: ButtonWidgetViewModel.ButtonWidgetUiState,
+    callbacks: ButtonWidgetConfigureCallbacks,
+    onShowAddFieldDialogChange: (Boolean) -> Unit,
+) {
+    ActionTextFieldInput(state.actionText, callbacks.onActionTextUpdated, state.serverActions)
 
-            HATextField(
-                label = { Text(text = stringResource(commonR.string.label)) },
-                value = label,
-                onValueChange = onLabelUpdated,
-                singleLine = true,
-                modifier = Modifier
-                    .fillMaxWidth(),
-            )
+    if (state.dynamicFields.isNotEmpty()) {
+        state.dynamicFields.forEachIndexed { index, fieldBinder ->
+            DynamicFieldInput(index, fieldBinder, state.domainEntities, callbacks.onDynamicFieldUpdated)
+        }
+    }
 
-            BackgroundTypeSelector(selectedBackgroundType, onBackgroundTypeSelected)
+    HAAccentButton(
+        text = stringResource(commonR.string.add_action_data_field),
+        onClick = { onShowAddFieldDialogChange(true) },
+    )
+}
 
-            if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
-                WidgetTextColorSelector(textColorIndex, onTextColorSelected)
-            }
+@Composable
+private fun ConfigureFormContent(
+    state: ButtonWidgetViewModel.ButtonWidgetUiState,
+    callbacks: ButtonWidgetConfigureCallbacks,
+    showAddFieldDialog: Boolean,
+    onShowAddFieldDialogChange: (Boolean) -> Unit,
+    showIconDialog: Boolean,
+    onShowIconDialogChange: (Boolean) -> Unit,
+    onAddWidgetClicked: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        ConfigureDialogsSection(
+            state = state,
+            callbacks = callbacks,
+            showAddFieldDialog = showAddFieldDialog,
+            onShowAddFieldDialogChange = onShowAddFieldDialogChange,
+            showIconDialog = showIconDialog,
+            onShowIconDialogChange = onShowIconDialogChange,
+        )
 
-            RequireAuthCheckbox(isChecked = isRequireAuthenticationChecked, onChecked = onRequireAuthenticationChecked)
-
-            val addButtonStringResource =
-                if (isUpdatingWidget) commonR.string.update_widget else commonR.string.add_widget
-            HAAccentButton(
-                text = stringResource(addButtonStringResource),
-                onClick = onAddWidgetClicked,
-                modifier = Modifier.align(Alignment.End),
+        if (state.servers.size > 1) {
+            ServerSelector(
+                servers = state.servers,
+                selectedServerId = state.selectedServerId,
+                onServerSelected = callbacks.onServerSelected,
+                modifier = Modifier.fillMaxWidth(),
             )
         }
+
+        ConfigureActionFieldsSection(state, callbacks, onShowAddFieldDialogChange)
+
+        IconSelector(icon = state.selectedIcon, onIconSelectorClicked = { onShowIconDialogChange(true) })
+
+        HATextField(
+            label = { Text(text = stringResource(commonR.string.label)) },
+            value = state.label,
+            onValueChange = callbacks.onLabelUpdated,
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        BackgroundTypeSelector(state.selectedBackgroundType, callbacks.onBackgroundTypeSelected)
+
+        if (state.selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
+            HADropdownMenu(
+                items = listOf(
+                    HADropdownItem(0, stringResource(commonR.string.widget_text_color_black)),
+                    HADropdownItem(1, stringResource(commonR.string.widget_text_color_white)),
+                ),
+                selectedKey = state.textColorIndex,
+                onItemSelected = callbacks.onTextColorSelected,
+                label = stringResource(commonR.string.widget_text_color_title),
+            )
+        }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            HACheckbox(
+                checked = state.requiresAuthentication,
+                onCheckedChange = callbacks.onRequireAuthenticationChecked,
+            )
+            Text(text = stringResource(commonR.string.widget_checkbox_require_authentication))
+        }
+
+        val addButtonString = if (state.isUpdating == true) commonR.string.update_widget else commonR.string.add_widget
+        HAAccentButton(text = stringResource(addButtonString), onClick = onAddWidgetClicked)
     }
 }
 
@@ -443,18 +449,6 @@ fun IconSelector(icon: MdiIcon, onIconSelectorClicked: () -> Unit, modifier: Mod
 }
 
 @Composable
-fun RequireAuthCheckbox(isChecked: Boolean, onChecked: (Boolean) -> Unit, modifier: Modifier = Modifier) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        HACheckbox(
-            checked = isChecked,
-            onCheckedChange = onChecked,
-            modifier = modifier,
-        )
-        Text(text = stringResource(commonR.string.widget_checkbox_require_authentication))
-    }
-}
-
-@Composable
 fun AddFieldDialog(
     action: String,
     onCancel: (() -> Unit)?,
@@ -539,59 +533,32 @@ fun BackgroundTypeSelector(
 }
 
 @Composable
-fun WidgetTextColorSelector(textColorIndex: Int, onTextColorSelected: (Int) -> Unit, modifier: Modifier = Modifier) {
-    HADropdownMenu(
-        items = listOf(
-            HADropdownItem(0, stringResource(commonR.string.widget_text_color_black)),
-            HADropdownItem(1, stringResource(commonR.string.widget_text_color_white)),
-        ),
-        selectedKey = textColorIndex,
-        onItemSelected = { onTextColorSelected(it) },
-        label = stringResource(commonR.string.widget_text_color_title),
-        modifier = modifier,
-    )
-}
-
-@Composable
 @Preview(name = "Light Mode")
 @Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
 private fun ButtonWidgetConfigureScreenPreview() {
+    val sampleState = ButtonWidgetViewModel.ButtonWidgetUiState(
+        servers = listOf(previewServer1, previewServer2),
+        selectedServerId = 0,
+        dynamicFields = listOf(ActionFieldBinder("Test Action", "Test", 1)),
+        selectedIcon = Mdi.Flash,
+        selectedBackgroundType = WidgetBackgroundType.TRANSPARENT,
+    )
+    val dummyCallbacks = ButtonWidgetConfigureCallbacks(
+        onActionTextUpdated = {},
+        onServerSelected = {},
+        onDynamicFieldUpdated = { _, _ -> },
+        onAddFieldDialogOkClicked = { _, _ -> },
+        onIconSelected = {},
+        onLabelUpdated = {},
+        onBackgroundTypeSelected = {},
+        onTextColorSelected = {},
+        onRequireAuthenticationChecked = {},
+    )
     HATheme {
         ButtonWidgetConfigureView(
-            actionText = "",
-            onActionTextUpdated = {},
-            servers = listOf(
-                previewServer1,
-                previewServer2,
-            ),
-            selectedServerId = 0,
-            onServerSelected = {},
-            serverActions = emptyList(),
-            dynamicFields = listOf(ActionFieldBinder("Test Action", "Test", 1)),
-            onDynamicFieldUpdated = { i: Int, value: String -> },
-            domainEntities = emptyList(),
-            icon = Mdi.Flash,
-            onIconSelected = {},
-            label = "",
-            onLabelUpdated = {},
-            textColorIndex = 0,
-            onTextColorSelected = {},
-            onAddFieldDialogOkClicked = { i: Int, binder: ActionFieldBinder -> },
-            selectedBackgroundType = WidgetBackgroundType.TRANSPARENT,
-            onBackgroundTypeSelected = {},
-            isRequireAuthenticationChecked = false,
-            onRequireAuthenticationChecked = {},
-            isUpdatingWidget = false,
+            state = sampleState,
+            callbacks = dummyCallbacks,
             onAddWidgetClicked = {},
         )
-    }
-}
-
-@Composable
-@Preview(name = "Light Mode")
-@Preview(name = "Dark Mode", uiMode = Configuration.UI_MODE_NIGHT_YES)
-private fun AddFieldDialogPreview() {
-    HATheme {
-        AddFieldDialog("", {}, {}, modifier = Modifier)
     }
 }
