@@ -523,7 +523,9 @@ class MainViewModel @Inject constructor(
 
     fun setThermostatTileEntity(tileId: Int, entityId: String) = viewModelScope.launch {
         val current = thermostatTileDao.get(tileId)
-        val updated = current?.copy(entityId = entityId) ?: ThermostatTile(id = tileId, entityId = entityId)
+        // A presumed power state belongs to the previous entity
+        val updated = current?.copy(entityId = entityId, presumedPowerOn = null, presumedPowerAt = null)
+            ?: ThermostatTile(id = tileId, entityId = entityId)
         thermostatTileDao.add(updated)
     }
 

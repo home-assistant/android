@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package io.homeassistant.companion.android.tiles
 
 import androidx.wear.protolayout.ActionBuilders
@@ -24,7 +26,9 @@ import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.home.HomeActivity
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,8 +45,8 @@ private const val PRESUMED_ON_STATE = "heat"
 /** How long a presumed power state is shown at most, in case the server never reports it. */
 private val PRESUMED_POWER_TIMEOUT = 30.seconds
 
-/** How soon the system asks for the tile again after a toggle, so the presumed state is replaced by the actual one. */
-private val TOGGLE_FALLBACK_REFRESH = 3.seconds
+/** How soon the system asks for the tile again while a presumed power state is shown. */
+private val PRESUMED_POWER_REFRESH = 3.seconds
 
 @AndroidEntryPoint
 class ThermostatTile : TileService() {
@@ -61,6 +65,9 @@ class ThermostatTile : TileService() {
 
     @Inject
     lateinit var entitiesForDisplayManager: EntitiesForDisplayManager
+
+    @Inject
+    lateinit var clock: Clock
 
     override fun onTileRequest(requestParams: RequestBuilders.TileRequest): ListenableFuture<Tile> =
         serviceScope.future {
@@ -116,9 +123,13 @@ class ThermostatTile : TileService() {
 
                         // A toggle isn't reported by the server right away, so keep showing what the user asked for
                         val serverOn = entity.rawState != "off"
-                        val presumedAge = System.currentTimeMillis() - (tileConfig.presumedPowerAt ?: 0L)
+                        val now = clock.now().toEpochMilliseconds()
+                        val presumedAge = now - (tileConfig.presumedPowerAt ?: 0L)
+                        // An unavailable entity must show as such, so it never keeps a presumed state
                         val pendingOn = tileConfig.presumedPowerOn?.takeIf {
-                            it != serverOn && presumedAge < PRESUMED_POWER_TIMEOUT.inWholeMilliseconds
+                            entity.rawState != "unavailable" &&
+                                it != serverOn &&
+                                presumedAge < PRESUMED_POWER_TIMEOUT.inWholeMilliseconds
                         }
                         var updatedConfig = tileConfig.copy(
                             targetTemperature = null,
@@ -161,10 +172,12 @@ class ThermostatTile : TileService() {
                             shownOn = !shownOn
                             updatedConfig = updatedConfig.copy(
                                 presumedPowerOn = shownOn.takeIf { it != serverOn },
-                                presumedPowerAt = System.currentTimeMillis().takeIf { shownOn != serverOn },
+                                presumedPowerAt = now.takeIf { shownOn != serverOn },
                             )
-                            // The system then asks for the tile again, which replaces the presumed state
-                            tile.setFreshnessIntervalMillis(TOGGLE_FALLBACK_REFRESH.inWholeMilliseconds)
+                        }
+                        if (updatedConfig.presumedPowerOn != null) {
+                            // Ask for the tile again soon, so the presumed state is replaced or expires promptly
+                            tile.setFreshnessIntervalMillis(PRESUMED_POWER_REFRESH.inWholeMilliseconds)
                         }
                         thermostatTileDao.add(updatedConfig)
 
