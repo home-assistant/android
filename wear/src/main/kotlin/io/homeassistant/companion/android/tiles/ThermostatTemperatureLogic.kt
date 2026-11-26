@@ -1,12 +1,11 @@
 package io.homeassistant.companion.android.tiles
 
+import kotlin.math.ceil
+import kotlin.math.floor
 import kotlin.math.round
 
-/** Pure temperature rules used by tile buttons and the drag editor. */
+/** Pure temperature rules used by tile buttons. */
 internal object ThermostatTemperatureLogic {
-    const val START_DEGREES = 205f
-    const val SWEEP_DEGREES = 130f
-    private const val MIDPOINT_FRACTION = 0.5f
     fun snap(value: Float, step: Float, minimum: Float, maximum: Float): Float {
         require(step > 0f && minimum <= maximum)
         val bounded = value.coerceIn(minimum, maximum)
@@ -34,19 +33,19 @@ internal object ThermostatTemperatureLogic {
         }
     }
 
-    fun normalized(value: Float, minimum: Float, maximum: Float): Float =
-        if (maximum <= minimum) MIDPOINT_FRACTION else ((value - minimum) / (maximum - minimum)).coerceIn(0f, 1f)
-
-    /** Normalizes clockwise top semicircle: 0=left side, 1=right side. */
-    fun fractionFromTopArc(x: Float, y: Float, centerX: Float, centerY: Float): Float {
-        val degrees = Math.toDegrees(kotlin.math.atan2((y - centerY).toDouble(), (x - centerX).toDouble()))
-        val topAngle = if (degrees < 0) degrees + 360 else degrees
-        return (
-            (topAngle - START_DEGREES) /
-                SWEEP_DEGREES
-            ).toFloat().coerceIn(0f, 1f)
+    /** Move both setpoints together without changing their separation. */
+    fun shiftRange(
+        delta: Float,
+        low: Float,
+        high: Float,
+        minimum: Float,
+        maximum: Float,
+        step: Float,
+    ): Pair<Float, Float> {
+        if (step <= 0f || low < minimum || high > maximum || low > high) return low to high
+        val minimumSteps = ceil((minimum - low) / step)
+        val maximumSteps = floor((maximum - high) / step)
+        val shift = round(delta / step).coerceIn(minimumSteps, maximumSteps) * step
+        return (low + shift) to (high + shift)
     }
-
-    fun chooseHighMarker(touchFraction: Float, lowFraction: Float, highFraction: Float): Boolean =
-        kotlin.math.abs(touchFraction - highFraction) < kotlin.math.abs(touchFraction - lowFraction)
 }

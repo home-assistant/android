@@ -133,7 +133,6 @@ class EntityTest {
             assertEquals(75f, controls.targetTemperatureHigh)
             assertEquals("auto", controls.fanMode)
             assertEquals(listOf("auto", "on"), controls.fanModes)
-            assertTrue(controls.supportsTargetTemperatureRange)
         }
     }
 

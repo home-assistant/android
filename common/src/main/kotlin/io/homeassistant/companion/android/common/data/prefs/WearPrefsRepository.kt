@@ -14,6 +14,8 @@ interface WearPrefsRepository {
     suspend fun setAllTemplateTiles(templateTiles: Map<Int, TemplateTileConfig>)
     suspend fun setTemplateTile(tileId: Int, content: String, refreshInterval: Int): TemplateTileConfig
     suspend fun removeTemplateTile(tileId: Int): TemplateTileConfig?
+    suspend fun isThermostatLayoutInvitationAcknowledged(tileId: Int): Boolean
+    suspend fun setThermostatLayoutInvitationAcknowledged(tileId: Int, acknowledged: Boolean)
     suspend fun getWearHapticFeedback(): Boolean
     suspend fun setWearHapticFeedback(enabled: Boolean)
     suspend fun getWearToastConfirmation(): Boolean

@@ -20,6 +20,7 @@ import io.homeassistant.companion.android.common.data.integration.display.Entiti
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
@@ -37,6 +38,7 @@ import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.database.wear.getAll
 import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import io.homeassistant.companion.android.tiles.thermostatSettingsMutex
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -44,7 +46,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -57,6 +58,7 @@ class MainViewModel @Inject constructor(
     private val sensorRepository: SensorRepository,
     private val cameraTileDao: CameraTileDao,
     private val thermostatTileDao: ThermostatTileDao,
+    private val wearPrefsRepository: WearPrefsRepository,
     private val managers: Set<@JvmSuppressWildcards SensorManager>,
     application: Application,
 ) : AndroidViewModel(application) {
@@ -524,12 +526,14 @@ class MainViewModel @Inject constructor(
         cameraTileDao.add(updated)
     }
 
-    private val thermostatSettingsMutex = Mutex()
-
     private fun updateThermostatTile(tileId: Int, update: (ThermostatTile) -> ThermostatTile) = viewModelScope.launch {
         thermostatSettingsMutex.withLock {
             val current = thermostatTileDao.get(tileId) ?: return@withLock
-            thermostatTileDao.add(update(current))
+            val updated = update(current)
+            thermostatTileDao.add(updated)
+            if (updated.layoutStyle != current.layoutStyle) {
+                wearPrefsRepository.setThermostatLayoutInvitationAcknowledged(tileId, true)
+            }
             TileService.getUpdater(getApplication<Application>()).requestUpdate(
                 io.homeassistant.companion.android.tiles.ThermostatTile::class.java,
             )

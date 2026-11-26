@@ -1465,6 +1465,10 @@
     <string name="thermostat_tile_turn_on">Turn thermostat on</string>
     <string name="thermostat_tile_turn_off">Turn thermostat off</string>
     <string name="setting_thermostat_tile_appearance">Tile appearance</string>
+    <string name="thermostat_tile_invitation_title">Try Enhanced?</string>
+    <string name="thermostat_tile_invitation_message">Change this setting anytime in tile settings.</string>
+    <string name="thermostat_tile_invitation_accept">Switch to Enhanced</string>
+    <string name="thermostat_tile_invitation_decline">Keep Classic</string>
     <string name="setting_thermostat_temperature_unit">Temperature unit</string>
     <string name="setting_thermostat_temperature_unit_default">Home Assistant default</string>
     <string name="setting_thermostat_temperature_unit_celsius">Celsius (°C)</string>

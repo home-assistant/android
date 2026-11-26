@@ -45,17 +45,16 @@ class ThermostatTileViewsTest {
         rawState = state,
         climateControls = ClimateControls(
             currentTemperature = 19.4f,
-            targetTemperature = 19.5f,
+            targetTemperature = if (state == "heat_cool") null else 19.5f,
             targetTemperatureStep = 0.5f,
             hvacAction = hvacAction,
             minTemperature = 5f,
             maxTemperature = 30f,
             temperatureUnit = "°C",
             hvacModes = listOf("off", "heat", "cool", "heat_cool"),
-            supportsTargetTemperature = true,
+            supportsTargetTemperature = state != "heat_cool",
             targetTemperatureLow = 18f,
             targetTemperatureHigh = 22f,
-            supportsTargetTemperatureRange = true,
             fanMode = fanMode,
             fanModes = listOf("auto", "on"),
             supportsTurnOn = supportsPower,
@@ -197,5 +196,20 @@ class ThermostatTileViewsTest {
         assertTrue(context.getString(commonR.string.thermostat_tile_unconfirmed) in failedTexts)
         assertFalse("21°" in failedTexts)
         assertTrue("19.5°" in failedTexts)
+    }
+
+    @Test
+    fun `classic auto displays both setpoints and enables adjustment`() {
+        val timeline = classic(state = "heat_cool")
+        val texts = timeline.elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
+        assertTrue("18.0–22.0 °C" in texts)
+        assertEquals(setOf("Down", "Up", "PowerOff"), timeline.actions())
+        assertEquals(setOf("Down", "Up"), classic(state = "heat_cool", showPower = false).actions())
+    }
+
+    @Test
+    fun `classic off exposes power even when hidden in settings`() {
+        assertEquals(setOf("PowerOn"), classic(state = "off", showPower = false).actions())
+        assertTrue(classic(state = "off", showPower = false, supportsPower = false).actions().isEmpty())
     }
 }

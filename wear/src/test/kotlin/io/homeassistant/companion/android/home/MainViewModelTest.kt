@@ -49,6 +49,7 @@ class MainViewModelTest {
         sensorRepository = sensorRepository,
         cameraTileDao = cameraTileDao,
         thermostatTileDao = thermostatTileDao,
+        wearPrefsRepository = mockk(relaxed = true),
         managers = emptySet(),
         application = mockk<Application>(relaxed = true),
     )

@@ -15,10 +15,10 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.ClimateControls
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.database.wear.ThermostatTile
-import io.homeassistant.companion.android.tiles.ThermostatTileIds.ICON_AUTO_COOL
-import io.homeassistant.companion.android.tiles.ThermostatTileIds.ICON_AUTO_HEAT
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.ICON_COOL
+import io.homeassistant.companion.android.tiles.ThermostatTileIds.ICON_ENHANCED_POWER
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.ICON_FAN
+import io.homeassistant.companion.android.tiles.ThermostatTileIds.ICON_FAN_OFF
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.ICON_HEAT
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.ICON_POWER
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_ACTION_DOWN
@@ -77,9 +77,9 @@ internal object ThermostatTileIds {
     // Stable ProtoLayout resource IDs; the tile's resource version changes only when icons change.
     const val ICON_HEAT = "thermostat_heat_v1"
     const val ICON_COOL = "thermostat_cool_v1"
-    const val ICON_AUTO_HEAT = "thermostat_auto_heat_v1"
-    const val ICON_AUTO_COOL = "thermostat_auto_cool_v1"
     const val ICON_FAN = "thermostat_fan_v1"
+    const val ICON_FAN_OFF = "thermostat_fan_off_v1"
+    const val ICON_ENHANCED_POWER = "thermostat_enhanced_power_v1"
     const val ICON_POWER = "thermostat_power_v1"
 }
 
@@ -104,24 +104,34 @@ internal class ThermostatTileViews(private val context: Context) {
         val entityName = if (tileConfig.showEntityName == true) entity.name else ""
         val controls = entity.climateControls
         val units = ThermostatDisplayUnits(temperatureUnit, tileConfig.temperatureUnit)
-        val showPower = tileConfig.showPowerButton &&
-            (controls?.supportsTurnOn == true || controls?.supportsTurnOff == true)
+        val showPower =
+            (tileConfig.showPowerButton || (entity.rawState == "off" && controls?.supportsTurnOn == true)) &&
+                (controls?.supportsTurnOn == true || controls?.supportsTurnOff == true)
         val available = entity.rawState !in listOf("unavailable", "unknown")
         val powerOn = entity.rawState != "off"
         val powerEnabled = available &&
             pending?.status != ThermostatCommandCoordinator.Pending.Status.WAITING &&
             (if (powerOn) controls?.supportsTurnOff == true else controls?.supportsTurnOn == true)
+        val classicRangeMode = entity.rawState == "heat_cool"
+        val rangeAvailable = controls?.targetTemperatureLow != null && controls.targetTemperatureHigh != null
         val temperatureEnabled = available &&
             powerOn &&
-            controls?.targetTemperature != null &&
+            (if (classicRangeMode) rangeAvailable else controls?.targetTemperature != null) &&
             !(
                 pending?.status == ThermostatCommandCoordinator.Pending.Status.WAITING &&
                     pending.value in listOf("on", "off")
                 )
-        val targetTemperature = units.display(
-            pending?.single?.takeIf { pending.status == ThermostatCommandCoordinator.Pending.Status.WAITING }
-                ?: controls?.targetTemperature,
-        )
+        val targetTemperature = if (classicRangeMode) {
+            val waiting = pending?.takeIf { it.status == ThermostatCommandCoordinator.Pending.Status.WAITING }
+            val low = units.display(waiting?.low ?: controls?.targetTemperatureLow)
+            val high = units.display(waiting?.high ?: controls?.targetTemperatureHigh)
+            if (low != null && high != null) "$low–$high" else null
+        } else {
+            units.display(
+                pending?.single?.takeIf { pending.status == ThermostatCommandCoordinator.Pending.Status.WAITING }
+                    ?: controls?.targetTemperature,
+            )
+        }
         return Timeline.fromLayoutElement(
             LayoutElementBuilders.Box.Builder().apply {
                 val currentTemperature = units.display(controls?.currentTemperature)
@@ -155,7 +165,7 @@ internal class ThermostatTileViews(private val context: Context) {
                                 )
                                 .setFontStyle(
                                     LayoutElementBuilders.FontStyle.Builder().setSize(
-                                        DimensionBuilders.sp(CLASSIC_TARGET_TEXT_SP),
+                                        DimensionBuilders.sp(if (classicRangeMode) 22f else CLASSIC_TARGET_TEXT_SP),
                                     ).build(),
                                 )
                                 .build(),
@@ -595,7 +605,7 @@ internal class ThermostatTileViews(private val context: Context) {
             )
             addMode(
                 if ("heat_cool" in available) "heat_cool" else "auto",
-                ICON_AUTO_HEAT,
+                ICON_HEAT,
                 context.getString(
                     if ("heat_cool" in
                         available
@@ -606,7 +616,7 @@ internal class ThermostatTileViews(private val context: Context) {
                     },
                 ),
                 0xFF6961A6.toInt(),
-                ICON_AUTO_COOL,
+                ICON_COOL,
             )
         }
         if (hasMode) column.addContent(modeRow.build())
@@ -629,10 +639,10 @@ internal class ThermostatTileViews(private val context: Context) {
         val showFan = config.showFanControl && controls.fanModes.isNotEmpty()
         val showOff = config.showHvacModes && "off" in available
         if (showFan) {
-            val on = controls.fanMode != null && controls.fanMode != "auto"
+            val on = controls.fanMode != null && controls.fanMode !in listOf("auto", "off")
             utilityRow.addContent(
                 iconButton(
-                    ICON_FAN,
+                    if (on) ICON_FAN else ICON_FAN_OFF,
                     actionPrefix + TAP_FAN,
                     on,
                     modeWidth,
@@ -649,7 +659,7 @@ internal class ThermostatTileViews(private val context: Context) {
         if (showOff) {
             utilityRow.addContent(
                 iconButton(
-                    ICON_POWER,
+                    ICON_ENHANCED_POWER,
                     actionPrefix + TAP_MODE_PREFIX + "off",
                     state == "off",
                     modeWidth,
@@ -775,7 +785,7 @@ internal class ThermostatTileViews(private val context: Context) {
         0xFF293447.toInt(),
     )
 
-    /** The five mode/utility buttons use drawables, not font-dependent symbols. */
+    /** The five mode/utility buttons use image resources, not font-dependent symbols. */
     // ProtoLayout button geometry and action semantics are independent inputs.
     @Suppress("LongParameterList")
     private fun iconButton(
@@ -791,7 +801,7 @@ internal class ThermostatTileViews(private val context: Context) {
         val content: LayoutElementBuilders.LayoutElement = if (secondIconId == null) {
             tileIcon(iconId, 25f)
         } else {
-            // Auto is two readable symbols: coral heat and blue cool.
+            // Auto is two readable symbols: red/yellow heat and blue cool.
             LayoutElementBuilders.Row.Builder()
                 .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
                 .addContent(tileIcon(iconId, 17f))

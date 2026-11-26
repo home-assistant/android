@@ -1,8 +1,6 @@
 package io.homeassistant.companion.android.tiles
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class ThermostatTemperatureLogicTest {
@@ -30,14 +28,12 @@ class ThermostatTemperatureLogicTest {
     }
 
     @Test
-    fun `top arc gestures are left to right and clamped`() {
-        assertEquals(0.5f, ThermostatTemperatureLogic.fractionFromTopArc(0f, -1f, 0f, 0f), 0.01f)
-        assertEquals(0.5f, ThermostatTemperatureLogic.normalized(70f, 50f, 90f))
-    }
-
-    @Test
-    fun `nearest heat and cool handle is selected`() {
-        assertFalse(ThermostatTemperatureLogic.chooseHighMarker(0.25f, 0.2f, 0.8f))
-        assertTrue(ThermostatTemperatureLogic.chooseHighMarker(0.75f, 0.2f, 0.8f))
+    fun `classic range preserves separation and respects limits`() {
+        assertEquals(74f to 79f, ThermostatTemperatureLogic.shiftRange(1f, 73f, 78f, 50f, 90f, 1f))
+        assertEquals(72f to 77f, ThermostatTemperatureLogic.shiftRange(-1f, 73f, 78f, 50f, 90f, 1f))
+        assertEquals(85f to 90f, ThermostatTemperatureLogic.shiftRange(3f, 84f, 89f, 50f, 90f, 1f))
+        assertEquals(50f to 55f, ThermostatTemperatureLogic.shiftRange(-3f, 51f, 56f, 50f, 90f, 1f))
+        assertEquals(85f to 90f, ThermostatTemperatureLogic.shiftRange(1f, 85f, 90f, 50f, 90f, 1f))
+        assertEquals(18.5f to 22.5f, ThermostatTemperatureLogic.shiftRange(0.5f, 18f, 22f, 5f, 30f, 0.5f))
     }
 }
