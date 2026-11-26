@@ -14,9 +14,8 @@ import kotlinx.coroutines.Job
 
 /** Restarts the BLE transmitter after a device boot or an app update. */
 @AndroidEntryPoint
-class TransmitterRestartReceiver @VisibleForTesting internal constructor(
-    dispatcher: CoroutineDispatcher,
-) : BroadcastReceiver() {
+class TransmitterRestartReceiver @VisibleForTesting internal constructor(dispatcher: CoroutineDispatcher) :
+    BroadcastReceiver() {
 
     @Inject
     lateinit var bluetoothSensorManager: BluetoothSensorManager
