@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -72,6 +73,13 @@ import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.fail
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+
+/**
+ * Number of events filling every buffer between a subscription and its collector (64 elements each
+ * for a default buffered channel, the callbackFlow and the shared flow), so delivering them would
+ * suspend if the core waited for the collector.
+ */
+private const val MANY_EVENTS = 400
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class WebSocketCoreImplTest {
@@ -171,6 +179,21 @@ class WebSocketCoreImplTest {
             )
             true
         }
+    }
+
+    private fun mockPongAnswer() {
+        every { mockConnection.send(match<String> { it.contains(""""type":"ping"""") }) } answers {
+            val id = checkNotNull(Regex(""""id":(\d+)""").find(firstArg<String>())?.groupValues?.get(1)?.toLong())
+            webSocketListener.onMessage(mockConnection, """{"id":$id,"type":"pong"}""")
+            true
+        }
+    }
+
+    private fun sendStateChangedEvent(subscriptionId: Long, entityId: String) {
+        webSocketListener.onMessage(
+            mockConnection,
+            """{"id":$subscriptionId, "type":"event", "event":{"event_type":"state_changed", "time_fired":"2016-11-26T01:37:24.265429+00:00", "data": {"entity_id":"$entityId"}}}""",
+        )
     }
 
     private fun closeConnection() {
@@ -1520,6 +1543,76 @@ class WebSocketCoreImplTest {
                 assertEquals(timeBeforeEvent, testScheduler.currentTime)
                 cancelAndIgnoreRemainingEvents()
             }
+        }
+
+        @Test
+        fun `Given a subscription whose events are not consumed When more events arrive than a channel buffer holds Then answers are still handled and no event is lost`() = runTest {
+            setupServer(backgroundScope = backgroundScope)
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+            mockResultSuccessForId(2)
+
+            // Not collected yet, like a subscription whose collector is not started
+            val flow = checkNotNull(
+                webSocketCore.subscribeTo<StateChangedEvent>(
+                    SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                    mapOf("event_type" to "state_changed"),
+                ),
+            )
+
+            repeat(MANY_EVENTS) { index -> sendStateChangedEvent(subscriptionId = 2, entityId = "light.light_$index") }
+            mockPongAnswer()
+
+            // The pong is queued behind the events, it must not wait for them to be consumed
+            assertTrue(webSocketCore.ping())
+            verify(exactly = 0) { mockConnection.cancel() }
+
+            flow.test {
+                repeat(MANY_EVENTS) { index ->
+                    assertEquals("light.light_$index", awaitItem().entityId)
+                }
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+        @Test
+        fun `Given a subscriber waiting for an answer while handling an event When more events arrive than a channel buffer holds before the answer Then the answer is handled and no event is lost`() = runTest {
+            setupServer(backgroundScope = backgroundScope)
+            prepareAuthenticationAnswer()
+            assertTrue(webSocketCore.connect())
+            mockResultSuccessForId(2)
+
+            val flow = checkNotNull(
+                webSocketCore.subscribeTo<StateChangedEvent>(
+                    SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS,
+                    mapOf("event_type" to "state_changed"),
+                ),
+            )
+
+            // The server keeps streaming events before answering the request of the subscriber
+            every { mockConnection.send(match<String> { it.contains(""""id":3""") }) } answers {
+                repeat(MANY_EVENTS) { index -> sendStateChangedEvent(subscriptionId = 2, entityId = "light.light_$index") }
+                webSocketListener.onMessage(mockConnection, """{"id":3,"type":"result","success":true,"result":{}}""")
+                true
+            }
+
+            var answered = false
+            // Like a subscriber fetching data from the server for the event it handles
+            flow.onEach { event ->
+                if (event.entityId == "light.first") {
+                    answered = webSocketCore.sendMessage(mapOf("type" to "get_states")) != null
+                }
+            }.test {
+                sendStateChangedEvent(subscriptionId = 2, entityId = "light.first")
+
+                assertEquals("light.first", awaitItem().entityId)
+                assertTrue(answered)
+                repeat(MANY_EVENTS) { index ->
+                    assertEquals("light.light_$index", awaitItem().entityId)
+                }
+                cancelAndIgnoreRemainingEvents()
+            }
+            verify(exactly = 0) { mockConnection.cancel() }
         }
 
         @Test

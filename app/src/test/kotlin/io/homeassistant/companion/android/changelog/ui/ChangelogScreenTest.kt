@@ -48,7 +48,7 @@ internal class ChangelogScreenTest {
         currentPlatform: ChangelogPlatform = ChangelogPlatform.APP,
         platforms: Set<ChangelogPlatform> = setOf(ChangelogPlatform.APP, ChangelogPlatform.WEAR),
         actionRequiresPlatform: Boolean = false,
-    ) = ChangelogUiState(
+    ) = ChangelogUiState.Content(
         versionName = VERSION_NAME,
         releaseUrl = RELEASE_URL,
         currentPlatform = currentPlatform,
