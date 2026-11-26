@@ -74,14 +74,17 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.channels.onFailure
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -325,7 +328,6 @@ internal class WebSocketCoreImpl(
         // Track pending connection state locally within the urlObserverJob scope.
         // This is read across collectLatest invocations to cancel partial connections on URL change.
         var pendingWebSocket: WebSocket? = null
-        var urlObserverJob: Job? = null
 
         connectedMutex.withLock {
             // Already connected?
@@ -348,31 +350,31 @@ internal class WebSocketCoreImpl(
             // Cancel any existing URL observer
             connectionHolder.get()?.urlObserverJob?.cancel()
 
-            urlObserverJob = wsScope.launch {
+            wsScope.launch {
+                val urlObserverJob = coroutineContext.job
                 connectionStateProvider().urlFlow()
                     .collectLatest { urlState ->
                         connectedMutex.withLock {
                             // This lock might wait for the first withLock to finish but it should be fast
                             val url = (urlState as? UrlState.HasUrl)?.url
                             if (!connectDeferred.isCompleted) {
-                                handleNewConnectionAttempt(
+                                val connected = handleNewConnectionAttempt(
                                     url = url,
                                     pendingWebSocket = pendingWebSocket,
-                                    connectDeferred = connectDeferred,
-                                    urlObserverJob = urlObserverJob!!,
+                                    urlObserverJob = urlObserverJob,
                                     setPendingWebSocket = { pendingWebSocket = it },
                                 )
+                                connectDeferred.complete(connected)
+                                if (!connected) urlObserverJob.cancel()
                             } else if (url != connectionHolder.get()?.url) {
                                 // Already connected but URL changed
                                 handleUrlChangeWhileConnected(urlState)
                             }
                         }
                     }
-            }.apply {
-                invokeOnCompletion {
-                    if (!connectDeferred.isCompleted) {
-                        connectDeferred.complete(false)
-                    }
+            }.invokeOnCompletion {
+                if (!connectDeferred.isCompleted) {
+                    connectDeferred.complete(false)
                 }
             }
         }
@@ -401,16 +403,16 @@ internal class WebSocketCoreImpl(
     }
 
     /**
-     * Handles a new connection attempt when not yet connected.
-     * This is called when the URL flow emits before [connectDeferred] is completed.
+     * Cancels any [pendingWebSocket] and tries to connect to [url].
+     *
+     * @return `true` when the socket is authenticated and its [ConnectionHolder] is stored, `false` on failure.
      */
     private suspend fun handleNewConnectionAttempt(
         url: URL?,
         pendingWebSocket: WebSocket?,
-        connectDeferred: CompletableDeferred<Boolean>,
         urlObserverJob: Job,
         setPendingWebSocket: (WebSocket?) -> Unit,
-    ) {
+    ): Boolean {
         // Clean up any partial connection before using this URL.
         connectionHolder.set(null)
         pendingWebSocket?.cancel()
@@ -420,17 +422,11 @@ internal class WebSocketCoreImpl(
         if (url == null) {
             Timber.w("No URL available to open WebSocket connection")
             connectionState = WebSocketState.ClosedOther
-            connectDeferred.complete(false)
-            urlObserverJob.cancel()
-            return
+            return false
         }
 
-        when (val attemptResult = attemptWebSocketConnection(url)) {
-            is ConnectionAttemptResult.Failed -> {
-                connectDeferred.complete(false)
-                urlObserverJob.cancel()
-            }
-
+        return when (val attemptResult = attemptWebSocketConnection(url)) {
+            is ConnectionAttemptResult.Failed -> false
             is ConnectionAttemptResult.Success -> {
                 val webSocket = attemptResult.webSocket
                 setPendingWebSocket(webSocket)
@@ -441,7 +437,7 @@ internal class WebSocketCoreImpl(
                     urlObserverJob = urlObserverJob,
                 )
                 if (authSuccess) restoreLeftoverSubscriptions()
-                connectDeferred.complete(authSuccess)
+                authSuccess
             }
         }
     }
@@ -686,6 +682,11 @@ internal class WebSocketCoreImpl(
         }
     }
 
+    override suspend fun <T : Any> firstEventOf(type: String, data: Map<String, Any?>): T? {
+        // Never shared and not restored: the event is the answer to this one request
+        return subscribeTo<T>(type, data, reconnectPolicy = SubscriptionReconnectPolicy.Complete)?.firstOrNull()
+    }
+
     override fun shutdown() {
         Timber.i("Shutting down websocket")
         close(1001, "Session removed from app.")
@@ -809,7 +810,8 @@ internal class WebSocketCoreImpl(
         timeout: Duration,
         reconnectPolicy: SubscriptionReconnectPolicy,
     ): Flow<T>? {
-        val channel = Channel<T>(capacity = Channel.BUFFERED)
+        // Unlimited so that delivering an event never suspends the inbound message queue, see handleEvent
+        val channel = Channel<T>(capacity = Channel.UNLIMITED)
         val flow = callbackFlow<T> {
             launch {
                 channel.consumeAsFlow().collect(::send)
@@ -940,7 +942,7 @@ internal class WebSocketCoreImpl(
             null -> null
         }
 
-    private suspend fun handleEvent(response: EventSocketResponse) {
+    private fun handleEvent(response: EventSocketResponse) {
         // TODO https://github.com/home-assistant/android/issues/5271
         val subscriptionId = response.id
         val activeMessage = subscriptionForEvent(subscriptionId)
@@ -1064,12 +1066,13 @@ internal class WebSocketCoreImpl(
                 return
             }
 
-        try {
-            activeMessage.onEvent.send(message)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            Timber.e(e, "Unable to send event message to channel")
+        // Never suspend here: events, results and pongs share the sequential inbound message queue, so
+        // waiting for a subscriber that is slow or not collecting yet would hold back every answer
+        // until it times out, see https://github.com/home-assistant/android/issues/7810
+        activeMessage.onEvent.trySend(message).onFailure { e ->
+            // The channel of an unlimited capacity only refuses events once closed, which is expected
+            // while the subscription is being torn down
+            Timber.d(e, "Dropping event for closed subscription id=$subscriptionId")
         }
     }
 

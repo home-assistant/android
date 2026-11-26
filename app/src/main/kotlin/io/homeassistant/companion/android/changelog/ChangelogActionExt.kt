@@ -19,6 +19,10 @@ internal suspend fun ChangelogAction.perform(
             SettingsActivity.newInstance(context, deeplink),
         )
 
+        is ChangelogAction.OpenSensor -> context.startActivity(
+            SettingsActivity.newInstance(context, SettingsActivity.Deeplink.Sensor(sensorId)),
+        )
+
         is ChangelogAction.OpenWidgetConfig -> context.startActivity(widgetType.toConfigureIntent(context))
 
         ChangelogAction.OpenAssist -> context.startActivity(AssistActivity.newInstance(context))

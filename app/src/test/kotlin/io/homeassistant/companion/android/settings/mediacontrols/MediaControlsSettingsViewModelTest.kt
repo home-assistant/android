@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.settings.mediacontrols
 
 import app.cash.turbine.test
-import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
@@ -74,7 +73,7 @@ class MediaControlsSettingsViewModelTest {
         coEvery { mediaControlsRepository.removeEntity(any()) } coAnswers {
             configuredEntitiesFlow.value = configuredEntitiesFlow.value - firstArg<MediaControlsEntityConfig>()
         }
-        every { entitiesForDisplayManager.snapshotInContext(any(), any<(Entity) -> Boolean>()) } returns flowOf(
+        every { entitiesForDisplayManager.snapshotInContext(any(), any()) } returns flowOf(
             EntityDisplayState.Loading,
         )
     }
@@ -161,7 +160,7 @@ class MediaControlsSettingsViewModelTest {
         @Test
         fun `Given a configured entity when entities resolve then it is left out of availableEntities`() = runTest(testDispatcher) {
             every {
-                entitiesForDisplayManager.snapshotInContext(DEFAULT_SERVER_ID, any<(Entity) -> Boolean>())
+                entitiesForDisplayManager.snapshotInContext(DEFAULT_SERVER_ID, any())
             } returns flowOf(
                 EntityDisplayState.Loaded(
                     listOf(fakeItem("media_player.tv"), fakeItem("media_player.radio")),
@@ -211,7 +210,7 @@ class MediaControlsSettingsViewModelTest {
         @Test
         fun `Given resolved entities when a configured entity belongs to them then its display is resolved`() = runTest(testDispatcher) {
             every {
-                entitiesForDisplayManager.snapshotInContext(DEFAULT_SERVER_ID, any<(Entity) -> Boolean>())
+                entitiesForDisplayManager.snapshotInContext(DEFAULT_SERVER_ID, any())
             } returns flowOf(EntityDisplayState.Loaded(listOf(fakeItem("media_player.tv", name = "Television"))))
             configuredEntitiesFlow.value = listOf(
                 MediaControlsEntityConfig(serverId = DEFAULT_SERVER_ID, entityId = "media_player.tv"),

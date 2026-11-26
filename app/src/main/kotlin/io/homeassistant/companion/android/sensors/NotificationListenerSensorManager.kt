@@ -1,7 +1,6 @@
 package io.homeassistant.companion.android.sensors
 
 import android.Manifest
-import android.app.Notification
 import android.app.UiModeManager
 import android.content.ComponentName
 import android.content.Context
@@ -21,6 +20,7 @@ import io.github.timoptr.mdiicons.generated.BellRing
 import io.github.timoptr.mdiicons.generated.PlayCircle
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.notifications.isSystemGeneratedGroupSummary
 import io.homeassistant.companion.android.common.sensors.ProvidesSensor
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.sensors.SensorManager.BasicSensor.Setting
@@ -37,16 +37,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-
-/**
- * Mirrors the hidden `Notification.FLAG_AUTOGROUP_SUMMARY` system API. Android sets it on every summary it
- * creates when auto-grouping an app's notifications since auto-grouping was introduced in API 24, both for the
- * `ranker_group` group and the `Aggregate_*` groups of Android 16+.
- *
- * Defined in [Notification.java](https://cs.android.com/android/platform/superproject/main/+/03b7b057c4e76cafc1f96d349adcd60ac0320a5e:frameworks/base/core/java/android/app/Notification.java;l=708).
- */
-@VisibleForTesting
-internal const val FLAG_AUTOGROUP_SUMMARY = 0x00000400
 
 /**
  * Sensor manager for the notification sensors. Owns the basic sensors, availability, permission and
@@ -385,14 +375,6 @@ class NotificationListenerSensorManager @VisibleForTesting internal constructor(
     }
 
     private data class NotificationSettings(val allowPackages: List<String>, val disableAllowListRequirement: Boolean)
-
-    /**
-     * Whether this notification is a group summary that Android generated on behalf of the app.
-     *
-     * Such summaries carry no content of their own and are posted right after the real notification, so reporting
-     * them would replace the real notification data with an empty one.
-     */
-    private fun Notification.isSystemGeneratedGroupSummary(): Boolean = (flags and FLAG_AUTOGROUP_SUMMARY) != 0
 
     private fun getPlaybackState(state: Int?): String {
         return mediaStates.getOrDefault(state ?: PlaybackState.STATE_NONE, STATE_UNKNOWN)

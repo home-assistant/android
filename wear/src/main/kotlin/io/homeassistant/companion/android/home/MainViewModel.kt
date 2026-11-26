@@ -12,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.HomeAssistantApplication
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
@@ -276,9 +277,10 @@ class MainViewModel @Inject constructor(
      */
     suspend fun observeEntities() = withContext(Dispatchers.Default) {
         entitiesForDisplayManager
-            .observeInContext(ServerManager.SERVER_ID_ACTIVE) {
-                it.domain in supportedDomains() || it.domain in tileDomains
-            }
+            .observeInContext(
+                ServerManager.SERVER_ID_ACTIVE,
+                EntityFilter(domains = (supportedDomains() + tileDomains).toSet()),
+            )
             .collect { state ->
                 if (state !is EntityDisplayState.Loaded) return@collect
 

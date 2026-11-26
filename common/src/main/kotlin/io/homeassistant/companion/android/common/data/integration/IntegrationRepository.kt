@@ -44,10 +44,21 @@ interface IntegrationRepository {
     suspend fun getConfig(): GetConfigResponse
     suspend fun getServices(): List<Action>?
 
-    suspend fun getEntities(): List<Entity>?
+    /**
+     * Current state of the entities selected by [filter], sorted by entity id, or of every entity
+     * when it is empty. Pass a filter whenever possible: servers supporting it (2022.4 for ids,
+     * 2024.9 for domains) only send the selected states. Returns null when the states can't be
+     * retrieved.
+     */
+    suspend fun getEntities(filter: EntityFilter = EntityFilter()): List<Entity>?
     suspend fun getEntity(entityId: String): Entity?
-    suspend fun getEntityUpdates(): Flow<Entity>?
-    suspend fun getEntityUpdates(entityIds: List<String>): Flow<Entity>?
+
+    /**
+     * State changes and removals of the entities selected by [filter], or of every entity when it
+     * is empty. Pass a filter whenever possible: servers supporting it (2022.4 for ids, 2024.9 for
+     * domains) only send the selected changes. Returns null when the changes can't be followed.
+     */
+    suspend fun getEntityChanges(filter: EntityFilter = EntityFilter()): Flow<EntityChange>?
 
     suspend fun callAction(domain: String, action: String, actionData: Map<String, Any?>)
 
