@@ -9,7 +9,7 @@ import android.os.Looper
 import android.util.Rational
 import android.view.WindowManager
 import androidx.biometric.BiometricPrompt
-import androidx.biometric.biometricClientCallback
+import androidx.biometric.BiometricViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.core.app.ActivityScenario
@@ -230,6 +230,26 @@ class LaunchActivityTest {
     }
 
     @Test
+    fun `Given app lock enabled when authentication succeeds on the first attempt then the app unlocks`() {
+        enableAppLock()
+
+        ActivityScenario.launch(LaunchActivity::class.java).use { scenario ->
+            shadowOf(Looper.getMainLooper()).idle()
+            scenario.onActivity { activity ->
+                val viewModel = launchViewModelOf(activity)
+                val callback = requireNotNull(activity.biometricClientCallback())
+
+                assertTrue(viewModel.isAppLocked.value)
+
+                callback.onAuthenticationSucceeded(mockk(relaxed = true))
+                shadowOf(Looper.getMainLooper()).idle()
+
+                assertFalse(viewModel.isAppLocked.value)
+            }
+        }
+    }
+
+    @Test
     fun `Given a rejected biometric attempt when authentication later succeeds then the app stays locked until success unlocks it`() {
         enableAppLock()
 
@@ -298,6 +318,16 @@ class LaunchActivityTest {
                 assertTrue(activity.isFinishing)
             }
         }
+    }
+
+    // `BiometricViewModel.getClientCallback()` is package-private in androidx.biometric, so reflect
+    // into it to retrieve the callback the activity registered with its `BiometricPrompt`. This lets
+    // the test drive the real authentication callbacks without adding code to the androidx package.
+    private fun LaunchActivity.biometricClientCallback(): BiometricPrompt.AuthenticationCallback? {
+        val biometricViewModel = ViewModelProvider(this)[BiometricViewModel::class.java]
+        val getClientCallback = BiometricViewModel::class.java.getDeclaredMethod("getClientCallback")
+        getClientCallback.isAccessible = true
+        return getClientCallback.invoke(biometricViewModel) as BiometricPrompt.AuthenticationCallback?
     }
 
     // `Activity.onUserLeaveHint` is `protected`, so reflect into Activity to dispatch through
