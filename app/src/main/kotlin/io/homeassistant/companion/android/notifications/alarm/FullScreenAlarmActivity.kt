@@ -35,6 +35,7 @@ import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.fromHaName
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -137,8 +138,7 @@ class FullScreenAlarmActivity : BaseActivity() {
                 hasBeenPosted = true
                 if (notification.postTime != imagePostTime) {
                     imagePostTime = notification.postTime
-                    val extras = notification.notification.extras
-                    image = withContext(Dispatchers.IO) { extras.loadPicture(this@FullScreenAlarmActivity) }
+                    image = loadPicture(notification.notification.extras, context = this)
                 }
                 uiState.value = notification.toUiState()
             } else {
@@ -243,12 +243,16 @@ class FullScreenAlarmActivity : BaseActivity() {
 }
 
 /**
- * Loads the picture of the notification's big picture style, set from its `image` option. Android 12+ keeps
- * animated pictures as an icon pointing to a file, and other pictures as a bitmap.
+ * Loads the picture of the notification's big picture style from its [extras], set from its `image` option.
+ * Android 12+ keeps animated pictures as an icon pointing to a file, and other pictures as a bitmap.
  */
-private fun Bundle.loadPicture(context: Context): ImageBitmap? {
-    val pictureIcon = BundleCompat.getParcelable(this, NotificationCompat.EXTRA_PICTURE_ICON, Icon::class.java)
+private suspend fun loadPicture(
+    extras: Bundle,
+    context: Context,
+    ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+): ImageBitmap? = withContext(ioDispatcher) {
+    val pictureIcon = BundleCompat.getParcelable(extras, NotificationCompat.EXTRA_PICTURE_ICON, Icon::class.java)
     val picture = pictureIcon?.loadDrawable(context)?.toBitmap()
-        ?: BundleCompat.getParcelable(this, NotificationCompat.EXTRA_PICTURE, Bitmap::class.java)
-    return picture?.asImageBitmap()
+        ?: BundleCompat.getParcelable(extras, NotificationCompat.EXTRA_PICTURE, Bitmap::class.java)
+    picture?.asImageBitmap()
 }
