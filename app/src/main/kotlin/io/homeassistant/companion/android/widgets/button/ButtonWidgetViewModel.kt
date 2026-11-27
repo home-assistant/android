@@ -93,7 +93,17 @@ internal class ButtonWidgetViewModel @AssistedInject constructor(
     }
 
     fun updateActionText(newAction: String) {
-        updateState { it.copy(actionText = newAction) }
+        val selectedServerId = currentState().selectedServerId
+        val allActions = actions[selectedServerId]?.values.orEmpty().toList()
+        val filteredActions = if (newAction.isBlank()) {
+            allActions
+        } else {
+            allActions.filter { action ->
+                "${action.domain}.${action.action}".contains(newAction, ignoreCase = true)
+            }
+        }
+        updateState { it.copy(actionText = newAction, serverActions = filteredActions) }
+
         updateActionFields(newAction)
     }
 

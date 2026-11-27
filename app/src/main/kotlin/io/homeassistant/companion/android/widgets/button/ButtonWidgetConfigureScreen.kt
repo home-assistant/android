@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenu
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarHostState
@@ -209,36 +211,40 @@ fun ActionTextFieldInput(
     modifier: Modifier = Modifier,
 ) {
     var isActionDropdownExpanded by remember { mutableStateOf(false) }
-    Box {
+    ExposedDropdownMenuBox(
+        expanded = isActionDropdownExpanded && serverActions.isNotEmpty(),
+        onExpandedChange = { isActionDropdownExpanded = it },
+        modifier = modifier,
+    ) {
         HATextField(
             label = { Text(text = stringResource(commonR.string.label_action)) },
             value = value,
-            onValueChange = onValueChange,
-            modifier = modifier
+            onValueChange = { newValue ->
+                onValueChange(newValue)
+                isActionDropdownExpanded = true
+            },
+            modifier = Modifier
                 .fillMaxWidth()
                 .onFocusChanged { state ->
                     isActionDropdownExpanded = state.hasFocus
                 },
         )
-        if (serverActions.isNotEmpty()) {
-            DropdownMenu(
-                expanded = isActionDropdownExpanded,
-                onDismissRequest = {
-                    isActionDropdownExpanded = false
-                },
-                properties = PopupProperties(focusable = false),
-            ) {
-                serverActions.forEach { action ->
-                    val text = "${action.domain}.${action.action}"
-                    DropdownMenuItem(
-                        text = { Text(text = text) },
-                        onClick = {
-                            onValueChange(text)
-                            isActionDropdownExpanded = false
-                        },
-                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                    )
-                }
+        ExposedDropdownMenu(
+            expanded = isActionDropdownExpanded && serverActions.isNotEmpty(),
+            onDismissRequest = {
+                isActionDropdownExpanded = false
+            },
+        ) {
+            serverActions.forEach { action ->
+                val text = "${action.domain}.${action.action}"
+                DropdownMenuItem(
+                    text = { Text(text = text) },
+                    onClick = {
+                        onValueChange(text)
+                        isActionDropdownExpanded = false
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                )
             }
         }
     }
