@@ -529,15 +529,13 @@ class MainViewModel @Inject constructor(
 
     private fun updateThermostatTile(tileId: Int, update: (ThermostatTile) -> ThermostatTile) = viewModelScope.launch {
         thermostatSettingsMutex.withLock {
-            withContext(Dispatchers.IO) {
-                val current = thermostatTileDao.get(tileId)
-                val updated = update(
-                    current ?: ThermostatTile(id = tileId, layoutStyle = ThermostatLayoutStyle.ENHANCED),
-                )
-                thermostatTileDao.add(updated)
-                if (current == null || updated.layoutStyle != current.layoutStyle) {
-                    wearPrefsRepository.setThermostatLayoutInvitationAcknowledged(tileId, true)
-                }
+            val current = thermostatTileDao.get(tileId)
+            val updated = update(
+                current ?: ThermostatTile(id = tileId, layoutStyle = ThermostatLayoutStyle.ENHANCED),
+            )
+            thermostatTileDao.add(updated)
+            if (current == null || updated.layoutStyle != current.layoutStyle) {
+                wearPrefsRepository.setThermostatLayoutInvitationAcknowledged(tileId, true)
             }
         }
         TileService.getUpdater(getApplication<Application>()).requestUpdate(

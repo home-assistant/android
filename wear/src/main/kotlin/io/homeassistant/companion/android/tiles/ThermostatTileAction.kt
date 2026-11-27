@@ -9,6 +9,10 @@ import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_ACTION_UP
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_FAN
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_MODE_PREFIX
 
+private const val TEMPERATURE_ACTION_PARTS = 3
+private const val MIN_SECONDARY_STEP = 2
+private const val MAX_SECONDARY_STEP = 10
+
 /** Resolve only the gesture; the coordinator owns the current and pending command baselines. */
 internal sealed interface ThermostatTileAction {
     data class Adjust(val slot: TemperatureSlot, val amount: Float) : ThermostatTileAction
@@ -52,7 +56,7 @@ private fun enhancedAction(action: String, config: ThermostatTile, controls: Cli
 
 private fun temperatureAction(action: String, config: ThermostatTile): ThermostatTileAction? {
     val items = action.split(":")
-    if (items.size != 3) return null
+    if (items.size != TEMPERATURE_ACTION_PARTS) return null
     val slot = when (items[1]) {
         "single" -> TemperatureSlot.SINGLE
         "heat" -> TemperatureSlot.HEAT
@@ -69,6 +73,6 @@ private fun temperatureAction(action: String, config: ThermostatTile): Thermosta
 
 private fun isDisplayedAdjustment(amount: Float, config: ThermostatTile): Boolean {
     val magnitude = kotlin.math.abs(amount)
-    val secondary = config.secondaryStep.coerceIn(2, 10).toFloat()
+    val secondary = config.secondaryStep.coerceIn(MIN_SECONDARY_STEP, MAX_SECONDARY_STEP).toFloat()
     return magnitude == 1f || (config.showSecondaryButtons && magnitude == secondary)
 }

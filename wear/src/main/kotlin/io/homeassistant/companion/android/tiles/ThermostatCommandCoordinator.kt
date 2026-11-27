@@ -6,6 +6,7 @@ import android.content.Context
 import android.os.PowerManager
 import androidx.wear.tiles.TileService
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.homeassistant.companion.android.common.data.integration.ClimateControls
 import io.homeassistant.companion.android.common.data.integration.EntityChange
 import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationRepository
@@ -414,49 +415,72 @@ internal class ThermostatCommandCoordinator internal constructor(
             // A mode change may invalidate the layout from which the tap originated.
             val pendingMode = waiting(target, CommandKind.HVAC)?.value
             if (pendingMode != null && pendingMode != entity.rawState) return@withFreshBaseline
-            val step = units.serverStep(controls.targetTemperatureStep)
-            val min = controls.minTemperature ?: units.minimum()
-            val max = controls.maxTemperature ?: units.maximum()
-            val classic = slot == TemperatureSlot.CLASSIC_SINGLE || slot == TemperatureSlot.CLASSIC_RANGE
-            val delta = if (classic && !units.hasOverride) amount * step else units.adjustment(amount, step)
-            val pending = waiting(target, CommandKind.TEMPERATURE)
+            val bounds = TemperatureBounds(
+                step = units.serverStep(controls.targetTemperatureStep),
+                minimum = controls.minTemperature ?: units.minimum(),
+                maximum = controls.maxTemperature ?: units.maximum(),
+            )
+            val delta = temperatureDelta(units, slot, amount, bounds.step)
             if (entity.rawState == "heat_cool") {
-                val low = pending?.low ?: controls.targetTemperatureLow ?: return@withFreshBaseline
-                val high = pending?.high ?: controls.targetTemperatureHigh ?: return@withFreshBaseline
-                val setpoints = SetpointRange(low, high)
-                val revised = when (slot) {
-                    TemperatureSlot.CLASSIC_RANGE -> ThermostatTemperatureLogic.shiftRange(
-                        delta,
-                        setpoints,
-                        min,
-                        max,
-                        step,
-                    )
-                    TemperatureSlot.HEAT -> ThermostatTemperatureLogic.adjustRange(
-                        low + delta,
-                        false,
-                        setpoints,
-                        min,
-                        max,
-                        step,
-                    )
-                    TemperatureSlot.COOL -> ThermostatTemperatureLogic.adjustRange(
-                        high + delta,
-                        true,
-                        setpoints,
-                        min,
-                        max,
-                        step,
-                    )
-                    else -> return@withFreshBaseline
-                }
-                if (revised != setpoints) submitTemperatureLocked(target, true, revised.low, revised.high, null)
+                adjustRangeLocked(target, slot, controls, delta, bounds)
             } else if (slot == TemperatureSlot.SINGLE || slot == TemperatureSlot.CLASSIC_SINGLE) {
-                val baseline = pending?.single ?: controls.targetTemperature ?: return@withFreshBaseline
-                val proposed = ThermostatTemperatureLogic.snap(baseline + delta, step, min, max)
-                if (proposed != baseline) submitTemperatureLocked(target, false, null, null, proposed)
+                adjustSingleLocked(target, controls, delta, bounds)
             }
         }
+    }
+
+    private data class TemperatureBounds(val step: Float, val minimum: Float, val maximum: Float)
+
+    private fun temperatureDelta(
+        units: ThermostatDisplayUnits,
+        slot: TemperatureSlot,
+        amount: Float,
+        step: Float,
+    ): Float {
+        val classic = slot == TemperatureSlot.CLASSIC_SINGLE || slot == TemperatureSlot.CLASSIC_RANGE
+        return if (classic && !units.hasOverride) amount * step else units.adjustment(amount, step)
+    }
+
+    private fun adjustRangeLocked(
+        target: Target,
+        slot: TemperatureSlot,
+        controls: ClimateControls,
+        delta: Float,
+        bounds: TemperatureBounds,
+    ) {
+        val pending = waiting(target, CommandKind.TEMPERATURE)
+        val low = pending?.low ?: controls.targetTemperatureLow ?: return
+        val high = pending?.high ?: controls.targetTemperatureHigh ?: return
+        val setpoints = SetpointRange(low, high)
+        val (step, min, max) = bounds
+        val revised = when (slot) {
+            TemperatureSlot.CLASSIC_RANGE -> ThermostatTemperatureLogic.shiftRange(delta, setpoints, min, max, step)
+            TemperatureSlot.HEAT -> ThermostatTemperatureLogic.adjustRange(
+                low + delta,
+                false,
+                setpoints,
+                min,
+                max,
+                step,
+            )
+            TemperatureSlot.COOL -> ThermostatTemperatureLogic.adjustRange(
+                high + delta,
+                true,
+                setpoints,
+                min,
+                max,
+                step,
+            )
+            else -> setpoints
+        }
+        if (revised != setpoints) submitTemperatureLocked(target, true, revised.low, revised.high, null)
+    }
+
+    private fun adjustSingleLocked(target: Target, controls: ClimateControls, delta: Float, bounds: TemperatureBounds) {
+        val pending = waiting(target, CommandKind.TEMPERATURE)
+        val baseline = pending?.single ?: controls.targetTemperature ?: return
+        val proposed = ThermostatTemperatureLogic.snap(baseline + delta, bounds.step, bounds.minimum, bounds.maximum)
+        if (proposed != baseline) submitTemperatureLocked(target, false, null, null, proposed)
     }
 
     suspend fun cycleFan(target: Target) {

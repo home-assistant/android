@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.tiles
 
+import android.content.Context
 import android.graphics.Bitmap
 import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.ResourceBuilders
@@ -60,11 +61,7 @@ class ThermostatTile : TileService() {
     companion object {
         private const val TAG = "ThermostatTile"
         const val DEFAULT_REFRESH_INTERVAL = 600L
-        private const val PENDING_CACHE_MAX_AGE_MS = 3_000L
-        private const val CACHE_MAX_AGE_MS = 5_000L
         private const val MODE_ICON_SIZE_DP = 25f
-        private const val ENTITY_FETCH_TIMEOUT_MS = 6_000L
-        private const val PENDING_REFRESH_INTERVAL_SECONDS = 5L
         private const val COOL_ICON_COLOR = 0xFF38BDF8.toInt()
         private const val FAN_ICON_COLOR = 0xFF22C55E.toInt()
         private const val INACTIVE_ICON_COLOR = 0xFF9CA3AF.toInt()
@@ -87,6 +84,10 @@ class ThermostatTile : TileService() {
 
     @Inject
     lateinit var thermostatMetadata: ThermostatMetadata
+
+    private val renderer by lazy {
+        ThermostatTileRenderer(this, serverManager, commandCoordinator, thermostatMetadata)
+    }
 
     private suspend fun shouldShowInvitation(config: ThermostatTile?, tileId: Int): Boolean {
         if (config == null || config.layoutStyle != ThermostatLayoutStyle.CLASSIC || config.entityId.isNullOrBlank()) {
@@ -128,7 +129,7 @@ class ThermostatTile : TileService() {
                         HomeActivity.Companion.LaunchMode.ThermostatTile,
                     ),
                 ).build()
-                else -> configuredTile(tile, config, requestParams, freshness)
+                else -> renderer.configuredTile(tile, config, requestParams, freshness)
             }
         }
 
@@ -147,138 +148,6 @@ class ThermostatTile : TileService() {
             wearPrefsRepository.setThermostatLayoutInvitationAcknowledged(tileId, true)
             updated
         }
-
-    private suspend fun configuredTile(
-        tile: Tile.Builder,
-        config: ThermostatTile,
-        request: RequestBuilders.TileRequest,
-        freshness: Long,
-    ): Tile = try {
-        renderConfiguredTile(tile, config, request, freshness)
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Timber.e(e, "Unable to fetch entity ${config.entityId}")
-        tile.setTileTimeline(
-            primaryLayoutTimeline(
-                this,
-                request,
-                null,
-                commonR.string.tile_fetch_entity_error,
-                commonR.string.refresh,
-                ActionBuilders.LoadAction.Builder().build(),
-            ),
-        ).build()
-    }
-
-    private suspend fun renderConfiguredTile(
-        tile: Tile.Builder,
-        config: ThermostatTile,
-        request: RequestBuilders.TileRequest,
-        freshness: Long,
-    ): Tile {
-        val entityId = checkNotNull(config.entityId)
-        val serverId = checkNotNull(serverManager.getServer()) { "No active server" }.id
-        val target = ThermostatCommandCoordinator.Target(serverId, entityId)
-        val cached = commandCoordinator.cachedEntity(target)
-        val entity = cached ?: fetchEntity(target)
-        checkNotNull(entity) { "Thermostat state not yet available: $entityId" }
-        val metadata = thermostatMetadata.resolve(target, entity)
-        val units = ThermostatDisplayUnits(metadata.sourceUnit, config.temperatureUnit)
-        val actionPrefix = units.actionPrefix(target.actionPrefix)
-        val clickedId = request.currentState.lastClickableId
-        val action = resolveThermostatAction(clickedId, actionPrefix, config, entity.rawState, entity.climateControls)
-        dispatchAction(target, units, action)
-        val pending = refreshState(request, config, target, actionPrefix, cached != null)
-        if (pending != null) {
-            val interval = if (freshness == 0L) {
-                PENDING_REFRESH_INTERVAL_SECONDS
-            } else {
-                minOf(freshness, PENDING_REFRESH_INTERVAL_SECONDS)
-            }
-            tile.setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(interval))
-        }
-        val temperatureUnit = metadata.sourceUnit ?: "°"
-        val displayEntity = entity.copy(name = metadata.name)
-        val views = ThermostatTileViews(this)
-        return tile.setTileTimeline(
-            when (config.layoutStyle) {
-                ThermostatLayoutStyle.CLASSIC -> views.classicTimeline(
-                    config,
-                    displayEntity,
-                    temperatureUnit,
-                    pending,
-                    actionPrefix,
-                )
-                ThermostatLayoutStyle.ENHANCED -> views.enhancedTimeline(
-                    config,
-                    displayEntity,
-                    temperatureUnit,
-                    pending,
-                    actionPrefix,
-                    request.deviceConfiguration.screenWidthDp,
-                    request.deviceConfiguration.screenHeightDp,
-                )
-            },
-        ).build()
-    }
-
-    // Render warm tiles immediately; fetch only the selected entity on a cache miss.
-    private suspend fun fetchEntity(target: ThermostatCommandCoordinator.Target): EntityDisplayWithoutContext? =
-        withTimeoutOrNull(ENTITY_FETCH_TIMEOUT_MS) {
-            serverManager.integrationRepository(target.serverId).getEntity(target.entityId)
-                ?.let { EntityDisplayWithoutContext(it) }
-                ?.also { commandCoordinator.rememberEntity(target, it) }
-        }
-
-    private suspend fun dispatchAction(
-        target: ThermostatCommandCoordinator.Target,
-        units: ThermostatDisplayUnits,
-        action: ThermostatTileAction?,
-    ) {
-        when (action) {
-            is ThermostatTileAction.Adjust -> commandCoordinator.adjustTemperature(
-                target,
-                units,
-                action.slot,
-                action.amount,
-            )
-            is ThermostatTileAction.Mode -> commandCoordinator.submitHvac(target, action.mode)
-            ThermostatTileAction.Fan -> commandCoordinator.cycleFan(target)
-            null -> Unit
-        }
-    }
-
-    private suspend fun refreshState(
-        request: RequestBuilders.TileRequest,
-        config: ThermostatTile,
-        target: ThermostatCommandCoordinator.Target,
-        actionPrefix: String,
-        hadCachedEntity: Boolean,
-    ): ThermostatCommandCoordinator.Pending? {
-        val clickedId = request.currentState.lastClickableId
-        if (config.refreshInterval != 0L) {
-            val visibleAt = if (clickedId.startsWith(actionPrefix) && clickedId.length > actionPrefix.length) {
-                commandCoordinator.nowMillis()
-            } else {
-                request.lastVisibleTime.toEpochMilli()
-            }
-            commandCoordinator.observeVisibleTile(request.tileId, target, visibleAt)
-        } else {
-            commandCoordinator.stopObservingTile(request.tileId)
-        }
-        val pending = commandCoordinator.get(target)
-        // A manual tap bypasses cache age and retry gates; a cold tile already fetched above.
-        if (clickedId != MODIFIER_CLICK_REFRESH || hadCachedEntity) {
-            val maxAge = when {
-                clickedId == MODIFIER_CLICK_REFRESH -> 0L
-                pending != null -> PENDING_CACHE_MAX_AGE_MS
-                else -> CACHE_MAX_AGE_MS
-            }
-            commandCoordinator.refreshEntityIfStale(target, maxAge)
-        }
-        return pending
-    }
 
     override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> =
         serviceScope.future {
@@ -396,5 +265,152 @@ class ThermostatTile : TileService() {
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()
+    }
+}
+
+/** Renders configured tiles and routes gestures, independently of the TileService lifecycle. */
+private class ThermostatTileRenderer(
+    private val context: Context,
+    private val serverManager: ServerManager,
+    private val commandCoordinator: ThermostatCommandCoordinator,
+    private val thermostatMetadata: ThermostatMetadata,
+) {
+    private companion object {
+        const val PENDING_CACHE_MAX_AGE_MS = 3_000L
+        const val CACHE_MAX_AGE_MS = 5_000L
+        const val ENTITY_FETCH_TIMEOUT_MS = 6_000L
+        const val PENDING_REFRESH_INTERVAL_SECONDS = 5L
+    }
+
+    suspend fun configuredTile(
+        tile: Tile.Builder,
+        config: ThermostatTile,
+        request: RequestBuilders.TileRequest,
+        freshness: Long,
+    ): Tile = try {
+        renderConfiguredTile(tile, config, request, freshness)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Timber.e(e, "Unable to fetch entity ${config.entityId}")
+        tile.setTileTimeline(
+            primaryLayoutTimeline(
+                context,
+                request,
+                null,
+                commonR.string.tile_fetch_entity_error,
+                commonR.string.refresh,
+                ActionBuilders.LoadAction.Builder().build(),
+            ),
+        ).build()
+    }
+
+    private suspend fun renderConfiguredTile(
+        tile: Tile.Builder,
+        config: ThermostatTile,
+        request: RequestBuilders.TileRequest,
+        freshness: Long,
+    ): Tile {
+        val entityId = checkNotNull(config.entityId)
+        val serverId = checkNotNull(serverManager.getServer()) { "No active server" }.id
+        val target = ThermostatCommandCoordinator.Target(serverId, entityId)
+        val cached = commandCoordinator.cachedEntity(target)
+        val entity = cached ?: fetchEntity(target)
+        checkNotNull(entity) { "Thermostat state not yet available: $entityId" }
+        val metadata = thermostatMetadata.resolve(target, entity)
+        val units = ThermostatDisplayUnits(metadata.sourceUnit, config.temperatureUnit)
+        val actionPrefix = units.actionPrefix(target.actionPrefix)
+        val clickedId = request.currentState.lastClickableId
+        val action = resolveThermostatAction(clickedId, actionPrefix, config, entity.rawState, entity.climateControls)
+        dispatchAction(target, units, action)
+        val pending = refreshState(request, config, target, actionPrefix, cached != null)
+        if (pending != null) {
+            val interval = if (freshness == 0L) {
+                PENDING_REFRESH_INTERVAL_SECONDS
+            } else {
+                minOf(freshness, PENDING_REFRESH_INTERVAL_SECONDS)
+            }
+            tile.setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(interval))
+        }
+        val temperatureUnit = metadata.sourceUnit ?: "°"
+        val displayEntity = entity.copy(name = metadata.name)
+        val views = ThermostatTileViews(context)
+        return tile.setTileTimeline(
+            when (config.layoutStyle) {
+                ThermostatLayoutStyle.CLASSIC -> views.classicTimeline(
+                    config,
+                    displayEntity,
+                    temperatureUnit,
+                    pending,
+                    actionPrefix,
+                )
+                ThermostatLayoutStyle.ENHANCED -> views.enhancedTimeline(
+                    config,
+                    displayEntity,
+                    temperatureUnit,
+                    pending,
+                    actionPrefix,
+                    request.deviceConfiguration.screenWidthDp,
+                    request.deviceConfiguration.screenHeightDp,
+                )
+            },
+        ).build()
+    }
+
+    // Render warm tiles immediately; fetch only the selected entity on a cache miss.
+    private suspend fun fetchEntity(target: ThermostatCommandCoordinator.Target): EntityDisplayWithoutContext? =
+        withTimeoutOrNull(ENTITY_FETCH_TIMEOUT_MS) {
+            serverManager.integrationRepository(target.serverId).getEntity(target.entityId)
+                ?.let { EntityDisplayWithoutContext(it) }
+                ?.also { commandCoordinator.rememberEntity(target, it) }
+        }
+
+    private suspend fun dispatchAction(
+        target: ThermostatCommandCoordinator.Target,
+        units: ThermostatDisplayUnits,
+        action: ThermostatTileAction?,
+    ) {
+        when (action) {
+            is ThermostatTileAction.Adjust -> commandCoordinator.adjustTemperature(
+                target,
+                units,
+                action.slot,
+                action.amount,
+            )
+            is ThermostatTileAction.Mode -> commandCoordinator.submitHvac(target, action.mode)
+            ThermostatTileAction.Fan -> commandCoordinator.cycleFan(target)
+            null -> Unit
+        }
+    }
+
+    private suspend fun refreshState(
+        request: RequestBuilders.TileRequest,
+        config: ThermostatTile,
+        target: ThermostatCommandCoordinator.Target,
+        actionPrefix: String,
+        hadCachedEntity: Boolean,
+    ): ThermostatCommandCoordinator.Pending? {
+        val clickedId = request.currentState.lastClickableId
+        if (config.refreshInterval != 0L) {
+            val visibleAt = if (clickedId.startsWith(actionPrefix) && clickedId.length > actionPrefix.length) {
+                commandCoordinator.nowMillis()
+            } else {
+                request.lastVisibleTime.toEpochMilli()
+            }
+            commandCoordinator.observeVisibleTile(request.tileId, target, visibleAt)
+        } else {
+            commandCoordinator.stopObservingTile(request.tileId)
+        }
+        val pending = commandCoordinator.get(target)
+        // A manual tap bypasses cache age and retry gates; a cold tile already fetched above.
+        if (clickedId != MODIFIER_CLICK_REFRESH || hadCachedEntity) {
+            val maxAge = when {
+                clickedId == MODIFIER_CLICK_REFRESH -> 0L
+                pending != null -> PENDING_CACHE_MAX_AGE_MS
+                else -> CACHE_MAX_AGE_MS
+            }
+            commandCoordinator.refreshEntityIfStale(target, maxAge)
+        }
+        return pending
     }
 }
