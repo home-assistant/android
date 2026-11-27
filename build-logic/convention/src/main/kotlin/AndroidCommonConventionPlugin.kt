@@ -46,7 +46,10 @@ class AndroidCommonConventionPlugin : Plugin<Project> {
             val testResourcesDir = file("build/generated/testResources").apply { mkdirs() }
 
             androidConfig {
-                compileSdk = libs.versions.androidSdk.compile.get().toInt()
+                val mainSdkVersion = libs.versions.androidSdk.compile.get().substringBefore(".").toInt()
+                val minorSdkVersion = libs.versions.androidSdk.compile.get().substringAfter(".", "0").toInt()
+                compileSdk = mainSdkVersion
+                compileSdkMinor = minorSdkVersion
 
                 with(defaultConfig) {
                     minSdk = libs.versions.androidSdk.min.get().toInt()

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.websocket
 
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketRepositoryImpl
@@ -41,18 +42,30 @@ interface WebSocketRepository {
     suspend fun sendPing(): Boolean
     suspend fun getCurrentUser(): CurrentUserResponse?
     suspend fun getConfig(): GetConfigResponse?
-    suspend fun getStates(): List<EntityResponse>?
+
+    /**
+     * Current state of the entities selected by [filter], or of every entity when it is empty, as
+     * the server treats an empty filter. The server only sends the selected states when it supports
+     * it (2022.4 for entity ids, 2024.9 for domains), otherwise every state is fetched and filtered
+     * on the device.
+     */
+    suspend fun getStates(filter: EntityFilter = EntityFilter()): List<EntityResponse>?
     suspend fun getAreaRegistry(): List<AreaRegistryResponse>?
     suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>?
     suspend fun getEntityRegistry(): List<EntityRegistryResponse>?
 
     /**
-     * Return [EntityRegistryDisplayResponse], a bandwidth-efficient version of the
-     * entity registry meant for display.
-     * Requires Home Assistant 2023.3 or later. Some fields may require later
-     * versions of Home Assistant, see [EntityRegistryDisplayEntry].
+     * Return [EntityRegistryDisplayResponse], a bandwidth-efficient version of the entity registry
+     * meant for display, limited to the entities selected by [filter] or holding every entity when
+     * it is empty. Pass a filter whenever possible, so the whole registry isn't downloaded to
+     * resolve a few entities; the ones without a registry entry are omitted.
+     *
+     * The server does the filtering since 2026.12. Before that, a filter on entity ids only fetches
+     * their entries, and a filter on domains downloads the whole registry to filter it on the device.
+     * Requires Home Assistant 2024.10 or later, null is returned for older servers. Some fields may
+     * require later versions of Home Assistant, see [EntityRegistryDisplayEntry].
      */
-    suspend fun getEntityRegistryDisplay(): EntityRegistryDisplayResponse?
+    suspend fun getEntityRegistryDisplay(filter: EntityFilter = EntityFilter()): EntityRegistryDisplayResponse?
     suspend fun getEntityRegistryFor(entityId: String): EntityRegistryResponse?
 
     /**
@@ -61,10 +74,25 @@ interface WebSocketRepository {
      */
     suspend fun getFloorRegistry(): List<FloorRegistryResponse>?
     suspend fun getServices(): List<DomainResponse>?
+
+    /**
+     * State changes of every entity of the server.
+     * Prefer [getCompressedStateAndChanges] on servers supporting it.
+     */
     suspend fun getStateChanges(): Flow<StateChangedEvent>?
+
+    /**
+     * State changes of [entityIds], filtered by the server.
+     * Requires the current user to be an admin.
+     * Prefer [getCompressedStateAndChanges] on servers supporting it.
+     */
     suspend fun getStateChanges(entityIds: List<String>): Flow<TriggerEvent>?
-    suspend fun getCompressedStateAndChanges(): Flow<CompressedStateChangedEvent>?
-    suspend fun getCompressedStateAndChanges(entityIds: List<String>): Flow<CompressedStateChangedEvent>?
+
+    /**
+     * State changes of the entities selected by [filter], or of every entity when it is empty.
+     * It requires Home Assistant 2022.4 or later, and 2024.9 or later when [filter] selects domains.
+     */
+    suspend fun getCompressedStateAndChanges(filter: EntityFilter = EntityFilter()): Flow<CompressedStateChangedEvent>?
     suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>?
     suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>?
     suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>?

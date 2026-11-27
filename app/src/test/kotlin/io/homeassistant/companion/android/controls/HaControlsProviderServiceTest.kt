@@ -5,6 +5,7 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.generated.Bookmark
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
@@ -81,7 +82,7 @@ class HaControlsProviderServiceTest {
     @Test
     fun `Given entities that can no longer be followed when subscribed then their controls are failed`() = runTest {
         val service = createService()
-        every { entitiesForDisplayManager.observeInContext(any(), any<List<String>>()) } returns
+        every { entitiesForDisplayManager.observeInContext(any(), any()) } returns
             flowOf(loaded(switchItem(SWITCH_A), switchItem(SWITCH_B)))
 
         service.createPublisherFor(mutableListOf("$SERVER_ID.$SWITCH_A", "$SERVER_ID.$SWITCH_B")).subscribe(subscriber)
@@ -102,7 +103,7 @@ class HaControlsProviderServiceTest {
     @Test
     fun `Given an error state when subscribed then the controls are failed once`() = runTest {
         val service = createService()
-        every { entitiesForDisplayManager.observeInContext(any(), any<List<String>>()) } returns
+        every { entitiesForDisplayManager.observeInContext(any(), any()) } returns
             flowOf(EntityDisplayState.Error)
 
         service.createPublisherFor(mutableListOf("$SERVER_ID.$SWITCH_A", "$SERVER_ID.$SWITCH_B")).subscribe(subscriber)
@@ -133,6 +134,29 @@ class HaControlsProviderServiceTest {
     }
 
     @Test
+    fun `Given an entity leaving a snapshot when subscribed then its control is not found`() = runTest {
+        val service = createService()
+
+        service.createPublisherFor(mutableListOf("$SERVER_ID.$SWITCH_A", "$SERVER_ID.$SWITCH_B")).subscribe(subscriber)
+        subscriber.subscription.request(Long.MAX_VALUE)
+        displayStates.subscriptionCount.first { it > 0 }
+        displayStates.emit(loaded(switchItem(SWITCH_A), switchItem(SWITCH_B)))
+        advanceUntilIdle()
+
+        displayStates.emit(loaded(switchItem(SWITCH_A)))
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(
+                "$SERVER_ID.$SWITCH_A" to Control.STATUS_OK,
+                "$SERVER_ID.$SWITCH_B" to Control.STATUS_OK,
+                "$SERVER_ID.$SWITCH_B" to Control.STATUS_NOT_FOUND,
+            ),
+            subscriber.controls.map { it.controlId to it.status },
+        )
+    }
+
+    @Test
     fun `Given a snapshot when the system cancels the subscription then the controls are not failed`() = runTest {
         val service = createService()
 
@@ -156,7 +180,7 @@ class HaControlsProviderServiceTest {
         subscriber.subscription.request(Long.MAX_VALUE)
         advanceUntilIdle()
 
-        verify(exactly = 1) { entitiesForDisplayManager.observeInContext(SERVER_ID, listOf(SWITCH_A, SWITCH_B)) }
+        verify(exactly = 1) { entitiesForDisplayManager.observeInContext(SERVER_ID, EntityFilter(entityIds = setOf(SWITCH_A, SWITCH_B))) }
     }
 
     private fun TestScope.createService(): HaControlsProviderService {
@@ -169,7 +193,7 @@ class HaControlsProviderServiceTest {
         }
         coEvery { prefsRepository.getControlsEnableStructure() } returns false
         coEvery { prefsRepository.getControlsAuthRequired() } returns ControlsAuthRequiredSetting.NONE
-        every { entitiesForDisplayManager.observeInContext(any(), any<List<String>>()) } returns displayStates
+        every { entitiesForDisplayManager.observeInContext(any(), any()) } returns displayStates
 
         val instance = HaControlsProviderService(StandardTestDispatcher(testScheduler))
         return ServiceController.of(instance, null).get().apply {

@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.awaitLoadedOrNull
@@ -106,7 +107,10 @@ class ThermostatTile : TileService() {
                 } else {
                     try {
                         val entity = tileConfig.entityId?.let {
-                            entitiesForDisplayManager.snapshot(ServerManager.SERVER_ID_ACTIVE, listOf(it))
+                            entitiesForDisplayManager.snapshot(
+                                ServerManager.SERVER_ID_ACTIVE,
+                                EntityFilter(entityIds = setOf(it)),
+                            )
                                 .awaitLoadedOrNull()
                                 ?.entity(it)
                         }

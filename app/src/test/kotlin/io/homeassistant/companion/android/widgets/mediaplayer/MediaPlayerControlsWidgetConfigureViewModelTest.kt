@@ -57,7 +57,7 @@ class MediaPlayerControlsWidgetConfigureViewModelTest {
         coEvery { serverManager.getServer(any<Int>()) } returns server
         coEvery { dao.get(any()) } returns null
         every {
-            entitiesForDisplayManager.snapshotInContext(any(), any<(Entity) -> Boolean>())
+            entitiesForDisplayManager.snapshotInContext(any(), any())
         } returns flowOf(displayStateOf(entity.toDisplayItem(), secondEntity.toDisplayItem()))
     }
 

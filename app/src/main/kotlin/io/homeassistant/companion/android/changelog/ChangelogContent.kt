@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.changelog
 
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.frontend.navigation.WidgetType
+import io.homeassistant.companion.android.sensors.FoldableSensorManager
 import io.homeassistant.companion.android.settings.SettingsActivity
 
 /**
@@ -30,8 +31,14 @@ internal val currentChangelog = Changelog(
             platforms = setOf(ChangelogPlatform.APP, ChangelogPlatform.AUTOMOTIVE),
         ),
         ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_hinge_status_sensor,
+            platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenSensor(FoldableSensorManager.hingeStatus.id),
+        ),
+        ChangelogEntry(
             contentRes = commonR.string.changelog_entry_thread_store,
             platforms = setOf(ChangelogPlatform.APP),
+            requiresFlavor = ChangelogFlavor.FULL,
         ),
     ),
     improved = listOf(),
