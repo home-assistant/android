@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.notifications.alarm
 
+import androidx.compose.ui.graphics.ImageBitmap
 import io.github.timoptr.mdiicons.MdiIcon
 
 /**
@@ -12,6 +13,7 @@ import io.github.timoptr.mdiicons.MdiIcon
  * @property actions actions of the notification that can be used from the alarm screen
  * @property isFullScreenIntentAllowed whether the user allows the app to show full-screen alerts, which Android 14
  *  and later require to show the alarm screen on its own when the device is locked
+ * @property image picture of the notification, set with its `image` option, like a camera snapshot
  */
 data class FullScreenAlarmUiState(
     val icon: MdiIcon,
@@ -20,6 +22,7 @@ data class FullScreenAlarmUiState(
     val canOpen: Boolean,
     val actions: List<FullScreenAlarmAction>,
     val isFullScreenIntentAllowed: Boolean,
+    val image: ImageBitmap? = null,
 )
 
 /**

@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.notifications.alarm
 
+import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -15,20 +16,26 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -43,6 +50,7 @@ import io.homeassistant.companion.android.common.compose.composable.HAAccentButt
 import io.homeassistant.companion.android.common.compose.composable.HABanner
 import io.homeassistant.companion.android.common.compose.composable.HAFilledButton
 import io.homeassistant.companion.android.common.compose.theme.HADimens
+import io.homeassistant.companion.android.common.compose.theme.HARadius
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HAThemeForPreview
 import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
@@ -50,6 +58,11 @@ import io.homeassistant.companion.android.common.compose.theme.MaxButtonWidth
 import io.homeassistant.companion.android.util.compose.HAPreviews
 
 private val AlarmIconSize = 120.dp
+private val AlarmImageMaxHeight = 280.dp
+
+/** Test tag of the notification image on the alarm screen. */
+@VisibleForTesting
+internal const val ALARM_IMAGE_TEST_TAG = "full_screen_alarm_image"
 private const val ICON_PULSE_SCALE = 1.15f
 private const val ICON_PULSE_DURATION_MS = 600
 
@@ -79,6 +92,7 @@ internal fun FullScreenAlarmScreen(
         Spacer(modifier = Modifier.weight(1f))
         PulsingAlarmIcon(icon = uiState.icon)
         AlarmText(title = uiState.title, message = uiState.message)
+        uiState.image?.let { AlarmImage(image = it) }
         if (!uiState.isFullScreenIntentAllowed) {
             FullScreenPermissionBanner(onAllowFullScreen = onAllowFullScreen)
         }
@@ -131,6 +145,20 @@ private fun AlarmText(title: String, message: String) {
             modifier = Modifier.widthIn(max = MaxButtonWidth),
         )
     }
+}
+
+@Composable
+private fun AlarmImage(image: ImageBitmap) {
+    Image(
+        bitmap = image,
+        contentDescription = null,
+        contentScale = ContentScale.Fit,
+        modifier = Modifier
+            .widthIn(max = MaxButtonWidth)
+            .heightIn(max = AlarmImageMaxHeight)
+            .clip(RoundedCornerShape(HARadius.XL))
+            .testTag(ALARM_IMAGE_TEST_TAG),
+    )
 }
 
 @Composable

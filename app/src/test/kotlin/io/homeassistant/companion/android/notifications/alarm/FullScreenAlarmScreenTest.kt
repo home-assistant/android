@@ -1,6 +1,9 @@
 package io.homeassistant.companion.android.notifications.alarm
 
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -37,13 +40,18 @@ class FullScreenAlarmScreenTest {
         FullScreenAlarmAction(index = 2, title = "Turn on lights"),
     )
 
-    private fun uiState(canOpen: Boolean = true, isFullScreenIntentAllowed: Boolean = true) = FullScreenAlarmUiState(
+    private fun uiState(
+        canOpen: Boolean = true,
+        isFullScreenIntentAllowed: Boolean = true,
+        image: ImageBitmap? = null,
+    ) = FullScreenAlarmUiState(
         icon = Mdi.BellRing,
         title = "Intrusion detected",
         message = "Motion in the living room",
         canOpen = canOpen,
         actions = actions,
         isFullScreenIntentAllowed = isFullScreenIntentAllowed,
+        image = image,
     )
 
     @Test
@@ -125,5 +133,39 @@ class FullScreenAlarmScreenTest {
         }
 
         assertTrue(allowClicked)
+    }
+
+    @Test
+    fun `Given an image when showing the alarm then the image is displayed`() {
+        composeTestRule.apply {
+            setContent {
+                FullScreenAlarmScreen(
+                    uiState = uiState(image = ImageBitmap(width = 160, height = 90)),
+                    onDismiss = {},
+                    onOpen = {},
+                    onActionClick = {},
+                    onAllowFullScreen = {},
+                )
+            }
+
+            onNodeWithTag(ALARM_IMAGE_TEST_TAG).performScrollTo().assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun `Given no image when showing the alarm then no image is displayed`() {
+        composeTestRule.apply {
+            setContent {
+                FullScreenAlarmScreen(
+                    uiState = uiState(),
+                    onDismiss = {},
+                    onOpen = {},
+                    onActionClick = {},
+                    onAllowFullScreen = {},
+                )
+            }
+
+            onNodeWithTag(ALARM_IMAGE_TEST_TAG).assertDoesNotExist()
+        }
     }
 }

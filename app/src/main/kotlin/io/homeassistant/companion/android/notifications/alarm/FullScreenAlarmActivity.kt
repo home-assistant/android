@@ -6,6 +6,8 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -13,8 +15,12 @@ import android.service.notification.StatusBarNotification
 import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.getSystemService
+import androidx.core.graphics.drawable.toBitmap
 import androidx.core.net.toUri
 import androidx.core.os.BundleCompat
 import androidx.lifecycle.Lifecycle
@@ -29,9 +35,11 @@ import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.fromHaName
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 /**
@@ -82,6 +90,10 @@ class FullScreenAlarmActivity : BaseActivity() {
     private val notificationTag by lazy { intent.getStringExtra(EXTRA_NOTIFICATION_TAG) }
     private val notificationId by lazy { intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0) }
 
+    /** Picture of the notification, only loaded again when the notification is posted again. */
+    private var image: ImageBitmap? = null
+    private var imagePostTime = 0L
+
     override fun onCreate(savedInstanceState: Bundle?) {
         if (SdkVersion.isAtLeast(Build.VERSION_CODES.O_MR1)) {
             setShowWhenLocked(true)
@@ -123,6 +135,11 @@ class FullScreenAlarmActivity : BaseActivity() {
             val notification = findNotification()
             if (notification != null) {
                 hasBeenPosted = true
+                if (notification.postTime != imagePostTime) {
+                    imagePostTime = notification.postTime
+                    val extras = notification.notification.extras
+                    image = withContext(Dispatchers.IO) { extras.loadPicture(this@FullScreenAlarmActivity) }
+                }
                 uiState.value = notification.toUiState()
             } else {
                 checksWithoutNotification++
@@ -163,6 +180,7 @@ class FullScreenAlarmActivity : BaseActivity() {
             },
             isFullScreenIntentAllowed = !SdkVersion.isAtLeast(Build.VERSION_CODES.UPSIDE_DOWN_CAKE) ||
                 getSystemService<NotificationManager>()?.canUseFullScreenIntent() != false,
+            image = image,
         )
     }
 
@@ -222,4 +240,15 @@ class FullScreenAlarmActivity : BaseActivity() {
             )
         }
     }
+}
+
+/**
+ * Loads the picture of the notification's big picture style, set from its `image` option. Android 12+ keeps
+ * animated pictures as an icon pointing to a file, and other pictures as a bitmap.
+ */
+private fun Bundle.loadPicture(context: Context): ImageBitmap? {
+    val pictureIcon = BundleCompat.getParcelable(this, NotificationCompat.EXTRA_PICTURE_ICON, Icon::class.java)
+    val picture = pictureIcon?.loadDrawable(context)?.toBitmap()
+        ?: BundleCompat.getParcelable(this, NotificationCompat.EXTRA_PICTURE, Bitmap::class.java)
+    return picture?.asImageBitmap()
 }
