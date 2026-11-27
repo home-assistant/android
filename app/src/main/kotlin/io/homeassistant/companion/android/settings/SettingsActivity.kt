@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.os.Parcelable
 import android.view.MenuItem
 import android.view.View
+import android.view.ViewGroup
 import androidx.activity.viewModels
 import androidx.biometric.BiometricManager
 import androidx.core.content.IntentCompat
@@ -43,6 +44,46 @@ import timber.log.Timber
 
 private const val EXTRA_FRAGMENT = "fragment"
 
+/**
+ * Keeps the [settings] out of reach while blocked: [blurView] takes their touches, and they lose the focus, which keys
+ * act on, and are hidden from accessibility services, which act without touches.
+ */
+private class SettingsBlock(private val blurView: BlurView, private val settings: ViewGroup) {
+
+    /** The view that had the focus when the settings were blocked: it gets the focus back once they are unblocked. */
+    private var focusBeforeBlock: View? = null
+
+    init {
+        // Only takes touches, nothing for accessibility services to act on
+        blurView.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+    }
+
+    /** Blocks or unblocks the settings, and blurs them alike unless [keepBlur], which leaves the blur as it is. */
+    fun update(blocked: Boolean, keepBlur: Boolean = false) {
+        if (!keepBlur) blurView.setBlurEnabled(blocked)
+        settings.importantForAccessibility = if (blocked) {
+            View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+        } else {
+            View.IMPORTANT_FOR_ACCESSIBILITY_AUTO
+        }
+        settings.descendantFocusability = if (blocked) {
+            ViewGroup.FOCUS_BLOCK_DESCENDANTS
+        } else {
+            ViewGroup.FOCUS_BEFORE_DESCENDANTS
+        }
+        if (blocked) {
+            settings.findFocus()?.let { focused ->
+                focusBeforeBlock = focused
+                focused.clearFocus()
+            }
+        } else {
+            focusBeforeBlock?.takeIf { it.isAttachedToWindow }?.requestFocus()
+            focusBeforeBlock = null
+        }
+        blurView.isClickable = blocked
+    }
+}
+
 @AndroidEntryPoint
 class SettingsActivity : BaseActivity() {
 
@@ -52,9 +93,12 @@ class SettingsActivity : BaseActivity() {
     private val viewModel: SettingsViewModel by viewModels()
 
     private lateinit var authenticator: Authenticator
-    private lateinit var blurView: BlurView
+    private lateinit var settingsBlock: SettingsBlock
 
     private var authenticating = false
+
+    /** How often the settings left the foreground: a lock check that ends after they left must not unblock them. */
+    private var pauses = 0
     private var externalAuthCallback: ((AuthenticationResult) -> Boolean)? = null
 
     companion object {
@@ -96,11 +140,14 @@ class SettingsActivity : BaseActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val blurTarget = findViewById<BlurTarget>(R.id.blurTarget)
-        blurView = findViewById(R.id.blurView)
+        val blurView = findViewById<BlurView>(R.id.blurView)
         blurView.setupWith(blurTarget)
             .setFrameClearDrawable(window.decorView.background)
             .setBlurRadius(8f)
             .setBlurEnabled(false)
+        // While the app is locked and until the lock was checked: the blur alone lets touches through
+        settingsBlock = SettingsBlock(blurView, blurTarget)
+        settingsBlock.update(blocked = true, keepBlur = true)
 
         authenticator = Authenticator(this, ::settingsActivityAuthenticationResult)
 
@@ -167,13 +214,19 @@ class SettingsActivity : BaseActivity() {
     override fun onPause() {
         super.onPause()
         setAppActive(false)
+        pauses++
+        // Until the lock is checked again
+        settingsBlock.update(blocked = true, keepBlur = true)
     }
 
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
+            val pausesBefore = pauses
             setRecentsScreenshotProtection(isAppLockEnabled())
-            blurView.setBlurEnabled(isAppLocked())
+            val locked = isAppLocked()
+            if (!locked && pauses != pausesBefore) return@launch
+            settingsBlock.update(blocked = locked)
         }
     }
 
@@ -181,14 +234,17 @@ class SettingsActivity : BaseActivity() {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus && !isFinishing) {
             lifecycleScope.launch {
+                val pausesBefore = pauses
                 setRecentsScreenshotProtection(isAppLockEnabled())
                 if (isAppLocked()) {
                     authenticating = true
                     authenticator.authenticate(getString(commonR.string.biometric_title))
-                    blurView.setBlurEnabled(true)
+                    settingsBlock.update(blocked = true)
                 } else {
+                    // Left before the check ended: the app must not be marked active, nor the settings unblocked
+                    if (pauses != pausesBefore) return@launch
                     setAppActive(true)
-                    blurView.setBlurEnabled(false)
+                    settingsBlock.update(blocked = false)
                 }
             }
         }
@@ -209,7 +265,7 @@ class SettingsActivity : BaseActivity() {
             when (result) {
                 AuthenticationResult.SUCCESS -> {
                     Timber.d("Authentication successful, unlocking app")
-                    blurView.setBlurEnabled(false)
+                    settingsBlock.update(blocked = false)
                     setAppActive(true)
                 }
                 AuthenticationResult.CANCELED -> {
