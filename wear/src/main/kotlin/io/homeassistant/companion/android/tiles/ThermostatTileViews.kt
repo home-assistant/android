@@ -85,7 +85,6 @@ private fun getButtonsRow(
     showPowerButton: Boolean,
 ): LayoutElement {
     val buttonsEnabled = hvacAction != "off" && entity.rawState != "unavailable"
-    // The temperature buttons shrink only to make room for the power button
     val tempButtonSize = if (showPowerButton) {
         DimensionBuilders.dp(COMPACT_BUTTON_SIZE_DP)
     } else {

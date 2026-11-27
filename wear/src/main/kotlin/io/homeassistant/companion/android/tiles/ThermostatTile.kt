@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalTime::class)
-
 package io.homeassistant.companion.android.tiles
 
 import androidx.wear.protolayout.ActionBuilders
@@ -28,7 +26,6 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -42,14 +39,19 @@ import timber.log.Timber
 /** Raw state shown while a turn on is not reported by the server yet, the climate entity then reports its actual mode. */
 private const val PRESUMED_ON_STATE = "heat"
 
-/** How long a presumed power state is shown at most, in case the server never reports it. */
-private val PRESUMED_POWER_TIMEOUT = 30.seconds
-
-/** How soon the system asks for the tile again while a presumed power state is shown. */
-private val PRESUMED_POWER_REFRESH = 3.seconds
+/** How long a presumed power state or target temperature is shown at most, in case the server never reports it. */
+private val PRESUMED_TIMEOUT = 30.seconds
 
 @AndroidEntryPoint
 class ThermostatTile : TileService() {
+
+    companion object {
+        private const val TAG = "ThermostatTile"
+        const val DEFAULT_REFRESH_INTERVAL = 600L
+        const val TAP_ACTION_UP = "Up"
+        const val TAP_ACTION_DOWN = "Down"
+        const val TAP_ACTION_TOGGLE = "Toggle"
+    }
 
     private val serviceJob = Job()
     private val serviceScope = CoroutineScope(Dispatchers.IO + serviceJob)
@@ -109,7 +111,6 @@ class ThermostatTile : TileService() {
                     ).build()
                 } else {
                     try {
-                        val lastId = requestParams.currentState.lastClickableId
                         val entity = tileConfig.entityId?.let {
                             entitiesForDisplayManager.snapshot(
                                 ServerManager.SERVER_ID_ACTIVE,
@@ -119,7 +120,9 @@ class ThermostatTile : TileService() {
                                 ?.entity(it)
                         }
                         checkNotNull(entity)
-                        val climateControls = entity.climateControls
+                        val climateControls = checkNotNull(entity.climateControls)
+
+                        val lastId = requestParams.currentState.lastClickableId
 
                         // A toggle isn't reported by the server right away, so keep showing what the user asked for
                         val serverOn = entity.rawState != "off"
@@ -129,23 +132,26 @@ class ThermostatTile : TileService() {
                         val pendingOn = tileConfig.presumedPowerOn?.takeIf {
                             entity.rawState != "unavailable" &&
                                 it != serverOn &&
-                                presumedAge < PRESUMED_POWER_TIMEOUT.inWholeMilliseconds
+                                presumedAge < PRESUMED_TIMEOUT.inWholeMilliseconds
+                        }
+                        // A target set by a previous tap is only kept for quick repeated changes
+                        val pendingTargetTemp = tileConfig.targetTemperature?.takeIf {
+                            now - (tileConfig.targetTemperatureAt ?: 0L) < PRESUMED_TIMEOUT.inWholeMilliseconds
                         }
                         var updatedConfig = tileConfig.copy(
                             targetTemperature = null,
+                            targetTemperatureAt = null,
                             presumedPowerOn = pendingOn,
                             presumedPowerAt = tileConfig.presumedPowerAt.takeIf { pendingOn != null },
                         )
 
-                        var targetTemp = tileConfig.targetTemperature ?: climateControls?.targetTemperature
+                        var targetTemp = pendingTargetTemp ?: climateControls.targetTemperature
 
                         // The entity reports its unit, which spares opening the websocket for the server config
-                        val temperatureUnit = climateControls?.temperatureUnit
-                            ?: serverManager.webSocketRepository().getConfig()
-                                ?.unitSystem?.getValue("temperature").toString()
+                        val temperatureUnit = climateControls.temperatureUnit.orEmpty()
 
                         if (targetTemp != null && (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN)) {
-                            val stepSize = climateControls?.targetTemperatureStep
+                            val stepSize = climateControls.targetTemperatureStep
                                 ?: if (temperatureUnit == "°F") 1.0f else 0.5f
                             val updatedTargetTemp = targetTemp + if (lastId == TAP_ACTION_UP) +stepSize else -stepSize
 
@@ -157,7 +163,10 @@ class ThermostatTile : TileService() {
                                     "temperature" to updatedTargetTemp,
                                 ),
                             )
-                            updatedConfig = updatedConfig.copy(targetTemperature = updatedTargetTemp)
+                            updatedConfig = updatedConfig.copy(
+                                targetTemperature = updatedTargetTemp,
+                                targetTemperatureAt = now,
+                            )
                             targetTemp = updatedTargetTemp
                         }
 
@@ -174,10 +183,6 @@ class ThermostatTile : TileService() {
                                 presumedPowerOn = shownOn.takeIf { it != serverOn },
                                 presumedPowerAt = now.takeIf { shownOn != serverOn },
                             )
-                        }
-                        if (updatedConfig.presumedPowerOn != null) {
-                            // Ask for the tile again soon, so the presumed state is replaced or expires promptly
-                            tile.setFreshnessIntervalMillis(PRESUMED_POWER_REFRESH.inWholeMilliseconds)
                         }
                         thermostatTileDao.add(updatedConfig)
 
@@ -269,13 +274,5 @@ class ThermostatTile : TileService() {
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()
-    }
-
-    companion object {
-        private const val TAG = "ThermostatTile"
-        const val DEFAULT_REFRESH_INTERVAL = 600L
-        const val TAP_ACTION_UP = "Up"
-        const val TAP_ACTION_DOWN = "Down"
-        const val TAP_ACTION_TOGGLE = "Toggle"
     }
 }
