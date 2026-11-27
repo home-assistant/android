@@ -31,6 +31,7 @@ import com.mikepenz.aboutlibraries.ui.compose.style.LicenseHueResolver
 import com.mikepenz.aboutlibraries.ui.compose.style.VariantColors
 import com.mikepenz.aboutlibraries.ui.compose.variant.LibraryActionMode
 import com.mikepenz.aboutlibraries.ui.compose.variant.LibraryDetailMode
+import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.rememberHAModalBottomSheetState
 import io.homeassistant.companion.android.common.compose.theme.HATextStyle
@@ -58,7 +59,7 @@ class LicensesFragment : Fragment() {
 
 @Composable
 private fun LicensesContent() {
-    val libraries by produceLibraries()
+    val libraries by produceLibraries(R.raw.aboutlibraries)
     var openDialog by remember { mutableStateOf<Library?>(null) }
     var openSheet by remember { mutableStateOf<Library?>(null) }
 
