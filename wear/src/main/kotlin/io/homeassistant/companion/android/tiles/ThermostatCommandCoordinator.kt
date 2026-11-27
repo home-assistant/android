@@ -418,7 +418,7 @@ class ThermostatCommandCoordinator internal constructor(
             // A mode change may invalidate the layout from which the tap originated.
             val pendingMode = waiting(target, CommandKind.HVAC)?.value
             if (pendingMode != null && pendingMode != entity.rawState) return@withFreshBaseline
-            val step = controls.targetTemperatureStep?.takeIf { it > 0 } ?: 1f
+            val step = units.serverStep(controls.targetTemperatureStep)
             val min = controls.minTemperature ?: units.minimum()
             val max = controls.maxTemperature ?: units.maximum()
             val classic = slot == TemperatureSlot.CLASSIC_SINGLE || slot == TemperatureSlot.CLASSIC_RANGE

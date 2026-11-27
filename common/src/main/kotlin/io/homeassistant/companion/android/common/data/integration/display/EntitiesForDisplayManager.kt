@@ -50,6 +50,12 @@ import timber.log.Timber
  */
 class EntitiesForDisplayManager @Inject constructor(private val serverManager: ServerManager) {
 
+    /** Resolves only the registry name, without fetching or subscribing to entity state. */
+    suspend fun registryDisplayName(serverId: Int, entityId: String): String? =
+        serverManager.webSocketRepositoryOrNull(serverId)
+            .fetchEntityRegistryEntries(EntityFilter(entityIds = setOf(entityId)))
+            .registryNameOf(entityId)
+
     /**
      * Observes the entities selected by [filter] with their display information, or every entity
      * of the server when it is empty.
@@ -468,8 +474,9 @@ private class EntityRegistryEntries(
      * attribute, or its id. This is the single place where the app decides how an entity is named,
      * so a caller without registry entries resolves the same name as one with them.
      */
-    fun nameOf(entity: Entity): String =
-        displayEntries?.get(entity.entityId)?.name?.takeIf { it.isNotBlank() } ?: entity.friendlyName
+    fun registryNameOf(entityId: String): String? = displayEntries?.get(entityId)?.name?.takeIf { it.isNotBlank() }
+
+    fun nameOf(entity: Entity): String = registryNameOf(entity.entityId) ?: entity.friendlyName
 
     /**
      * Resolves [entity] into everything its state and the registry provide, with the following

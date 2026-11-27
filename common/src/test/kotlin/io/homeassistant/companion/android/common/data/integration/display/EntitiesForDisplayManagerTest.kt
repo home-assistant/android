@@ -121,6 +121,17 @@ class EntitiesForDisplayManagerTest {
     }
 
     @Test
+    fun `Given a registry name when resolving metadata then no entity states are fetched`() = runTest {
+        givenRegistryName("Bed")
+        assertEquals("Bed", manager.registryDisplayName(serverId, "light.bed"))
+        assertEquals(null, manager.registryDisplayName(serverId, "light.other"))
+        coVerify(exactly = 0) { integrationRepository.getEntities(any()) }
+        coVerify(exactly = 1) {
+            webSocketRepository.getEntityRegistryDisplay(EntityFilter(entityIds = setOf("light.bed")))
+        }
+    }
+
+    @Test
     fun `Given a registry name when snapshotting then it is used over the friendly name`() = runTest {
         givenRegistryName("Bed")
 

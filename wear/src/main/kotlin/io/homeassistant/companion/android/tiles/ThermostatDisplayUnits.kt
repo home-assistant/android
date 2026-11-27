@@ -43,6 +43,10 @@ internal class ThermostatDisplayUnits(source: String?, preference: String) {
         }
     }
 
+    /** Preserve the original default step when the entity does not advertise one. */
+    fun serverStep(step: Float?): Float = step?.takeIf { it.isFinite() && it > 0f }
+        ?: if (sourceUnit == Unit.FAHRENHEIT) 1f else 0.5f
+
     /** Fallback bounds are expressed in the server unit, not the display unit. */
     fun minimum(): Float = if (sourceUnit == Unit.FAHRENHEIT) MIN_FAHRENHEIT else MIN_CELSIUS
 

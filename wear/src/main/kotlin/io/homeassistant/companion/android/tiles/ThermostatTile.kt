@@ -83,6 +83,9 @@ class ThermostatTile : TileService() {
     @Inject
     lateinit var commandCoordinator: ThermostatCommandCoordinator
 
+    @Inject
+    lateinit var thermostatMetadata: ThermostatMetadata
+
     private suspend fun shouldShowInvitation(config: ThermostatTile?, tileId: Int): Boolean {
         if (config == null || config.layoutStyle != "classic" || config.entityId.isNullOrBlank()) return false
         return !wearPrefsRepository.isThermostatLayoutInvitationAcknowledged(tileId)
@@ -164,7 +167,8 @@ class ThermostatTile : TileService() {
                             }
                         checkNotNull(entity) { "Thermostat state not yet available: $entityId" }
                         val climateControls = entity.climateControls
-                        val units = ThermostatDisplayUnits(climateControls?.temperatureUnit, tileConfig.temperatureUnit)
+                        val metadata = thermostatMetadata.resolve(target, entity)
+                        val units = ThermostatDisplayUnits(metadata.sourceUnit, tileConfig.temperatureUnit)
                         val actionPrefix = units.actionPrefix(target.actionPrefix)
 
                         val clickedId = requestParams.currentState.lastClickableId
@@ -240,7 +244,8 @@ class ThermostatTile : TileService() {
                             target,
                             if (pending != null) PENDING_CACHE_MAX_AGE_MS else CACHE_MAX_AGE_MS,
                         )
-                        val temperatureUnit = controls?.temperatureUnit ?: "°"
+                        val temperatureUnit = metadata.sourceUnit ?: "°"
+                        val displayEntity = entity.copy(name = metadata.name)
                         if (clickedId.isNotEmpty()) {
                             Timber.i(
                                 "Thermostat tile action processed after %d ms; pending=%s",
@@ -251,11 +256,11 @@ class ThermostatTile : TileService() {
                         val views = ThermostatTileViews(this@ThermostatTile)
                         tile.setTileTimeline(
                             if (tileConfig.layoutStyle == "classic") {
-                                views.classicTimeline(tileConfig, entity, temperatureUnit, pending, actionPrefix)
+                                views.classicTimeline(tileConfig, displayEntity, temperatureUnit, pending, actionPrefix)
                             } else {
                                 views.enhancedTimeline(
                                     tileConfig,
-                                    entity,
+                                    displayEntity,
                                     temperatureUnit,
                                     pending,
                                     actionPrefix,

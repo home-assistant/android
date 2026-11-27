@@ -62,6 +62,18 @@ class ThermostatDisplayUnitsTest {
     }
 
     @Test
+    fun `Given no advertised step when using server units then Classic retains original increments`() {
+        val celsius = ThermostatDisplayUnits("°C", "default")
+        val fahrenheit = ThermostatDisplayUnits("°F", "default")
+        assertEquals(0.5f, celsius.serverStep(null))
+        assertEquals(1f, fahrenheit.serverStep(null))
+        assertEquals(2f, celsius.serverStep(2f))
+        assertEquals(0.5f, celsius.serverStep(0f))
+        assertEquals(21.5f, ThermostatTemperatureLogic.snap(21f + celsius.serverStep(null), 0.5f, 7f, 35f))
+        assertEquals(72f, ThermostatTemperatureLogic.snap(71f + fahrenheit.serverStep(null), 1f, 45f, 95f))
+    }
+
+    @Test
     fun `default and unavailable source unit preserve original values and actions`() {
         val default = ThermostatDisplayUnits("°C", "default")
         val unknown = ThermostatDisplayUnits(null, "F")
