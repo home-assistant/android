@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.integration.display
 
+import androidx.annotation.VisibleForTesting
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.MdiIcon
 import io.homeassistant.companion.android.common.data.integration.Entity
@@ -20,12 +21,14 @@ import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.fromHaName
 import javax.inject.Inject
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -50,7 +53,13 @@ import timber.log.Timber
  * The `observe`/`snapshot` variants resolve from the entity registry only; the `*InContext`
  * variants also resolve the area, floor and device registries into an [EntityDisplayWithContext].
  */
-class EntitiesForDisplayManager @Inject constructor(private val serverManager: ServerManager) {
+class EntitiesForDisplayManager @VisibleForTesting constructor(
+    private val serverManager: ServerManager,
+    private val backgroundDispatcher: CoroutineDispatcher,
+) {
+
+    @Inject
+    constructor(serverManager: ServerManager) : this(serverManager, Dispatchers.Default)
 
     /**
      * Observes the entities selected by [filter] with their display information, or every entity
@@ -58,9 +67,10 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
      *
      * Each emission is a complete [EntityDisplayState.Loaded] snapshot of the entities that could
      * be retrieved. A new snapshot is emitted on every state change of the observed entities and
-     * on every entity registry update, even when it resolves to the same items, so consumers that
-     * refresh on the entities themselves see each change; apply `distinctUntilChanged` when only
-     * the resolved values matter. An entity removed from the server leaves the snapshot.
+     * every time the entity registry is fetched again after an update, even when it resolves to the
+     * same items, so consumers that refresh on the entities themselves see each change; apply
+     * `distinctUntilChanged` when only the resolved values matter. An entity removed from the server
+     * leaves the snapshot.
      *
      * The flow completes with [EntityDisplayState.Error] when none of the entities can be
      * retrieved, and completes after the initial snapshot when the state changes cannot be
@@ -92,13 +102,11 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
             when (event) {
                 is ObserveEvent.EntityEvent.StateChanged -> entities[event.entity.entityId] = event.entity
                 is ObserveEvent.EntityEvent.Removed -> entities.remove(event.entityId)
-                ObserveEvent.EntityEvent.EntityRegistryChanged -> {
-                    registryEntries = webSocketRepository.fetchEntityRegistryEntries(filter)
-                }
+                is ObserveEvent.EntityEvent.EntityRegistryRefreshed -> registryEntries = event.entries
             }
             emit(snapshot())
         }
-    }.flowOn(Dispatchers.Default)
+    }.flowOn(backgroundDispatcher)
 
     /**
      * Resolves the entities selected by [filter] with their display information once, the one-shot
@@ -123,7 +131,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         val registryEntries = serverManager.webSocketRepositoryOrNull(serverId)
             .fetchEntityRegistryEntries(filter)
         emit(EntityDisplayState.Loaded(entities.map { registryEntries.itemFor(it) }))
-    }.flowOn(Dispatchers.Default)
+    }.flowOn(backgroundDispatcher)
 
     /**
      * Observes the display state of the entities selected by [filter], or of every entity of the
@@ -160,15 +168,10 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
             when (event) {
                 is ObserveEvent.EntityEvent.StateChanged -> entities[event.entity.entityId] = event.entity
                 is ObserveEvent.EntityEvent.Removed -> entities.remove(event.entityId)
-                ObserveEvent.AreaRegistryChanged -> webSocketRepository?.let {
-                    snapshot = snapshot.copy(areas = it.fetchAreas(), floors = it.fetchFloors())
-                }
-                ObserveEvent.DeviceRegistryChanged -> webSocketRepository?.let {
-                    snapshot = snapshot.copy(devices = it.fetchDevices())
-                }
-                ObserveEvent.EntityEvent.EntityRegistryChanged -> webSocketRepository?.let {
-                    snapshot = snapshot.withEntityEntries(it, filter)
-                }
+                is ObserveEvent.AreaRegistryRefreshed ->
+                    snapshot = snapshot.copy(areas = event.areas, floors = event.floors)
+                is ObserveEvent.DeviceRegistryRefreshed -> snapshot = snapshot.copy(devices = event.devices)
+                is ObserveEvent.EntityEvent.EntityRegistryRefreshed -> snapshot = snapshot.copy(entries = event.entries)
             }
             val items = resolveEntityDisplayItems(entities = entities.values.toList(), snapshot = snapshot)
             if (items != lastItems) {
@@ -176,7 +179,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
                 emit(EntityDisplayState.Loaded(items))
             }
         }
-    }.flowOn(Dispatchers.Default)
+    }.flowOn(backgroundDispatcher)
 
     /**
      * Resolves the display state of the entities selected by [filter] once, or of every entity of
@@ -190,11 +193,11 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
     ): Flow<EntityDisplayState<EntityDisplayWithContext>> = flow {
         val entities = loadEntities(serverId, filter) ?: return@flow
         emit(resolveState(serverId = serverId, entities = entities, filter = filter))
-    }.flowOn(Dispatchers.Default)
+    }.flowOn(backgroundDispatcher)
 
     /**
      * Merges what an [EntityDisplayWithoutContext] depends on into a single [ObserveEvent] flow: the state
-     * changes of the entities selected by [entityFilter] and the entity registry updates. The flow
+     * changes of the entities selected by [entityFilter] and the entity registry refreshes. The flow
      * completes when the state changes cannot be subscribed to, since the registry updates alone
      * cannot keep the entities current; a registry subscription that cannot be established is
      * skipped.
@@ -205,7 +208,10 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         entityFilter: EntityFilter,
     ): Flow<ObserveEvent.EntityEvent> {
         val entityChanges = entityChanges(serverId, entityFilter) ?: return emptyFlow()
-        return mergeUntilFirstCompletes(entityChanges, listOfNotNull(webSocketRepository?.entityRegistryChanges()))
+        return mergeUntilFirstCompletes(
+            entityChanges,
+            listOfNotNull(webSocketRepository?.entityRegistryRefreshes(entityFilter)),
+        )
     }
 
     /**
@@ -219,7 +225,7 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
 
     /**
      * Merges the state changes of the entities selected by [entityFilter], or of every entity of
-     * the server when it is empty, and the registry update events of the server into a single
+     * the server when it is empty, and the registry refreshes of the server into a single
      * [ObserveEvent] flow. The flow completes when the state changes cannot be subscribed to, since
      * the registry updates alone cannot keep the entities current; a registry subscription that
      * cannot be established is skipped.
@@ -233,9 +239,9 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         return mergeUntilFirstCompletes(
             entityChanges,
             listOfNotNull(
-                webSocketRepository?.areaRegistryChanges(),
-                webSocketRepository?.deviceRegistryChanges(),
-                webSocketRepository?.entityRegistryChanges(),
+                webSocketRepository?.areaRegistryRefreshes(),
+                webSocketRepository?.deviceRegistryRefreshes(),
+                webSocketRepository?.entityRegistryRefreshes(entityFilter),
             ),
         )
     }
@@ -254,14 +260,34 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
         }
     }
 
-    private fun WebSocketRepository.areaRegistryChanges(): Flow<ObserveEvent> =
-        getAreaRegistryUpdates().map { ObserveEvent.AreaRegistryChanged }
+    private fun WebSocketRepository.areaRegistryRefreshes(): Flow<ObserveEvent> =
+        getAreaRegistryUpdates().refreshing { ObserveEvent.AreaRegistryRefreshed(fetchAreas(), fetchFloors()) }
 
-    private fun WebSocketRepository.deviceRegistryChanges(): Flow<ObserveEvent> =
-        getDeviceRegistryUpdates().map { ObserveEvent.DeviceRegistryChanged }
+    private fun WebSocketRepository.deviceRegistryRefreshes(): Flow<ObserveEvent> =
+        getDeviceRegistryUpdates().refreshing { ObserveEvent.DeviceRegistryRefreshed(fetchDevices()) }
 
-    private fun WebSocketRepository.entityRegistryChanges(): Flow<ObserveEvent.EntityEvent> =
-        getEntityRegistryUpdates().map { ObserveEvent.EntityEvent.EntityRegistryChanged }
+    private fun WebSocketRepository.entityRegistryRefreshes(filter: EntityFilter): Flow<ObserveEvent.EntityEvent> =
+        getEntityRegistryUpdates().refreshing {
+            ObserveEvent.EntityEvent.EntityRegistryRefreshed(fetchEntityRegistryEntries(filter))
+        }
+
+    /**
+     * Emits the result of [fetch] after each update of this Flow. The updates received while a
+     * fetch is in flight are answered by a single other one. The fetch suspends the collector of
+     * the returned Flow, so [mergeUntilFirstCompletes] collects it apart from the entity events.
+     *
+     * For example, with five updates received while the first fetch takes 300ms:
+     * ```
+     * t=0    update 1 -> fetch A starts
+     * t=50   update 2 -> kept as the pending update
+     * t=100  update 3 -> replaces update 2
+     * t=150  update 4 -> replaces update 3
+     * t=200  update 5 -> replaces update 4
+     * t=300  fetch A done -> emitted, fetch B starts for the pending update
+     * t=600  fetch B done -> emitted, it holds what the five updates changed
+     * ```
+     */
+    private fun <T> Flow<*>.refreshing(fetch: suspend () -> T): Flow<T> = conflate().map { fetch() }
 
     /**
      * Merges [first] and [others] until [first] completes, which a subscription does when it cannot
@@ -436,8 +462,8 @@ class EntitiesForDisplayManager @Inject constructor(private val serverManager: S
 }
 
 /**
- * Events driving new emissions of [EntitiesForDisplayManager.observe]. Registry events name
- * the registry that changed, so only that part of the [RegistrySnapshot] is refetched.
+ * Events driving new emissions of [EntitiesForDisplayManager.observe]. Registry events carry the
+ * registry fetched again after it changed, so only that part of the [RegistrySnapshot] is replaced.
  */
 private sealed interface ObserveEvent {
     sealed interface EntityEvent : ObserveEvent {
@@ -447,15 +473,18 @@ private sealed interface ObserveEvent {
         /** An entity was removed from the server. */
         data class Removed(val entityId: String) : EntityEvent
 
-        /** An entity registry entry changed. */
-        data object EntityRegistryChanged : EntityEvent
+        /** The entity registry fetched again after one of its entries changed. */
+        class EntityRegistryRefreshed(val entries: EntityRegistryEntries) : EntityEvent
     }
 
-    /** An area registry entry changed; the floors are refetched along, they resolve through areas. */
-    data object AreaRegistryChanged : ObserveEvent
+    /** The areas fetched again after one changed, along with the floors they resolve through. */
+    class AreaRegistryRefreshed(
+        val areas: Map<String, AreaRegistryResponse>,
+        val floors: Map<String, FloorRegistryResponse>,
+    ) : ObserveEvent
 
-    /** A device registry entry changed. */
-    data object DeviceRegistryChanged : ObserveEvent
+    /** The device registry fetched again after one of its entries changed. */
+    class DeviceRegistryRefreshed(val devices: Map<String, DeviceRegistryResponse>) : ObserveEvent
 }
 
 /**

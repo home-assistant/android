@@ -20,7 +20,6 @@
     <ID>ConstructorParameterNaming:Server.kt:Server$@ColumnInfo(name = "_version") val _version: String? = null</ID>
     <ID>ConstructorParameterNaming:SingleSlotQueue.kt:SingleSlotQueue$private val _state: MutableStateFlow&lt;T?&gt; = MutableStateFlow(null)</ID>
     <ID>CyclomaticComplexMethod:AppSensorManagerBase.kt:AppSensorManagerBase$private suspend fun updateImportanceCheck</ID>
-    <ID>CyclomaticComplexMethod:AssistViewModelBase.kt:AssistViewModelBase$protected fun runAssistPipelineInternal</ID>
     <ID>CyclomaticComplexMethod:AudioSensorManager.kt:AudioSensorManager$private suspend fun updateAudioState</ID>
     <ID>CyclomaticComplexMethod:BluetoothSensorManager.kt:BluetoothSensorManager$private suspend fun updateBLESensor</ID>
     <ID>CyclomaticComplexMethod:DatabaseMigration.kt:Migration16to17$override suspend fun migrate</ID>
@@ -51,7 +50,6 @@
     <ID>InjectDispatcher:ContextExt.kt:IO</ID>
     <ID>InjectDispatcher:DataModule.kt:DataModule.Companion$IO</ID>
     <ID>InjectDispatcher:DefaultConnectivityChecker.kt:DefaultConnectivityChecker$IO</ID>
-    <ID>InjectDispatcher:EntitiesForDisplayManager.kt:EntitiesForDisplayManager$Default</ID>
     <ID>InjectDispatcher:ExoPlayerExt.kt:Default</ID>
     <ID>InjectDispatcher:HomeAssistantApis.kt:HomeAssistantApis$Default</ID>
     <ID>InjectDispatcher:IconDialogCompat.kt:IconDialogCompat$IO</ID>
@@ -190,8 +188,8 @@
     <ID>ReturnCount:ServerConnectionStateProviderImpl.kt:ServerConnectionStateProviderImpl$override suspend fun canSafelySendCredentials: Boolean</ID>
     <ID>ReturnCount:ServerConnectionStateProviderImpl.kt:ServerConnectionStateProviderImpl$override suspend fun isInternal: Boolean</ID>
     <ID>ReturnCount:TLSHelper.kt:TLSHelper$private fun withUserInstalledCaFallback: X509TrustManager</ID>
-    <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun attemptWebSocketConnection: ConnectionAttemptResult</ID>
     <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private fun handleEvent</ID>
+    <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun attemptWebSocketConnection: ConnectionAttemptResult</ID>
     <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun sendMessage: RawMessageSocketResponse?</ID>
     <ID>SpreadOperator:DatabaseModule.kt:DatabaseModule$(*migrationPath(context))</ID>
     <ID>SuspendFunWithFlowReturnType:AssistAudioStrategy.kt:AssistAudioStrategy$suspend</ID>
