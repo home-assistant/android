@@ -18,6 +18,7 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.unmockkAll
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.test.runTest
@@ -105,7 +106,7 @@ class HaSignalingClientTest {
 
     @Test
     fun `Given no subscription When opening a session Then a terminal Error event is emitted`() = runTest {
-        coEvery { webSocketRepository.startCameraWebRtcSession(ENTITY_ID, "v=0 offer") } returns null
+        coEvery { webSocketRepository.startCameraWebRtcSession(ENTITY_ID, "v=0 offer") } returns emptyFlow()
 
         client.openSession("v=0 offer").test {
             val event = awaitItem()

@@ -338,7 +338,7 @@ class WebSocketRepositoryImpl internal constructor(
         text: String,
         pipelineId: String?,
         conversationId: String?,
-    ): Flow<AssistPipelineEvent>? {
+    ): Flow<AssistPipelineEvent> {
         val data = buildMap {
             put("start_stage", "intent")
             put("end_stage", "intent")
@@ -360,7 +360,7 @@ class WebSocketRepositoryImpl internal constructor(
         pipelineId: String?,
         conversationId: String?,
         wakeWordPhrase: String?,
-    ): Flow<AssistPipelineEvent>? {
+    ): Flow<AssistPipelineEvent> {
         val data = buildMap {
             put("start_stage", "stt")
             put("end_stage", if (outputTts) "tts" else "intent")
@@ -384,30 +384,30 @@ class WebSocketRepositoryImpl internal constructor(
     override suspend fun sendVoiceData(binaryHandlerId: Int, data: ByteArray): Boolean =
         webSocketCore.sendBytes(byteArrayOf(binaryHandlerId.toByte()) + data)
 
-    override suspend fun getStateChanges(): Flow<StateChangedEvent>? = subscribeToEventsForType(EVENT_STATE_CHANGED)
+    override fun getStateChanges(): Flow<StateChangedEvent> = subscribeToEventsForType(EVENT_STATE_CHANGED)
 
-    override suspend fun getStateChanges(entityIds: List<String>): Flow<TriggerEvent>? =
+    override fun getStateChanges(entityIds: List<String>): Flow<TriggerEvent> =
         subscribeToTrigger("state", mapOf("entity_id" to entityIds))
 
-    override suspend fun getCompressedStateAndChanges(filter: EntityFilter): Flow<CompressedStateChangedEvent>? =
+    override fun getCompressedStateAndChanges(filter: EntityFilter): Flow<CompressedStateChangedEvent> =
         webSocketCore.subscribeTo(SUBSCRIBE_TYPE_SUBSCRIBE_ENTITIES, filter.toFilterData())
 
-    override suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>? =
+    override fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent> =
         subscribeToEventsForType(EVENT_AREA_REGISTRY_UPDATED)
 
-    override suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>? =
+    override fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent> =
         subscribeToEventsForType(EVENT_DEVICE_REGISTRY_UPDATED)
 
-    override suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>? =
+    override fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent> =
         subscribeToEventsForType(EVENT_ENTITY_REGISTRY_UPDATED)
 
-    private suspend fun <T : Any> subscribeToEventsForType(eventType: String): Flow<T>? =
+    private fun <T : Any> subscribeToEventsForType(eventType: String): Flow<T> =
         webSocketCore.subscribeTo(SUBSCRIBE_TYPE_SUBSCRIBE_EVENTS, mapOf("event_type" to eventType))
 
-    override suspend fun getTemplateUpdates(template: String): Flow<TemplateUpdatedEvent>? =
+    override fun getTemplateUpdates(template: String): Flow<TemplateUpdatedEvent> =
         webSocketCore.subscribeTo(SUBSCRIBE_TYPE_RENDER_TEMPLATE, mapOf("template" to template))
 
-    private suspend fun subscribeToTrigger(platform: String, data: Map<Any, Any>): Flow<TriggerEvent>? {
+    private fun subscribeToTrigger(platform: String, data: Map<Any, Any>): Flow<TriggerEvent> {
         val triggerData = buildMap {
             put("platform", platform)
             putAll(data)
@@ -546,7 +546,7 @@ class WebSocketRepositoryImpl internal constructor(
         }
     }
 
-    override suspend fun startCameraWebRtcSession(entityId: String, offerSdp: String): Flow<WebRtcEvent>? =
+    override fun startCameraWebRtcSession(entityId: String, offerSdp: String): Flow<WebRtcEvent> =
         webSocketCore.subscribeTo(
             SUBSCRIBE_TYPE_CAMERA_WEBRTC_OFFER,
             mapOf(
