@@ -5,7 +5,6 @@ package io.homeassistant.companion.android.tiles
 import android.content.Context
 import android.os.PowerManager
 import android.os.SystemClock
-import androidx.annotation.WorkerThread
 import androidx.wear.tiles.TileService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.integration.EntityChange
@@ -15,10 +14,8 @@ import io.homeassistant.companion.android.common.data.integration.display.Entity
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.locks.ReentrantLock
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.concurrent.withLock
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
@@ -26,6 +23,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -34,6 +32,9 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
@@ -106,7 +107,7 @@ class ThermostatCommandCoordinator internal constructor(
     // Pending commands belong to the running process, not persistent tile settings.
     private val pendingCommands = mutableMapOf<PendingKey, Pending>()
     private val latest = mutableMapOf<PendingKey, Long>()
-    private val lock = ReentrantLock()
+    private val lock = Mutex()
     private var nextToken = 0L
 
     // Queue service dispatches in submission order for the same entity. The next
@@ -132,7 +133,7 @@ class ThermostatCommandCoordinator internal constructor(
 
     // Early exits keep visibility checks and lock ownership explicit.
     @Suppress("ReturnCount")
-    fun observeVisibleTile(tileId: Int, target: Target, visibleAt: Long) {
+    suspend fun observeVisibleTile(tileId: Int, target: Target, visibleAt: Long) {
         val age = nowMillis() - visibleAt
         if (age !in 0L..VISIBILITY_MAX_AGE_MS || powerManager?.isInteractive != true) return
         lock.withLock {
@@ -181,11 +182,13 @@ class ThermostatCommandCoordinator internal constructor(
         } catch (error: Exception) {
             Timber.w(error, "Thermostat live observation failed: %s", target.entityId)
         } finally {
-            lock.withLock {
-                if (liveGeneration == generation) {
-                    liveJob = null
-                    liveTileId = null
-                    liveTarget = null
+            withContext(NonCancellable) {
+                lock.withLock {
+                    if (liveGeneration == generation) {
+                        liveJob = null
+                        liveTileId = null
+                        liveTarget = null
+                    }
                 }
             }
             Timber.i("Thermostat live observation stopped: %s", target.entityId)
@@ -209,7 +212,7 @@ class ThermostatCommandCoordinator internal constructor(
         }
     }
 
-    fun stopObservingTile(tileId: Int, leftAt: Long = nowMillis()) {
+    suspend fun stopObservingTile(tileId: Int, leftAt: Long = nowMillis()) {
         lock.withLock {
             if (liveTileId != tileId || leftAt < lastVisibilityAt) return
             lastVisibilityAt = leftAt
@@ -221,7 +224,7 @@ class ThermostatCommandCoordinator internal constructor(
         }
     }
 
-    private fun applyLiveChange(target: Target, generation: Long, change: EntityChange) {
+    private suspend fun applyLiveChange(target: Target, generation: Long, change: EntityChange) {
         lock.withLock {
             // The command acknowledgement path owns state during an in-flight command.
             if (liveGeneration != generation || latest.keys.any { it.target == target }) return
@@ -256,7 +259,12 @@ class ThermostatCommandCoordinator internal constructor(
     fun cachedEntity(target: Target): EntityDisplayWithoutContext? =
         entityCache[target]?.takeIf { nowMillis() - it.receivedAt in 0L until ENTITY_CACHE_TTL_MS }?.item
 
-    fun rememberEntity(target: Target, entity: EntityDisplayWithoutContext): Boolean = lock.withLock {
+    suspend fun rememberEntity(target: Target, entity: EntityDisplayWithoutContext): Boolean = lock.withLock {
+        rememberEntityLocked(target, entity)
+    }
+
+    @Suppress("ReturnCount")
+    private fun rememberEntityLocked(target: Target, entity: EntityDisplayWithoutContext): Boolean {
         if (entity.entityId != target.entityId) return false
         val previous = entityCache[target]
         val previousUpdated = previous?.item?.lastUpdated
@@ -265,12 +273,12 @@ class ThermostatCommandCoordinator internal constructor(
         entityCache[target] = CachedEntity(entity, nowMillis())
         // A state change should appear without waiting for the tile's long periodic interval.
         if (previous != null && previous.item != entity) refresh()
-        true
+        return true
     }
 
     // Independent early exits avoid unnecessary reads and preserve the in-flight gate.
     @Suppress("ReturnCount")
-    fun refreshEntityIfStale(target: Target, maxAgeMillis: Long) {
+    suspend fun refreshEntityIfStale(target: Target, maxAgeMillis: Long) {
         // A command already provides state updates. Avoid a second request from tile rendering.
         val (entry, refreshToken) = lock.withLock {
             if (latest.keys.any { it.target == target } || target in refreshInFlight) return
@@ -293,7 +301,7 @@ class ThermostatCommandCoordinator internal constructor(
                             entityCache[target] === entry &&
                             latest.keys.none { key -> key.target == target }
                         ) {
-                            rememberEntity(target, EntityDisplayWithoutContext(it))
+                            rememberEntityLocked(target, EntityDisplayWithoutContext(it))
                         }
                     }
                 }
@@ -302,15 +310,16 @@ class ThermostatCommandCoordinator internal constructor(
             } catch (error: Exception) {
                 Timber.w(error, "Thermostat background refresh failed: %s", target.entityId)
             } finally {
-                lock.withLock {
-                    if (refreshInFlight[target] === refreshToken) refreshInFlight.remove(target)
+                withContext(NonCancellable) {
+                    lock.withLock {
+                        if (refreshInFlight[target] === refreshToken) refreshInFlight.remove(target)
+                    }
                 }
             }
         }
     }
 
-    @WorkerThread
-    fun get(target: Target): Pending? = lock.withLock {
+    suspend fun get(target: Target): Pending? = lock.withLock {
         val commands = CommandKind.entries.mapNotNull { pendingCommands[PendingKey(target, it)] }
         commands.firstOrNull { it.status == Pending.Status.WAITING } ?: commands.firstOrNull()
     }
@@ -344,9 +353,8 @@ class ThermostatCommandCoordinator internal constructor(
     internal enum class TemperatureSlot { CLASSIC_SINGLE, CLASSIC_RANGE, SINGLE, HEAT, COOL }
 
     // Calculate and publish the new absolute target in the same critical section.
-    @WorkerThread
     @Suppress("ReturnCount")
-    internal fun adjustTemperature(
+    internal suspend fun adjustTemperature(
         target: Target,
         snapshot: EntityDisplayWithoutContext,
         units: ThermostatDisplayUnits,
@@ -397,17 +405,16 @@ class ThermostatCommandCoordinator internal constructor(
                     )
                     else -> return
                 }
-                if (revised != (low to high)) submitTemperature(target, true, revised.first, revised.second, null)
+                if (revised != (low to high)) submitTemperatureLocked(target, true, revised.first, revised.second, null)
             } else if (slot == TemperatureSlot.SINGLE || slot == TemperatureSlot.CLASSIC_SINGLE) {
                 val baseline = pending?.single ?: controls.targetTemperature ?: return
                 val proposed = ThermostatTemperatureLogic.snap(baseline + delta, step, min, max)
-                if (proposed != baseline) submitTemperature(target, false, null, null, proposed)
+                if (proposed != baseline) submitTemperatureLocked(target, false, null, null, proposed)
             }
         }
     }
 
-    @WorkerThread
-    fun cycleFan(target: Target, snapshot: EntityDisplayWithoutContext) {
+    suspend fun cycleFan(target: Target, snapshot: EntityDisplayWithoutContext) {
         lock.withLock {
             val entity = entityCache[target]?.item ?: snapshot
             if (entity.rawState in listOf("unknown", "unavailable")) return
@@ -426,8 +433,11 @@ class ThermostatCommandCoordinator internal constructor(
 
     // Nullable single/range values match the existing tile and test call sites.
     @Suppress("LongParameterList")
-    @WorkerThread
-    fun submitTemperature(target: Target, isRange: Boolean, low: Float?, high: Float?, single: Float?) {
+    suspend fun submitTemperature(target: Target, isRange: Boolean, low: Float?, high: Float?, single: Float?) =
+        lock.withLock { submitTemperatureLocked(target, isRange, low, high, single) }
+
+    @Suppress("LongParameterList")
+    private fun submitTemperatureLocked(target: Target, isRange: Boolean, low: Float?, high: Float?, single: Float?) {
         val data: Map<String, Any?> = when {
             isRange && low != null && high != null -> mapOf(
                 "entity_id" to target.entityId,
@@ -448,16 +458,16 @@ class ThermostatCommandCoordinator internal constructor(
         }
     }
 
-    @WorkerThread
-    fun submitHvac(target: Target, mode: String) = submit(
-        target,
-        CommandKind.HVAC,
-        "set_hvac_mode",
-        mapOf("entity_id" to target.entityId, "hvac_mode" to mode),
-        mode,
-    ) { entity -> entity.rawState == mode }
+    suspend fun submitHvac(target: Target, mode: String) = lock.withLock {
+        submit(
+            target,
+            CommandKind.HVAC,
+            "set_hvac_mode",
+            mapOf("entity_id" to target.entityId, "hvac_mode" to mode),
+            mode,
+        ) { entity -> entity.rawState == mode }
+    }
 
-    @WorkerThread
     private fun submitFan(target: Target, mode: String) = submit(
         target,
         CommandKind.FAN,
@@ -469,7 +479,7 @@ class ThermostatCommandCoordinator internal constructor(
     private fun approximately(a: Float?, b: Float?): Boolean =
         a != null && b != null && kotlin.math.abs(a - b) < TEMPERATURE_CONFIRMATION_TOLERANCE
 
-    // Keep dispatch, acknowledgement ownership and failure cleanup together in one coroutine.
+    // Called under lock. Dispatch and confirmation run in a separate coroutine.
     @Suppress("LongParameterList", "LongMethod")
     private fun submit(
         target: Target,
@@ -485,16 +495,14 @@ class ThermostatCommandCoordinator internal constructor(
         val key = PendingKey(target, kind)
         val submittedAt = SystemClock.elapsedRealtime()
         val dispatched = CompletableDeferred<Unit>()
-        val (token, predecessor) = lock.withLock {
-            val token = ++nextToken
-            latest[key] = token
-            // Invalidate only this target's outstanding refresh, even if the command completes first.
-            refreshInFlight.remove(target)
-            // Only registered after dispatch; never cancel a queued or in-flight service call.
-            acknowledgementJobs.remove(key)?.cancel()
-            store(key, Pending(value, Pending.Status.WAITING, single, low, high), updateTile = false)
-            token to dispatchTails.put(target, dispatched)
-        }
+        val token = ++nextToken
+        latest[key] = token
+        // Invalidate only this target's outstanding refresh, even if the command completes first.
+        refreshInFlight.remove(target)
+        // Only registered after dispatch; never cancel a queued or in-flight service call.
+        acknowledgementJobs.remove(key)?.cancel()
+        store(key, Pending(value, Pending.Status.WAITING, single, low, high), updateTile = false)
+        val predecessor = dispatchTails.put(target, dispatched)
         scope.launch {
             val started = submittedAt
             try {
@@ -508,9 +516,11 @@ class ThermostatCommandCoordinator internal constructor(
                     serverManager.integrationRepository(target.serverId).callAction("climate", action, data)
                 } finally {
                     // Always release the following command, including after a failed service call.
-                    lock.withLock {
-                        if (dispatchTails[target] === dispatched) dispatchTails.remove(target)
-                        dispatched.complete(Unit)
+                    withContext(NonCancellable) {
+                        lock.withLock {
+                            if (dispatchTails[target] === dispatched) dispatchTails.remove(target)
+                            dispatched.complete(Unit)
+                        }
                     }
                 }
                 Timber.i("Thermostat %s service accepted after %d ms", action, SystemClock.elapsedRealtime() - started)
@@ -543,8 +553,10 @@ class ThermostatCommandCoordinator internal constructor(
                         }
                     }
                 } finally {
-                    lock.withLock {
-                        if (acknowledgementJobs[key] === monitor) acknowledgementJobs.remove(key)
+                    withContext(NonCancellable) {
+                        lock.withLock {
+                            if (acknowledgementJobs[key] === monitor) acknowledgementJobs.remove(key)
+                        }
                     }
                 }
             } catch (error: CancellationException) {
@@ -569,9 +581,9 @@ class ThermostatCommandCoordinator internal constructor(
     ): Boolean {
         val target = key.target
         val repository = serverManager.integrationRepository(target.serverId)
-        fun checkState(entity: EntityDisplayWithoutContext): Boolean = lock.withLock {
+        suspend fun checkState(entity: EntityDisplayWithoutContext): Boolean = lock.withLock {
             if (latest[key] != token || entity.entityId != target.entityId) return false
-            if (!rememberEntity(target, entity)) return false
+            if (!rememberEntityLocked(target, entity)) return false
             confirmed(entity)
         }
         return readConfirmation(target, repository, ::checkState) ||
@@ -582,7 +594,7 @@ class ThermostatCommandCoordinator internal constructor(
     private suspend fun readConfirmation(
         target: Target,
         repository: IntegrationRepository,
-        checkState: (EntityDisplayWithoutContext) -> Boolean,
+        checkState: suspend (EntityDisplayWithoutContext) -> Boolean,
     ): Boolean {
         // Check the requested entity immediately before waiting for subscription events.
         try {
@@ -602,7 +614,7 @@ class ThermostatCommandCoordinator internal constructor(
         key: PendingKey,
         token: Long,
         repository: IntegrationRepository,
-        checkState: (EntityDisplayWithoutContext) -> Boolean,
+        checkState: suspend (EntityDisplayWithoutContext) -> Boolean,
     ): Boolean {
         val target = key.target
         // Unknown and pre-2022.4 servers may send all entity states on subscription.
@@ -641,7 +653,7 @@ class ThermostatCommandCoordinator internal constructor(
         key: PendingKey,
         token: Long,
         repository: IntegrationRepository,
-        checkState: (EntityDisplayWithoutContext) -> Boolean,
+        checkState: suspend (EntityDisplayWithoutContext) -> Boolean,
     ): Boolean {
         val target = key.target
         // The outer timeout bounds both subscription and fallback polling, including slow reads.
@@ -655,9 +667,18 @@ class ThermostatCommandCoordinator internal constructor(
         return false
     }
 
-    private fun isLatest(key: PendingKey, token: Long): Boolean = lock.withLock { latest[key] == token }
+    private suspend fun isLatest(key: PendingKey, token: Long): Boolean = lock.withLock { latest[key] == token }
 
     private fun refresh() {
-        requestTileUpdate()
+        // Redraw is a notification, not part of the protected state transaction.
+        scope.launch {
+            try {
+                requestTileUpdate()
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                Timber.w(error, "Thermostat tile redraw request failed")
+            }
+        }
     }
 }

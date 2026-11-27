@@ -99,6 +99,25 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
+    fun `Given a redraw failure when a command confirms then its pending state is still cleared`() = runTest {
+        val clock = testClock()
+        var redraws = 0
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {
+            redraws++
+            error("Simulated redraw failure")
+        }
+        coEvery { repository.callAction("climate", "set_temperature", any()) } returns Unit
+        coEvery { repository.getEntity(target.entityId) } returns state(72f)
+
+        coordinator.submitTemperature(target, false, null, null, 72f)
+        runCurrent()
+
+        assertNull(coordinator.get(target))
+        assertEquals(EntityDisplayWithoutContext(state(72f)), coordinator.cachedEntity(target))
+        assertEquals(1, redraws)
+    }
+
+    @Test
     fun `queued calls dispatch in order without waiting for older acknowledgement`() = runTest {
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
