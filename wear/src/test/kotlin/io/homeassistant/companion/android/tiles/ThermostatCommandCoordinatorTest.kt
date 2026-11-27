@@ -396,6 +396,27 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
+    fun `Given a fresh cache when manual refresh is requested then bypass age and coalesce reads`() = runTest {
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, testClock()) {}
+        coordinator.rememberEntity(target, EntityDisplayWithoutContext(state(70f)))
+        val response = CompletableDeferred<Entity>()
+        coEvery { repository.getEntity(target.entityId) } coAnswers { response.await() }
+        coordinator.refreshEntityIfStale(target, 5_000L)
+        runCurrent()
+        coVerify(exactly = 0) { repository.getEntity(target.entityId) }
+        coordinator.refreshEntityIfStale(target, 0L)
+        coordinator.refreshEntityIfStale(target, 0L)
+        runCurrent()
+        coVerify(exactly = 1) { repository.getEntity(target.entityId) }
+        response.complete(state(75f))
+        runCurrent()
+        assertEquals(EntityDisplayWithoutContext(state(75f)), coordinator.cachedEntity(target))
+        coordinator.refreshEntityIfStale(target, 0L)
+        runCurrent()
+        coVerify(exactly = 2) { repository.getEntity(target.entityId) }
+    }
+
+    @Test
     fun `given outstanding refresh when same target command fails then old refresh is discarded`() = runTest {
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}

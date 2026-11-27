@@ -192,6 +192,51 @@ class ThermostatTileViewsTest {
     }
 
     @Test
+    fun `Given a pending Classic command when rendered then feedback replaces the normal status`() {
+        val waiting = ThermostatCommandCoordinator.Pending(
+            "21°",
+            ThermostatCommandCoordinator.Pending.Status.WAITING,
+            single = 21f,
+        )
+        fun texts(pending: ThermostatCommandCoordinator.Pending) = views.classicTimeline(
+            config,
+            thermostat(),
+            "°C",
+            pending,
+            prefix,
+        ).elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
+        val waitingTexts = texts(waiting)
+        assertTrue(context.getString(commonR.string.thermostat_tile_waiting) in waitingTexts)
+        assertTrue("21.0 °C" in waitingTexts)
+        val failedTexts = texts(waiting.copy(status = ThermostatCommandCoordinator.Pending.Status.FAILED))
+        assertTrue(context.getString(commonR.string.thermostat_tile_unconfirmed) in failedTexts)
+        assertTrue("19.5 °C" in failedTexts)
+    }
+
+    @Test
+    fun `Given unavailable Enhanced climate when rendered then only refresh remains actionable`() {
+        for (size in listOf(192, 240)) {
+            for (state in listOf("unavailable", "unknown")) {
+                val timeline = views.enhancedTimeline(config, thermostat(state), "°C", null, prefix, size, size)
+                assertTrue(timeline.actions().isEmpty())
+                assertEquals(MODIFIER_CLICK_REFRESH, (timeline.elements().first() as Box).modifiers?.clickable?.id)
+            }
+        }
+    }
+
+    @Test
+    fun `Given manual refresh when either layout is rendered then background is clickable`() {
+        val manual = config.copy(refreshInterval = 0L)
+        for (size in listOf(192, 240)) {
+            val enhanced = views.enhancedTimeline(manual, thermostat(), "°C", null, prefix, size, size)
+            assertEquals(MODIFIER_CLICK_REFRESH, (enhanced.elements().first() as Box).modifiers?.clickable?.id)
+            assertTrue("Temp:single:1" in enhanced.actions())
+        }
+        val classic = views.classicTimeline(manual, thermostat(), "°C", null, prefix)
+        assertEquals(MODIFIER_CLICK_REFRESH, (classic.elements().first() as Box).modifiers?.clickable?.id)
+    }
+
+    @Test
     fun `classic auto displays both setpoints and enables adjustment`() {
         val timeline = classic(state = "heat_cool")
         val texts = timeline.elements().filterIsInstance<Text>().mapNotNull { it.text?.value }

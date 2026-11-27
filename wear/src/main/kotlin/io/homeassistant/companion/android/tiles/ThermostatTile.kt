@@ -159,12 +159,12 @@ class ThermostatTile : TileService() {
                         val target = ThermostatCommandCoordinator.Target(serverId, entityId)
                         val requestStarted = android.os.SystemClock.elapsedRealtime()
                         // Render warm tiles immediately; fetch only the selected entity on a cache miss.
-                        val entity = commandCoordinator.cachedEntity(target)
-                            ?: withTimeoutOrNull(6_000L) {
-                                serverManager.integrationRepository(serverId).getEntity(entityId)
-                                    ?.let { EntityDisplayWithoutContext(it) }
-                                    ?.also { commandCoordinator.rememberEntity(target, it) }
-                            }
+                        val cached = commandCoordinator.cachedEntity(target)
+                        val entity = cached ?: withTimeoutOrNull(6_000L) {
+                            serverManager.integrationRepository(serverId).getEntity(entityId)
+                                ?.let { EntityDisplayWithoutContext(it) }
+                                ?.also { commandCoordinator.rememberEntity(target, it) }
+                        }
                         checkNotNull(entity) { "Thermostat state not yet available: $entityId" }
                         val climateControls = entity.climateControls
                         val metadata = thermostatMetadata.resolve(target, entity)
@@ -240,10 +240,16 @@ class ThermostatTile : TileService() {
                             val pendingFreshness = if (freshness == 0L) 5L else minOf(freshness, 5L)
                             tile.setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(pendingFreshness))
                         }
-                        commandCoordinator.refreshEntityIfStale(
-                            target,
-                            if (pending != null) PENDING_CACHE_MAX_AGE_MS else CACHE_MAX_AGE_MS,
-                        )
+                        // A manual tap bypasses the cache age and retry gates, but still coalesces
+                        // with an in-flight refresh or command confirmation. A cold tile already fetched above.
+                        if (clickedId != MODIFIER_CLICK_REFRESH || cached != null) {
+                            val maxAge = when {
+                                clickedId == MODIFIER_CLICK_REFRESH -> 0L
+                                pending != null -> PENDING_CACHE_MAX_AGE_MS
+                                else -> CACHE_MAX_AGE_MS
+                            }
+                            commandCoordinator.refreshEntityIfStale(target, maxAge)
+                        }
                         val temperatureUnit = metadata.sourceUnit ?: "°"
                         val displayEntity = entity.copy(name = metadata.name)
                         if (clickedId.isNotEmpty()) {

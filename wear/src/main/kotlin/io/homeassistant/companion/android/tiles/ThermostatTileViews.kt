@@ -132,7 +132,7 @@ internal class ThermostatTileViews(private val context: Context) {
                     LayoutElementBuilders.Column.Builder()
                         .addContent(
                             LayoutElementBuilders.Text.Builder()
-                                .setText(friendlyHvacAction)
+                                .setText(pendingStatusText(pending) ?: friendlyHvacAction)
                                 .build(),
                         )
                         .addContent(
@@ -308,6 +308,7 @@ internal class ThermostatTileViews(private val context: Context) {
                 .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
                 .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
                 .addContent(column.build())
+                .setModifiers(getRefreshModifiers())
                 .apply {
                     if (showName) {
                         addContent(
@@ -341,6 +342,7 @@ internal class ThermostatTileViews(private val context: Context) {
         layout: EnhancedLayout,
         controls: ClimateControls?,
     ) {
+        if (layout.entity.rawState in listOf("unavailable", "unknown")) return
         if (controls != null && (layout.config.showHvacModes || layout.config.showFanControl)) {
             column.addContent(verticalGap(if (layout.compact) 2f else CONTROL_SECTION_GAP_DP))
             addModes(column, layout, controls)
@@ -390,6 +392,14 @@ internal class ThermostatTileViews(private val context: Context) {
         val secondaryStep: Int? get() = config.secondaryStep.takeIf { config.showSecondaryButtons }
     }
 
+    private fun pendingStatusText(pending: ThermostatCommandCoordinator.Pending?): String? = when (pending?.status) {
+        ThermostatCommandCoordinator.Pending.Status.WAITING -> context.getString(commonR.string.thermostat_tile_waiting)
+        ThermostatCommandCoordinator.Pending.Status.FAILED -> context.getString(
+            commonR.string.thermostat_tile_unconfirmed,
+        )
+        null -> null
+    }
+
     private fun addActivity(column: LayoutElementBuilders.Column.Builder, layout: EnhancedLayout) {
         val config = layout.config
         val compact = layout.compact
@@ -407,22 +417,14 @@ internal class ThermostatTileViews(private val context: Context) {
                 },
             ).uppercase(java.util.Locale.getDefault())
             val modeColor = activityModeColor(state)
-            val activity = when (pending?.status) {
-                ThermostatCommandCoordinator.Pending.Status.WAITING -> context.getString(
-                    commonR.string.thermostat_tile_waiting,
+            val activity = pendingStatusText(pending) ?: if (showHvacAction(state, hvacAction)) {
+                context.getString(
+                    commonR.string.thermostat_tile_activity_summary,
+                    displayState,
+                    stateLabel(hvacAction),
                 )
-                ThermostatCommandCoordinator.Pending.Status.FAILED -> context.getString(
-                    commonR.string.thermostat_tile_unconfirmed,
-                )
-                null -> if (showHvacAction(state, hvacAction)) {
-                    context.getString(
-                        commonR.string.thermostat_tile_activity_summary,
-                        displayState,
-                        stateLabel(hvacAction),
-                    )
-                } else {
-                    displayState
-                }
+            } else {
+                displayState
             }
             val activityColor = when (pending?.status) {
                 ThermostatCommandCoordinator.Pending.Status.WAITING -> 0xFFFFD778.toInt()
