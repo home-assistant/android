@@ -97,7 +97,7 @@ class AppDatabaseMigrationTest {
                 assertEquals(3, it.getInt(6))
                 assertEquals("default", it.getText(7))
                 assertEquals(1, it.getInt(8))
-                assertEquals(1, it.getInt(9))
+                assertEquals(0, it.getInt(9))
                 assertEquals(1, it.getInt(10))
             }
         }

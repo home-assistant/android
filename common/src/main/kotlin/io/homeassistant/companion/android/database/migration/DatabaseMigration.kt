@@ -827,3 +827,10 @@ private val MIGRATION_55_56 = object : Migration(55, 56) {
         )
     }
 }
+
+/** Existing Classic tiles have never had a fan preference, so start with Fan hidden. */
+internal class Migration56to57 : AutoMigrationSpec {
+    override suspend fun onPostMigrate(connection: SQLiteConnection) {
+        connection.execSQL("UPDATE `thermostat_tiles` SET `show_fan_control` = 0")
+    }
+}
