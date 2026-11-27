@@ -614,7 +614,7 @@ class LaunchViewModelTest {
 
     @ParameterizedTest
     @ValueSource(booleans = [true, false])
-    fun `Given refreshAppLockState when manager reports lock state then isAppLocked reflects it`(
+    fun `Given refreshAppLockState when manager reports lock state then appLockState reflects it`(
         locked: Boolean,
     ) = runTest {
         coEvery { appLockStateManager.isAppLocked() } returns locked
@@ -623,7 +623,40 @@ class LaunchViewModelTest {
         viewModel.refreshAppLockState()
         advanceUntilIdle()
 
-        assertEquals(locked, viewModel.isAppLocked.value)
+        val expected = if (locked) AppLockUiState.Locked else AppLockUiState.Unlocked
+        assertEquals(expected, viewModel.appLockState.value)
+    }
+
+    @Test
+    fun `Given a new view model when the lock was never checked then the content is covered until the first check`() = runTest {
+        coEvery { appLockStateManager.isAppLocked() } returns false
+        createViewModel()
+        advanceUntilIdle()
+        assertEquals(AppLockUiState.Checking, viewModel.appLockState.value)
+
+        viewModel.refreshAppLockState()
+        advanceUntilIdle()
+
+        assertEquals(AppLockUiState.Unlocked, viewModel.appLockState.value)
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `Given unlocked content when refreshAppLockState starts then it is covered before the check returns only with app lock on`(
+        lockEnabled: Boolean,
+    ) = runTest {
+        appLockEnabledFlow.value = lockEnabled
+        coEvery { appLockStateManager.isAppLocked() } returns false
+        createViewModel()
+        viewModel.refreshAppLockState()
+        advanceUntilIdle()
+        assertEquals(AppLockUiState.Unlocked, viewModel.appLockState.value)
+
+        // The check runs on viewModelScope, so with a StandardTestDispatcher it has not returned yet.
+        viewModel.refreshAppLockState()
+
+        val expected = if (lockEnabled) AppLockUiState.Checking else AppLockUiState.Unlocked
+        assertEquals(expected, viewModel.appLockState.value)
     }
 
     @Test
@@ -649,18 +682,18 @@ class LaunchViewModelTest {
     }
 
     @Test
-    fun `Given onAuthenticated when invoked then manager is told app is active and isAppLocked is false`() = runTest {
+    fun `Given onAuthenticated when invoked then manager is told app is active and appLockState is unlocked`() = runTest {
         coEvery { appLockStateManager.isAppLocked() } returns true
         createViewModel()
         viewModel.refreshAppLockState()
         advanceUntilIdle()
-        assertTrue(viewModel.isAppLocked.value)
+        assertEquals(AppLockUiState.Locked, viewModel.appLockState.value)
 
         viewModel.onAuthenticated()
         advanceUntilIdle()
 
         coVerify { appLockStateManager.setAppActive(active = true) }
-        assertFalse(viewModel.isAppLocked.value)
+        assertEquals(AppLockUiState.Unlocked, viewModel.appLockState.value)
     }
 
     @Test

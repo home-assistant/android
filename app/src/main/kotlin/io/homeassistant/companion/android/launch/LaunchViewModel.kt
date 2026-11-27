@@ -63,6 +63,29 @@ internal sealed interface LaunchUiState {
 }
 
 /**
+ * Whether the app content must be covered while app lock is on.
+ *
+ * Distinguishes being covered from being prompted: when the app becomes visible again the lock
+ * state is not known yet, so the content is covered without asking the user to authenticate until
+ * the check resolves. This keeps the content out of reach during that moment instead of leaving it
+ * live until the asynchronous check returns.
+ */
+internal sealed interface AppLockUiState {
+
+    /** The content is visible and interactive. */
+    data object Unlocked : AppLockUiState
+
+    /** The lock state is not known yet, at launch or when coming back: cover the content, but do not prompt. */
+    data object Checking : AppLockUiState
+
+    /** The content is locked: cover it and ask the user to authenticate. */
+    data object Locked : AppLockUiState
+
+    /** Whether the lock overlay must cover the content. */
+    val isCovered: Boolean get() = this != Unlocked
+}
+
+/**
  * ViewModel for the launch activity. Upon instantiation, it checks for servers to remove
  * and verifies the presence of an active, registered, and connected server.
  *
@@ -132,8 +155,8 @@ internal class LaunchViewModel @VisibleForTesting constructor(
     ) { preference, requested -> preference || requested }
         .stateIn(viewModelScope, SharingStarted.Eagerly, initialValue = false)
 
-    private val _isAppLocked = MutableStateFlow(false)
-    val isAppLocked: StateFlow<Boolean> = _isAppLocked.asStateFlow()
+    private val _appLockState = MutableStateFlow<AppLockUiState>(AppLockUiState.Checking)
+    val appLockState: StateFlow<AppLockUiState> = _appLockState.asStateFlow()
 
     /**
      * Emits whether app lock is turned on for the active server, so the app content must stay out of
@@ -167,11 +190,23 @@ internal class LaunchViewModel @VisibleForTesting constructor(
     fun shouldShowSplashScreen(): Boolean = _uiState.value is LaunchUiState.Loading
 
     /**
-     * Refresh the [isAppLocked] state.
+     * Refresh the [appLockState], called when the app becomes visible.
+     *
+     * Covers the content right away while the fresh check runs, so it is never briefly reachable
+     * when the app comes back before the asynchronous check returns. Once the first check has
+     * resolved, this only acts when app lock is on and the content is not already covered, so it
+     * neither affects users without app lock nor re-triggers the prompt while locked.
      */
     fun refreshAppLockState() {
+        if (isAppLockEnabled.value && _appLockState.value is AppLockUiState.Unlocked) {
+            _appLockState.value = AppLockUiState.Checking
+        }
         viewModelScope.launch {
-            _isAppLocked.value = appLockStateManager.isAppLocked()
+            _appLockState.value = if (appLockStateManager.isAppLocked()) {
+                AppLockUiState.Locked
+            } else {
+                AppLockUiState.Unlocked
+            }
         }
     }
 
@@ -191,7 +226,7 @@ internal class LaunchViewModel @VisibleForTesting constructor(
     fun onAuthenticated() {
         viewModelScope.launch {
             appLockStateManager.setAppActive(active = true)
-            _isAppLocked.value = false
+            _appLockState.value = AppLockUiState.Unlocked
         }
     }
 
