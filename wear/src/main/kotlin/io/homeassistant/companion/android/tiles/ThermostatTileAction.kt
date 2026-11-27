@@ -49,7 +49,7 @@ private fun enhancedAction(action: String, config: ThermostatTile, controls: Cli
             val mode = action.removePrefix(TAP_MODE_PREFIX)
             if (mode in controls.hvacModes) ThermostatTileAction.Mode(mode) else null
         }
-        config.showFanControl && action == TAP_FAN -> ThermostatTileAction.Fan
+        config.showFanControl && action == TAP_FAN && controls.fanModes.isNotEmpty() -> ThermostatTileAction.Fan
         action.startsWith("Temp:") -> temperatureAction(action, config)
         else -> null
     }

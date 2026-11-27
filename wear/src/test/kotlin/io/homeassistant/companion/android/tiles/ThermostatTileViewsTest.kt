@@ -39,6 +39,7 @@ class ThermostatTileViewsTest {
         state: String = "heat",
         hvacAction: String = if (state == "heat") "heating" else "idle",
         fanMode: String = "auto",
+        fanModes: List<String> = listOf("auto", "on"),
     ) = EntityDisplayWithoutContext(
         entityId = "climate.living_room",
         name = "Living Room",
@@ -57,7 +58,7 @@ class ThermostatTileViewsTest {
             targetTemperatureLow = 18f,
             targetTemperatureHigh = 22f,
             fanMode = fanMode,
-            fanModes = listOf("auto", "on"),
+            fanModes = fanModes,
         ),
     )
 
@@ -90,7 +91,11 @@ class ThermostatTileViewsTest {
 
     @Test
     fun `Given compact Enhanced layout when rendered then single and dual setpoint actions stay distinct`() {
-        val enhanced = config.copy(layoutStyle = ThermostatLayoutStyle.ENHANCED, showSecondaryButtons = true)
+        val enhanced = config.copy(
+            layoutStyle = ThermostatLayoutStyle.ENHANCED,
+            showSecondaryButtons = true,
+            showFanControl = true,
+        )
         val single = views.enhancedTimeline(enhanced, thermostat(), "°C", null, prefix, 192, 192).actions()
         val dual = views.enhancedTimeline(enhanced, thermostat("heat_cool"), "°C", null, prefix, 192, 192).actions()
         val modes = setOf("Mode:heat", "Mode:cool", "Mode:heat_cool", "Mode:off", "CycleFan")
@@ -99,9 +104,9 @@ class ThermostatTileViewsTest {
     }
 
     @Test
-    fun `Given default Enhanced settings when rendered then hide secondary adjustments on both watch sizes`() {
+    fun `Given default Enhanced settings when rendered then hide secondary adjustments and fan on both watch sizes`() {
         val enhanced = config.copy(layoutStyle = ThermostatLayoutStyle.ENHANCED)
-        val modes = setOf("Mode:heat", "Mode:cool", "Mode:heat_cool", "Mode:off", "CycleFan")
+        val modes = setOf("Mode:heat", "Mode:cool", "Mode:heat_cool", "Mode:off")
         for (size in listOf(192, 240)) {
             for (state in listOf("heat", "cool")) {
                 val single = views.enhancedTimeline(enhanced, thermostat(state), "°C", null, prefix, size, size)
@@ -120,6 +125,7 @@ class ThermostatTileViewsTest {
             layoutStyle = ThermostatLayoutStyle.ENHANCED,
             showSecondaryButtons = true,
             secondaryStep = 5,
+            showFanControl = true,
         )
         val modes = setOf("Mode:heat", "Mode:cool", "Mode:heat_cool", "Mode:off", "CycleFan")
         for (size in listOf(192, 240)) {
@@ -127,6 +133,50 @@ class ThermostatTileViewsTest {
             val dual = views.enhancedTimeline(enhanced, thermostat("heat_cool"), "°C", null, prefix, size, size)
             assertEquals(modes + setOf("Temp:single:-5", "Temp:single:-1", "Temp:single:1", "Temp:single:5"), single.actions())
             assertEquals(modes + listOf("heat", "cool").flatMap { slot -> listOf(-5, -1, 1, 5).map { "Temp:$slot:$it" } }, dual.actions())
+        }
+    }
+
+    @Test
+    fun `Given fan preference and capability when rendered then show fan only when both are present`() {
+        val enhanced = config.copy(layoutStyle = ThermostatLayoutStyle.ENHANCED, showFanControl = true)
+        for (size in listOf(192, 240)) {
+            val supported = views.enhancedTimeline(enhanced, thermostat(), "°C", null, prefix, size, size)
+            val unsupported = views.enhancedTimeline(
+                enhanced,
+                thermostat(fanModes = emptyList()),
+                "°C",
+                null,
+                prefix,
+                size,
+                size,
+            )
+            assertTrue("CycleFan" in supported.actions())
+            assertFalse("CycleFan" in unsupported.actions())
+        }
+    }
+
+    @Test
+    fun `Given secondary preference when rendered then all visible adjustment buttons use the expected background`() {
+        for (size in listOf(192, 240)) {
+            for (state in listOf("heat", "cool", "heat_cool")) {
+                for (secondary in listOf(false, true)) {
+                    val enhanced = config.copy(
+                        layoutStyle = ThermostatLayoutStyle.ENHANCED,
+                        showSecondaryButtons = secondary,
+                    )
+                    val buttons = views.enhancedTimeline(enhanced, thermostat(state), "°C", null, prefix, size, size)
+                        .elements().filterIsInstance<Box>()
+                        .filter { it.modifiers?.clickable?.id?.startsWith(prefix + "Temp:") == true }
+                    val expectedCount = (if (state == "heat_cool") 2 else 1) * (if (secondary) 4 else 2)
+                    assertEquals(expectedCount, buttons.size)
+                    buttons.forEach { button ->
+                        assertEquals(
+                            if (secondary) 0xFF293447.toInt() else 0x00000000,
+                            button.modifiers?.background?.color?.argb,
+                        )
+                    }
+                }
+            }
         }
     }
 

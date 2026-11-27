@@ -632,9 +632,9 @@ internal class ThermostatTileViews(private val context: Context) {
                     ),
                 ),
             )
-            utilityRow.addContent(horizontalGap(if (compact) COMPACT_CONTROL_GAP_DP else CONTROL_GAP_DP))
         }
         if (showOff) {
+            if (showFan) utilityRow.addContent(horizontalGap(if (compact) COMPACT_CONTROL_GAP_DP else CONTROL_GAP_DP))
             utilityRow.addContent(
                 iconButton(
                     ICON_ENHANCED_POWER,
@@ -667,13 +667,8 @@ internal class ThermostatTileViews(private val context: Context) {
         actionPrefix: String,
     ): LayoutElementBuilders.LayoutElement {
         val extra = secondaryStep?.coerceIn(2, 10)
-        val targetDescription = context.getString(
-            when (slot) {
-                "heat" -> commonR.string.thermostat_tile_heat_target
-                "cool" -> commonR.string.thermostat_tile_cool_target
-                else -> commonR.string.thermostat_tile_target
-            },
-        )
+        val backgroundColor = if (extra == null) TRANSPARENT_COLOR else BUTTON_BACKGROUND_COLOR
+        val targetDescription = targetDescriptionForSlot(slot)
         fun adjustmentDescription(amount: Int): String {
             val quantity = kotlin.math.abs(amount)
             return context.resources.getQuantityString(
@@ -694,15 +689,21 @@ internal class ThermostatTileViews(private val context: Context) {
                 button(
                     "−$extra",
                     actionPrefix + "Temp:$slot:${-extra}",
-                    outerWidth,
-                    height,
+                    ButtonSize(outerWidth, height),
                     adjustmentDescription(-extra),
+                    backgroundColor,
                 ),
             )
             row.addContent(horizontalGap(gap))
         }
         row.addContent(
-            button("−", actionPrefix + "Temp:$slot:-1", primaryWidth, height, adjustmentDescription(-1)),
+            button(
+                "−",
+                actionPrefix + "Temp:$slot:-1",
+                ButtonSize(primaryWidth, height),
+                adjustmentDescription(-1),
+                backgroundColor,
+            ),
         )
         row.addContent(horizontalGap(gap))
         val value = target?.let { nice(it) } ?: "--"
@@ -732,7 +733,13 @@ internal class ThermostatTileViews(private val context: Context) {
         )
         row.addContent(horizontalGap(gap))
         row.addContent(
-            button("+", actionPrefix + "Temp:$slot:1", primaryWidth, height, adjustmentDescription(1)),
+            button(
+                "+",
+                actionPrefix + "Temp:$slot:1",
+                ButtonSize(primaryWidth, height),
+                adjustmentDescription(1),
+                backgroundColor,
+            ),
         )
         if (extra != null) {
             row.addContent(horizontalGap(gap))
@@ -740,27 +747,35 @@ internal class ThermostatTileViews(private val context: Context) {
                 button(
                     "+$extra",
                     actionPrefix + "Temp:$slot:$extra",
-                    outerWidth,
-                    height,
+                    ButtonSize(outerWidth, height),
                     adjustmentDescription(extra),
+                    backgroundColor,
                 ),
             )
         }
         return row.build()
     }
 
+    private fun targetDescriptionForSlot(slot: String): String = context.getString(
+        when (slot) {
+            "heat" -> commonR.string.thermostat_tile_heat_target
+            "cool" -> commonR.string.thermostat_tile_cool_target
+            else -> commonR.string.thermostat_tile_target
+        },
+    )
+
     private fun button(
         label: String,
         action: String,
-        width: Float,
-        height: Float,
+        size: ButtonSize,
         description: String,
+        backgroundColor: Int,
     ): LayoutElement = enhancedButton(
         temperatureText(label, BUTTON_TEXT_SP, PRIMARY_TEXT_COLOR),
         action,
-        ButtonSize(width, height),
+        size,
         description,
-        BUTTON_BACKGROUND_COLOR,
+        backgroundColor,
     )
 
     /** The five mode/utility buttons use image resources, not font-dependent symbols. */

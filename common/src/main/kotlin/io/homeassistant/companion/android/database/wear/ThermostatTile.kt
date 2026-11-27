@@ -33,7 +33,7 @@ data class ThermostatTile(
     @ColumnInfo(name = "show_hvac_modes", defaultValue = "1")
     val showHvacModes: Boolean = true,
     @ColumnInfo(name = "show_fan_control", defaultValue = "1")
-    val showFanControl: Boolean = true,
+    val showFanControl: Boolean = false,
     @ColumnInfo(name = "show_activity", defaultValue = "1")
     val showActivity: Boolean = true,
     @ColumnInfo(name = "show_secondary_buttons", defaultValue = "0")

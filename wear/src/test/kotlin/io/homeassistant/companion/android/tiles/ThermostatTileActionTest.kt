@@ -16,6 +16,7 @@ class ThermostatTileActionTest {
     private val enhanced = classic.copy(layoutStyle = ThermostatLayoutStyle.ENHANCED)
     private val controls = mockk<ClimateControls> {
         every { hvacModes } returns listOf("heat", "cool", "heat_cool", "off")
+        every { fanModes } returns listOf("auto", "on")
     }
 
     private fun resolve(action: String, config: ThermostatTile = enhanced, state: String = "heat") = resolveThermostatAction(prefix + action, prefix, config, state, controls)
@@ -38,7 +39,8 @@ class ThermostatTileActionTest {
         assertEquals(ThermostatTileAction.Adjust(TemperatureSlot.HEAT, -1f), resolve("Temp:heat:-1"))
         assertEquals(ThermostatTileAction.Adjust(TemperatureSlot.COOL, 1f), resolve("Temp:cool:1"))
         assertEquals(ThermostatTileAction.Mode("off"), resolve("Mode:off"))
-        assertEquals(ThermostatTileAction.Fan, resolve("CycleFan"))
+        assertNull(resolve("CycleFan"))
+        assertEquals(ThermostatTileAction.Fan, resolve("CycleFan", enhanced.copy(showFanControl = true)))
     }
 
     @Test
@@ -54,6 +56,8 @@ class ThermostatTileActionTest {
         assertNull(resolve("Mode:off", enhanced.copy(showHvacModes = false)))
         assertNull(resolve("Mode:dry"))
         assertNull(resolve("CycleFan", enhanced.copy(showFanControl = false)))
+        every { controls.fanModes } returns emptyList()
+        assertNull(resolve("CycleFan", enhanced.copy(showFanControl = true)))
         assertNull(resolve("Temp:single:1", state = "unavailable"))
         assertNull(resolve("Mode:heat", state = "unknown"))
         assertNull(resolveThermostatAction(prefix + "CycleFan", prefix, enhanced, "heat", null))
