@@ -14,7 +14,6 @@ import io.homeassistant.companion.android.common.data.integration.display.Entity
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -112,8 +111,8 @@ class ThermostatCommandCoordinator internal constructor(
 
     private data class CachedEntity(val item: EntityDisplayWithoutContext, val receivedAt: Long)
     private val entityCache = ConcurrentHashMap<Target, CachedEntity>()
-    private val refreshInFlight = ConcurrentHashMap<Target, AtomicBoolean>()
-    private val refreshAttemptAt = ConcurrentHashMap<Target, Long>()
+    private val refreshInFlight = mutableMapOf<Target, Any>()
+    private val refreshAttemptAt = mutableMapOf<Target, Long>()
 
     // A tile request alone does not prove visibility. Only recent interaction evidence may
     // start a bounded observer. Redraws never extend an existing session.
@@ -250,42 +249,40 @@ class ThermostatCommandCoordinator internal constructor(
     fun cachedEntity(target: Target): EntityDisplayWithoutContext? =
         entityCache[target]?.takeIf { System.currentTimeMillis() - it.receivedAt < ENTITY_CACHE_TTL_MS }?.item
 
-    fun rememberEntity(target: Target, entity: EntityDisplayWithoutContext) {
-        if (entity.entityId != target.entityId) return
-        lock.withLock {
-            val previous = entityCache[target]
-            val previousUpdated = previous?.item?.lastUpdated
-            val updated = entity.lastUpdated
-            if (previousUpdated != null && updated != null && updated < previousUpdated) return
-            entityCache[target] = CachedEntity(entity, System.currentTimeMillis())
-            // A state change should appear without waiting for the tile's long periodic interval.
-            if (previous != null && previous.item != entity) refresh()
-        }
+    fun rememberEntity(target: Target, entity: EntityDisplayWithoutContext): Boolean = lock.withLock {
+        if (entity.entityId != target.entityId) return false
+        val previous = entityCache[target]
+        val previousUpdated = previous?.item?.lastUpdated
+        val updated = entity.lastUpdated
+        if (previousUpdated != null && updated != null && updated < previousUpdated) return false
+        entityCache[target] = CachedEntity(entity, System.currentTimeMillis())
+        // A state change should appear without waiting for the tile's long periodic interval.
+        if (previous != null && previous.item != entity) refresh()
+        true
     }
 
     // Independent early exits avoid unnecessary reads and preserve the in-flight gate.
     @Suppress("ReturnCount")
     fun refreshEntityIfStale(target: Target, maxAgeMillis: Long) {
         // A command already provides state updates. Avoid a second request from tile rendering.
-        val refreshToken = lock.withLock {
-            if (latest.keys.any { it.target == target }) return
-            nextToken
+        val (entry, refreshToken) = lock.withLock {
+            if (latest.keys.any { it.target == target } || target in refreshInFlight) return
+            val now = System.currentTimeMillis()
+            val cached = entityCache[target]
+            if (cached != null && now - cached.receivedAt < maxAgeMillis) return
+            val previousAttempt = refreshAttemptAt[target] ?: 0L
+            if (now - previousAttempt < maxAgeMillis) return
+            val token = Any()
+            refreshInFlight[target] = token
+            refreshAttemptAt[target] = now
+            cached to token
         }
-        val now = System.currentTimeMillis()
-        val entry = entityCache[target]
-        if (entry != null && now - entry.receivedAt < maxAgeMillis) return
-        // Limit retries when offline and coalesce simultaneous tile requests.
-        val previousAttempt = refreshAttemptAt[target] ?: 0L
-        if (now - previousAttempt < maxAgeMillis) return
-        val gate = refreshInFlight.getOrPut(target) { AtomicBoolean(false) }
-        if (!gate.compareAndSet(false, true)) return
-        refreshAttemptAt[target] = now
         scope.launch {
             try {
                 serverManager.integrationRepository(target.serverId).getEntity(target.entityId)?.let {
                     lock.withLock {
                         // Discard a read started before a newer command was submitted.
-                        if (nextToken == refreshToken &&
+                        if (refreshInFlight[target] === refreshToken &&
                             entityCache[target] === entry &&
                             latest.keys.none { key -> key.target == target }
                         ) {
@@ -298,7 +295,9 @@ class ThermostatCommandCoordinator internal constructor(
             } catch (error: Exception) {
                 Timber.w(error, "Thermostat background refresh failed: %s", target.entityId)
             } finally {
-                gate.set(false)
+                lock.withLock {
+                    if (refreshInFlight[target] === refreshToken) refreshInFlight.remove(target)
+                }
             }
         }
     }
@@ -423,6 +422,8 @@ class ThermostatCommandCoordinator internal constructor(
         val (token, predecessor) = lock.withLock {
             val token = ++nextToken
             latest[key] = token
+            // Invalidate only this target's outstanding refresh, even if the command completes first.
+            refreshInFlight.remove(target)
             // Only registered after dispatch; never cancel a queued or in-flight service call.
             acknowledgementJobs.remove(key)?.cancel()
             store(key, Pending(value, Pending.Status.WAITING, single, low, high), updateTile = false)
@@ -504,7 +505,7 @@ class ThermostatCommandCoordinator internal constructor(
         val repository = serverManager.integrationRepository(target.serverId)
         fun checkState(entity: EntityDisplayWithoutContext): Boolean = lock.withLock {
             if (latest[key] != token || entity.entityId != target.entityId) return false
-            rememberEntity(target, entity)
+            if (!rememberEntity(target, entity)) return false
             confirmed(entity)
         }
         return readConfirmation(target, repository, ::checkState) ||

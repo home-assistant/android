@@ -332,6 +332,67 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
+    fun `given another server refresh when a command is submitted then refresh is retained`() = runTest {
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) {}
+        val other = target.copy(serverId = 2)
+        val otherRepository = mockk<IntegrationRepository>()
+        val response = CompletableDeferred<Entity>()
+        coEvery { servers.integrationRepository(2) } returns otherRepository
+        coEvery { otherRepository.getEntity(other.entityId) } coAnswers { response.await() }
+        coEvery { repository.callAction("climate", "set_temperature", any()) } returns Unit
+        coEvery { repository.getEntity(target.entityId) } returns state(72f)
+
+        coordinator.refreshEntityIfStale(other, 0L)
+        runCurrent()
+        coordinator.submitTemperature(10, target, false, null, null, 72f)
+        runCurrent()
+        response.complete(state(76f))
+        runCurrent()
+
+        assertEquals(EntityDisplayWithoutContext(state(76f)), coordinator.cachedEntity(other))
+    }
+
+    @Test
+    fun `given outstanding refresh when same target command fails then old refresh is discarded`() = runTest {
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) {}
+        val response = CompletableDeferred<Entity>()
+        coEvery { repository.getEntity(target.entityId) } coAnswers { response.await() }
+        coEvery { repository.callAction("climate", "set_temperature", any()) } throws IllegalStateException()
+
+        coordinator.refreshEntityIfStale(target, 0L)
+        runCurrent()
+        coordinator.submitTemperature(10, target, false, null, null, 72f)
+        runCurrent()
+        response.complete(state(70f))
+        runCurrent()
+
+        assertNull(coordinator.cachedEntity(target))
+        assertEquals(ThermostatCommandCoordinator.Pending.Status.FAILED, coordinator.get(10, target)?.status)
+    }
+
+    @Test
+    fun `given newer cached state when stale matching response arrives then command remains pending`() = runTest {
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) {}
+        val newer = LocalDateTime.of(2026, 1, 1, 0, 0, 2)
+        val changes = MutableSharedFlow<EntityChange>(extraBufferCapacity = 1)
+        coordinator.rememberEntity(target, EntityDisplayWithoutContext(state(70f, newer)))
+        coEvery { repository.callAction("climate", "set_temperature", any()) } returns Unit
+        coEvery { repository.getEntity(target.entityId) } returns state(72f, newer.minusSeconds(1))
+        coEvery { repository.getEntityChanges(any()) } returns changes
+
+        coordinator.submitTemperature(10, target, false, null, null, 72f)
+        runCurrent()
+
+        assertEquals(ThermostatCommandCoordinator.Pending.Status.WAITING, coordinator.get(10, target)?.status)
+        assertEquals(EntityDisplayWithoutContext(state(70f, newer)), coordinator.cachedEntity(target))
+
+        check(changes.tryEmit(EntityChange.StateChanged(state(72f, newer.plusSeconds(1)))))
+        runCurrent()
+        assertNull(coordinator.get(10, target))
+        assertEquals(EntityDisplayWithoutContext(state(72f, newer.plusSeconds(1))), coordinator.cachedEntity(target))
+    }
+
+    @Test
     fun `active server placeholder cannot be used as a command target`() {
         assertThrows(IllegalArgumentException::class.java) {
             ThermostatCommandCoordinator.Target(ServerManager.SERVER_ID_ACTIVE, target.entityId)
