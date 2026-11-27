@@ -117,6 +117,11 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="com.google.android.clockwork.tiles.category.PROVIDER_CONFIG" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="ConfigTodoListTile" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="com.google.android.clockwork.tiles.category.PROVIDER_CONFIG" />
+            </intent-filter>
         </activity>
 
         <!-- To show confirmations and failures -->
@@ -130,6 +135,19 @@
             android:theme="@style/Theme.HomeAssistant.SplashThemeAssist"
             android:exported="true"
             android:taskAffinity="io.homeassistant.companion.android.assist">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".todo.TodoListActivity"
+            android:icon="@mipmap/ic_todo_launcher"
+            android:label="@string/todo_lists"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.HomeAssistant"
+            android:exported="true"
+            android:taskAffinity="io.homeassistant.companion.android.todo">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -243,6 +261,27 @@
             <meta-data
                 android:name="com.google.android.clockwork.tiles.PROVIDER_CONFIG_ACTION"
                 android:value="ConfigThermostatTile" />
+        </service>
+        <service
+            android:name=".tiles.TodoListTile"
+            android:label="@string/todo_list_tile"
+            android:description="@string/todo_list_tile_desc"
+            android:permission="com.google.android.wearable.permission.BIND_TILE_PROVIDER"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.wear.tiles.action.BIND_TILE_PROVIDER" />
+            </intent-filter>
+
+            <meta-data android:name="androidx.wear.tiles.PREVIEW"
+                android:resource="@drawable/todo_list_tile_example" />
+
+            <meta-data
+                android:name="com.google.android.clockwork.tiles.MULTI_INSTANCES_SUPPORTED"
+                android:value="true" />
+
+            <meta-data
+                android:name="com.google.android.clockwork.tiles.PROVIDER_CONFIG_ACTION"
+                android:value="ConfigTodoListTile" />
         </service>
         <receiver android:name=".tiles.TileActionReceiver"
             android:exported="false">

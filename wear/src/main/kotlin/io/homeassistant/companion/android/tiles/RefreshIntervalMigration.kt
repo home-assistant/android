@@ -3,6 +3,7 @@ package io.homeassistant.companion.android.tiles
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.database.wear.ThermostatTileDao
+import io.homeassistant.companion.android.database.wear.TodoListTileDao
 import javax.inject.Inject
 import kotlinx.coroutines.flow.first
 
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.first
 class RefreshIntervalMigration @Inject constructor(
     private val cameraTileDao: CameraTileDao,
     private val thermostatTileDao: ThermostatTileDao,
+    private val todoListTileDao: TodoListTileDao,
     private val wearPrefsRepository: WearPrefsRepository,
 ) {
     suspend fun migrate() {
@@ -26,6 +28,10 @@ class RefreshIntervalMigration @Inject constructor(
         thermostatTileDao.getAllFlow().first()
             .filter { it.refreshInterval == REFRESH_INTERVAL_ON_VIEWED.toLong() }
             .forEach { thermostatTileDao.add(it.copy(refreshInterval = 0)) }
+
+        todoListTileDao.getAllFlow().first()
+            .filter { it.refreshInterval == REFRESH_INTERVAL_ON_VIEWED.toLong() }
+            .forEach { todoListTileDao.add(it.copy(refreshInterval = 0)) }
 
         wearPrefsRepository.getAllTemplateTiles()
             .filterValues { it.refreshInterval == REFRESH_INTERVAL_ON_VIEWED }

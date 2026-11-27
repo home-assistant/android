@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Three rows: a check mark and a line each -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,36 l3,3 l6,-6 l2,2 l-8,8 l-5,-5 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M46,35 h32 v4 h-32 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,52 l3,3 l6,-6 l2,2 l-8,8 l-5,-5 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M46,51 h32 v4 h-32 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,68 l3,3 l6,-6 l2,2 l-8,8 l-5,-5 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M46,67 h32 v4 h-32 z" />
+</vector>

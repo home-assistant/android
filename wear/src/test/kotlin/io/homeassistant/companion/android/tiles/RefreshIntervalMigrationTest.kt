@@ -8,6 +8,8 @@ import io.homeassistant.companion.android.database.wear.CameraTile
 import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.homeassistant.companion.android.database.wear.ThermostatTileDao
+import io.homeassistant.companion.android.database.wear.TodoListTile
+import io.homeassistant.companion.android.database.wear.TodoListTileDao
 import io.mockk.called
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -23,9 +25,11 @@ class RefreshIntervalMigrationTest {
 
     private val cameraTileDao = mockk<CameraTileDao>(relaxed = true)
     private val thermostatTileDao = mockk<ThermostatTileDao>(relaxed = true)
+    private val todoListTileDao = mockk<TodoListTileDao>(relaxed = true)
     private val wearPrefsRepository = mockk<WearPrefsRepository>(relaxed = true)
 
-    private val migration = RefreshIntervalMigration(cameraTileDao, thermostatTileDao, wearPrefsRepository)
+    private val migration =
+        RefreshIntervalMigration(cameraTileDao, thermostatTileDao, todoListTileDao, wearPrefsRepository)
 
     @AfterEach
     fun tearDown() {
@@ -40,6 +44,9 @@ class RefreshIntervalMigrationTest {
         val onViewedThermostat = ThermostatTile(id = 3, entityId = "climate.living", refreshInterval = 1)
         coEvery { cameraTileDao.getAllFlow() } returns flowOf(listOf(onViewedCamera, timedCamera))
         coEvery { thermostatTileDao.getAllFlow() } returns flowOf(listOf(onViewedThermostat))
+        val onViewedTodoList = TodoListTile(id = 6, entityId = "todo.shopping", refreshInterval = 1)
+        val timedTodoList = TodoListTile(id = 7, entityId = "todo.chores", refreshInterval = 600)
+        coEvery { todoListTileDao.getAllFlow() } returns flowOf(listOf(onViewedTodoList, timedTodoList))
         coEvery { wearPrefsRepository.getAllTemplateTiles() } returns mapOf(
             4 to TemplateTileConfig(template = "{{ now() }}", refreshInterval = 1),
             5 to TemplateTileConfig(template = "{{ states.sensor }}", refreshInterval = 0),
@@ -50,6 +57,8 @@ class RefreshIntervalMigrationTest {
         coVerify(exactly = 1) { cameraTileDao.add(onViewedCamera.copy(refreshInterval = 0)) }
         coVerify(exactly = 0) { cameraTileDao.add(timedCamera) }
         coVerify(exactly = 1) { thermostatTileDao.add(onViewedThermostat.copy(refreshInterval = 0)) }
+        coVerify(exactly = 1) { todoListTileDao.add(onViewedTodoList.copy(refreshInterval = 0)) }
+        coVerify(exactly = 0) { todoListTileDao.add(timedTodoList) }
         coVerify(exactly = 1) {
             wearPrefsRepository.setTemplateTile(4, "{{ now() }}", refreshInterval = 0)
         }
@@ -62,6 +71,6 @@ class RefreshIntervalMigrationTest {
 
         migration.migrate()
 
-        verify { listOf(cameraTileDao, thermostatTileDao, wearPrefsRepository) wasNot called }
+        verify { listOf(cameraTileDao, thermostatTileDao, todoListTileDao, wearPrefsRepository) wasNot called }
     }
 }

@@ -21,6 +21,7 @@ import io.homeassistant.companion.android.database.wear.EntityStateComplications
 import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
 import io.homeassistant.companion.android.database.wear.ThermostatTileDao
+import io.homeassistant.companion.android.database.wear.TodoListTileDao
 import io.homeassistant.companion.android.database.widget.ButtonWidgetDao
 import io.homeassistant.companion.android.database.widget.CameraWidgetDao
 import io.homeassistant.companion.android.database.widget.MediaPlayerControlsWidgetDao
@@ -94,6 +95,9 @@ internal object DatabaseModule {
 
     @Provides
     fun provideThermostatTileDao(database: AppDatabase): ThermostatTileDao = database.thermostatTileDao()
+
+    @Provides
+    fun provideTodoListTileDao(database: AppDatabase): TodoListTileDao = database.todoListTileDao()
 
     @Provides
     fun provideEntityStateComplicationsDao(database: AppDatabase): EntityStateComplicationsDao =
