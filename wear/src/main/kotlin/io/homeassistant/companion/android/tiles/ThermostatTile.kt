@@ -81,7 +81,7 @@ class ThermostatTile : TileService() {
     lateinit var thermostatTileDao: ThermostatTileDao
 
     @Inject
-    lateinit var commandCoordinator: ThermostatCommandCoordinator
+    internal lateinit var commandCoordinator: ThermostatCommandCoordinator
 
     @Inject
     lateinit var thermostatMetadata: ThermostatMetadata

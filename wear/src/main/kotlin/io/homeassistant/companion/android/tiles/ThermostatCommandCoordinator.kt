@@ -65,7 +65,7 @@ private const val FAILED_COMMAND_DISPLAY_MS = 15_000L
 // One lock owns the cache, visibility generation, and ordered command lifecycle.
 @Suppress("TooManyFunctions")
 @Singleton
-class ThermostatCommandCoordinator internal constructor(
+internal class ThermostatCommandCoordinator internal constructor(
     context: Context,
     private val serverManager: ServerManager,
     private val scope: CoroutineScope,

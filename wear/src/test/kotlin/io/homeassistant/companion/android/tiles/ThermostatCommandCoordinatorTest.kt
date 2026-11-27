@@ -81,7 +81,7 @@ class ThermostatCommandCoordinatorTest {
     )
 
     @Test
-    fun `immediate confirmation avoids subscription and redundant refresh`() = runTest {
+    fun `Given immediate confirmation when a command completes then skip subscription and refresh`() = runTest {
         var refreshes = 0
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) { refreshes++ }
@@ -118,7 +118,7 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
-    fun `queued calls dispatch in order without waiting for older acknowledgement`() = runTest {
+    fun `Given queued commands when dispatched then preserve order without waiting for confirmation`() = runTest {
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val gate = CompletableDeferred<Unit>()
@@ -147,7 +147,7 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
-    fun `failed dispatch releases next command and fallback read confirms it`() = runTest {
+    fun `Given a failed dispatch when the next command runs then fallback read confirms it`() = runTest {
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val sent = mutableListOf<Float>()
@@ -167,7 +167,7 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
-    fun `same entity ID on another server has independent cache and pending state`() = runTest {
+    fun `Given matching entity IDs when using separate servers then keep cache and pending independent`() = runTest {
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val other = target.copy(serverId = 2)
@@ -199,7 +199,7 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
-    fun `live external state updates cache and redraw without dispatching commands`() = runTest {
+    fun `Given live observation when external state changes then cache and tile update without a command`() = runTest {
         var refreshes = 0
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope, clock) {
@@ -232,7 +232,7 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
-    fun `duplicate visibility does not create a second subscription and leave cancels it`() = runTest {
+    fun `Given active observation when visibility repeats and tile leaves then cancel one subscription`() = runTest {
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope, clock) {}
         val changes = MutableSharedFlow<EntityChange>()
@@ -259,7 +259,7 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
-    fun `screen going to sleep cancels live subscription`() = runTest {
+    fun `Given live observation when the screen sleeps then the subscription is cancelled`() = runTest {
         var interactive = true
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(
@@ -283,7 +283,7 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
-    fun `observation expires and stale visibility cannot restart it`() = runTest {
+    fun `Given expired observation when visibility is stale then observation does not restart`() = runTest {
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope, clock) {}
         val changes = MutableSharedFlow<EntityChange>()
@@ -307,7 +307,7 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
-    fun `unavailable subscription retries within observation window`() = runTest {
+    fun `Given an unavailable subscription when observing then retry within the observation window`() = runTest {
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope, clock) {}
         val changes = MutableSharedFlow<EntityChange>()
@@ -326,7 +326,7 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
-    fun `live events cannot overwrite a command in flight`() = runTest {
+    fun `Given a command in flight when live events arrive then pending state is preserved`() = runTest {
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope, clock) {}
         val changes = MutableSharedFlow<EntityChange>(extraBufferCapacity = 8)
@@ -374,7 +374,7 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
-    fun `given another server refresh when a command is submitted then refresh is retained`() = runTest {
+    fun `Given another server refresh when a command is submitted then refresh is retained`() = runTest {
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val other = target.copy(serverId = 2)
@@ -417,7 +417,7 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
-    fun `given outstanding refresh when same target command fails then old refresh is discarded`() = runTest {
+    fun `Given outstanding refresh when same target command fails then old refresh is discarded`() = runTest {
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val response = CompletableDeferred<Entity>()
@@ -436,7 +436,7 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
-    fun `given newer cached state when stale matching response arrives then command remains pending`() = runTest {
+    fun `Given newer cached state when stale matching response arrives then command remains pending`() = runTest {
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val newer = LocalDateTime.of(2026, 1, 1, 0, 0, 2)
@@ -459,7 +459,7 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
-    fun `given rapid adjustments when fan command intervenes then both increments are retained`() = runTest {
+    fun `Given rapid adjustments when fan command intervenes then both increments are retained`() = runTest {
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val gate = CompletableDeferred<Unit>()
@@ -505,7 +505,7 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
-    fun `given simultaneous taps when both use the same snapshot then neither adjustment is lost`() = runTest {
+    fun `Given simultaneous taps when both use the same snapshot then neither adjustment is lost`() = runTest {
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val gate = CompletableDeferred<Unit>()
@@ -532,7 +532,7 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
-    fun `given a pending range when adjusting its other bound then both values are retained`() = runTest {
+    fun `Given a pending range when adjusting its other bound then both values are retained`() = runTest {
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val snapshot = EntityDisplayWithoutContext(
@@ -594,7 +594,7 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
-    fun `given failed command when display timeout elapses then failure is cleared`() = runTest {
+    fun `Given failed command when display timeout elapses then failure is cleared`() = runTest {
         val clock = testClock()
         val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         coEvery { repository.callAction("climate", "set_temperature", any()) } throws IllegalStateException()
@@ -607,7 +607,7 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
-    fun `active server placeholder cannot be used as a command target`() {
+    fun `Given an active server placeholder when creating a target then reject it`() {
         assertThrows(IllegalArgumentException::class.java) {
             ThermostatCommandCoordinator.Target(ServerManager.SERVER_ID_ACTIVE, target.entityId)
         }

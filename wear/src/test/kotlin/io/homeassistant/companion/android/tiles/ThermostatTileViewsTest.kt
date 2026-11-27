@@ -78,7 +78,7 @@ class ThermostatTileViewsTest {
     private fun classic(state: String = "heat") = views.classicTimeline(config, thermostat(state), "°C", null, prefix)
 
     @Test
-    fun `classic retains the original adjustment controls without power actions`() {
+    fun `Given Classic layout when rendered then retain adjustment controls without power actions`() {
         assertEquals(setOf("Down", "Up"), classic().actions())
         assertEquals(setOf("Down", "Up"), classic(state = "cool").actions())
         assertTrue(classic(state = "off").actions().isEmpty())
@@ -87,7 +87,7 @@ class ThermostatTileViewsTest {
     }
 
     @Test
-    fun `enhanced single and dual setpoint actions stay distinct on compact watches`() {
+    fun `Given compact Enhanced layout when rendered then single and dual setpoint actions stay distinct`() {
         val enhanced = config.copy(layoutStyle = "enhanced", showSecondaryButtons = true)
         val single = views.enhancedTimeline(enhanced, thermostat(), "°C", null, prefix, 192, 192).actions()
         val dual = views.enhancedTimeline(enhanced, thermostat("heat_cool"), "°C", null, prefix, 192, 192).actions()
@@ -97,7 +97,7 @@ class ThermostatTileViewsTest {
     }
 
     @Test
-    fun `enhanced hides secondary adjustments by default on compact and standard watches`() {
+    fun `Given default Enhanced settings when rendered then hide secondary adjustments on both watch sizes`() {
         val enhanced = config.copy(layoutStyle = "enhanced")
         val modes = setOf("Mode:heat", "Mode:cool", "Mode:heat_cool", "Mode:off", "CycleFan")
         for (size in listOf(192, 240)) {
@@ -113,7 +113,7 @@ class ThermostatTileViewsTest {
     }
 
     @Test
-    fun `enabled secondary adjustments use the saved step on both watch sizes`() {
+    fun `Given secondary adjustments enabled when rendered then use the saved step on both watch sizes`() {
         val enhanced = config.copy(layoutStyle = "enhanced", showSecondaryButtons = true, secondaryStep = 5)
         val modes = setOf("Mode:heat", "Mode:cool", "Mode:heat_cool", "Mode:off", "CycleFan")
         for (size in listOf(192, 240)) {
@@ -125,7 +125,7 @@ class ThermostatTileViewsTest {
     }
 
     @Test
-    fun `both layouts display converted temperatures while enhanced attaches the degree symbol`() {
+    fun `Given a unit override when rendering both layouts then show converted temperatures and degree symbols`() {
         val fahrenheit = config.copy(temperatureUnit = "F")
         val classicTexts = views.classicTimeline(fahrenheit, thermostat(), "°C", null, prefix)
             .elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
@@ -145,7 +145,7 @@ class ThermostatTileViewsTest {
     }
 
     @Test
-    fun `enhanced shows actual fan activity even when HVAC is off`() {
+    fun `Given HVAC off when fan activity changes then Enhanced displays the reported activity`() {
         fun texts(action: String, fanMode: String) = views.enhancedTimeline(
             config.copy(layoutStyle = "enhanced"),
             thermostat("off", hvacAction = action, fanMode = fanMode),
@@ -170,7 +170,7 @@ class ThermostatTileViewsTest {
     }
 
     @Test
-    fun `enhanced displays pending feedback and proposed setpoint without displaying failed values`() {
+    fun `Given pending or failed commands when rendering Enhanced then show feedback without failed setpoints`() {
         val enhanced = config.copy(layoutStyle = "enhanced")
         val waiting = ThermostatCommandCoordinator.Pending("21°", ThermostatCommandCoordinator.Pending.Status.WAITING, single = 21f)
         fun texts(pending: ThermostatCommandCoordinator.Pending) = views.enhancedTimeline(
@@ -237,7 +237,7 @@ class ThermostatTileViewsTest {
     }
 
     @Test
-    fun `classic auto displays both setpoints and enables adjustment`() {
+    fun `Given Classic AUTO mode when rendered then display both setpoints and adjustment controls`() {
         val timeline = classic(state = "heat_cool")
         val texts = timeline.elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
         assertTrue("18.0–22.0 °C" in texts)

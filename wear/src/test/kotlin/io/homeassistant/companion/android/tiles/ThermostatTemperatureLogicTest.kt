@@ -5,14 +5,14 @@ import org.junit.jupiter.api.Test
 
 class ThermostatTemperatureLogicTest {
     @Test
-    fun `snap clamps to allowed limits and uses entity step`() {
+    fun `Given an entity step and bounds when snapping then round and clamp the temperature`() {
         assertEquals(72.5f, ThermostatTemperatureLogic.snap(72.3f, 0.5f, 50f, 90f))
         assertEquals(50f, ThermostatTemperatureLogic.snap(12f, 1f, 50f, 90f))
         assertEquals(90f, ThermostatTemperatureLogic.snap(110f, 1f, 50f, 90f))
     }
 
     @Test
-    fun `snap uses the step grid independently of the minimum`() {
+    fun `Given an off-grid minimum when snapping then use the independent step grid`() {
         assertEquals(21.5f, ThermostatTemperatureLogic.snap(21.5f, 0.5f, 7.2f, 35f))
         assertEquals(7.2f, ThermostatTemperatureLogic.snap(6f, 0.5f, 7.2f, 35f))
         assertEquals(30.8f, ThermostatTemperatureLogic.snap(40f, 1f, 7.2f, 30.8f))
@@ -23,7 +23,7 @@ class ThermostatTemperatureLogicTest {
     }
 
     @Test
-    fun `heat cooling range never crosses`() {
+    fun `Given heating and cooling targets when adjusting either bound then prevent crossing`() {
         assertEquals(
             SetpointRange(50f, 70f),
             ThermostatTemperatureLogic.adjustRange(50f, false, SetpointRange(69f, 70f), 50f, 90f, 1f),
@@ -39,7 +39,7 @@ class ThermostatTemperatureLogicTest {
     }
 
     @Test
-    fun `classic range preserves separation and respects limits`() {
+    fun `Given a Classic range when shifting targets then preserve separation and respect limits`() {
         assertEquals(
             SetpointRange(74f, 79f),
             ThermostatTemperatureLogic.shiftRange(1f, SetpointRange(73f, 78f), 50f, 90f, 1f),

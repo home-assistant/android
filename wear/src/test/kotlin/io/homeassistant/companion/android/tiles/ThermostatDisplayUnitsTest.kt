@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 
 class ThermostatDisplayUnitsTest {
     @Test
-    fun `absolute values convert in both directions without changing the baseline`() {
+    fun `Given Celsius and Fahrenheit values when converting absolute temperatures then preserve the baseline`() {
         val fahrenheit = ThermostatDisplayUnits("°C", "F")
         val celsius = ThermostatDisplayUnits("°F", "C")
         assertEquals(73.4f, fahrenheit.display(23f))
@@ -20,7 +20,7 @@ class ThermostatDisplayUnitsTest {
     }
 
     @Test
-    fun `relative adjustments convert without applying the absolute temperature offset`() {
+    fun `Given relative adjustments when converting units then omit the absolute offset`() {
         val fahrenheit = ThermostatDisplayUnits("°C", "F")
         val celsius = ThermostatDisplayUnits("°F", "C")
         assertEquals(5f / 9f, fahrenheit.adjustment(1f, 0.5f), 0.0001f)
@@ -32,7 +32,7 @@ class ThermostatDisplayUnitsTest {
     }
 
     @Test
-    fun `converted adjustments retain server bounds and range separation`() {
+    fun `Given converted adjustments when calculating targets then respect bounds and range separation`() {
         val units = ThermostatDisplayUnits("°F", "C")
         val step = 1f
         assertEquals(75f, ThermostatTemperatureLogic.snap(73f + units.adjustment(1f, step), step, 45f, 95f))
@@ -51,7 +51,7 @@ class ThermostatDisplayUnitsTest {
     }
 
     @Test
-    fun `default and unknown units respect larger server steps in both directions`() {
+    fun `Given default or unknown units when adjusting then respect larger server steps in either direction`() {
         val default = ThermostatDisplayUnits("°C", "default")
         val unknown = ThermostatDisplayUnits(null, "F")
         for (units in listOf(default, unknown)) {
@@ -74,7 +74,7 @@ class ThermostatDisplayUnitsTest {
     }
 
     @Test
-    fun `default and unavailable source unit preserve original values and actions`() {
+    fun `Given default or unknown source units when rendering then preserve original values and actions`() {
         val default = ThermostatDisplayUnits("°C", "default")
         val unknown = ThermostatDisplayUnits(null, "F")
         assertFalse(default.hasOverride)
