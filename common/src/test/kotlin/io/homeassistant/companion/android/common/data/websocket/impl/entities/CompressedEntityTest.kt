@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
+import java.time.LocalDateTime
 import kotlin.random.Random
 import kotlinx.serialization.json.JsonPrimitive
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -37,6 +38,16 @@ class CompressedEntityTest {
         val rawData = """{"s":"$state","lc":$lastChanged,"lu":$lastUpdated,"a":{"dummy":"${attributes["dummy"]}","icon":"${attributes["icon"]}"}}"""
         val expected = CompressedEntityState(state = JsonPrimitive(state), attributes = attributes, lastChanged = lastChanged, lastUpdated = lastUpdated)
         assertEquals(expected, kotlinJsonMapper.decodeFromString<CompressedEntityState>(rawData))
+    }
+
+    @Test
+    fun `Given distinct fractional timestamps when converting then preserves their precision`() {
+        val compressed = kotlinJsonMapper.decodeFromString<CompressedEntityState>(
+            """{"s":"on","lc":1704067200.123456,"lu":1704067200.654321}""",
+        )
+        val entity = compressed.toEntity("light.test")
+        assertEquals(LocalDateTime.of(2024, 1, 1, 0, 0, 0, 123_456_000), entity.lastChanged)
+        assertEquals(LocalDateTime.of(2024, 1, 1, 0, 0, 0, 654_321_000), entity.lastUpdated)
     }
 
     @Nested

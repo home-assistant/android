@@ -17,6 +17,9 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import java.time.LocalDateTime
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -24,6 +27,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -38,7 +42,7 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, ExperimentalTime::class)
 class ThermostatCommandCoordinatorTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val servers = mockk<ServerManager>()
@@ -51,6 +55,10 @@ class ThermostatCommandCoordinatorTest {
         coEvery { servers.getServer(1) } returns mockk<Server> {
             every { version } returns HomeAssistantVersion(2026, 9, 2)
         }
+    }
+
+    private fun TestScope.testClock(): Clock = object : Clock {
+        override fun now(): Instant = Instant.fromEpochMilliseconds(100_000L + testScheduler.currentTime)
     }
 
     private fun observationContext(interactive: () -> Boolean = { true }): Context {
@@ -75,7 +83,8 @@ class ThermostatCommandCoordinatorTest {
     @Test
     fun `immediate confirmation avoids subscription and redundant refresh`() = runTest {
         var refreshes = 0
-        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) { refreshes++ }
+        val clock = testClock()
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) { refreshes++ }
         coEvery { repository.callAction("climate", "set_temperature", any()) } returns Unit
         coEvery { repository.getEntity(target.entityId) } returns state(72f)
         coordinator.submitTemperature(target, false, null, null, 72f)
@@ -91,7 +100,8 @@ class ThermostatCommandCoordinatorTest {
 
     @Test
     fun `queued calls dispatch in order without waiting for older acknowledgement`() = runTest {
-        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) {}
+        val clock = testClock()
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val gate = CompletableDeferred<Unit>()
         val sent = mutableListOf<Float>()
         coEvery { repository.callAction("climate", "set_temperature", any()) } coAnswers {
@@ -119,7 +129,8 @@ class ThermostatCommandCoordinatorTest {
 
     @Test
     fun `failed dispatch releases next command and fallback read confirms it`() = runTest {
-        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) {}
+        val clock = testClock()
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val sent = mutableListOf<Float>()
         coEvery { repository.callAction("climate", "set_temperature", any()) } coAnswers {
             val temperature = thirdArg<Map<String, Any?>>()["temperature"] as Float
@@ -138,7 +149,8 @@ class ThermostatCommandCoordinatorTest {
 
     @Test
     fun `same entity ID on another server has independent cache and pending state`() = runTest {
-        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) {}
+        val clock = testClock()
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val other = target.copy(serverId = 2)
         val firstEntity = EntityDisplayWithoutContext(state(71f))
         val secondEntity = EntityDisplayWithoutContext(state(76f))
@@ -170,7 +182,10 @@ class ThermostatCommandCoordinatorTest {
     @Test
     fun `live external state updates cache and redraw without dispatching commands`() = runTest {
         var refreshes = 0
-        val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope) { refreshes++ }
+        val clock = testClock()
+        val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope, clock) {
+            refreshes++
+        }
         val changes = MutableSharedFlow<EntityChange>(extraBufferCapacity = 8)
         val initial = state(70f)
         val newer = state(72f, LocalDateTime.of(2026, 1, 1, 0, 0, 2))
@@ -178,7 +193,7 @@ class ThermostatCommandCoordinatorTest {
         coEvery { repository.getEntityChanges(any()) } returns changes
         coordinator.rememberEntity(target, EntityDisplayWithoutContext(initial))
 
-        coordinator.observeVisibleTile(10, target, System.currentTimeMillis())
+        coordinator.observeVisibleTile(10, target, clock.now().toEpochMilliseconds())
         runCurrent()
         assertEquals(1, changes.subscriptionCount.value)
         val initialRefreshes = refreshes
@@ -199,11 +214,12 @@ class ThermostatCommandCoordinatorTest {
 
     @Test
     fun `duplicate visibility does not create a second subscription and leave cancels it`() = runTest {
-        val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope) {}
+        val clock = testClock()
+        val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope, clock) {}
         val changes = MutableSharedFlow<EntityChange>()
         coEvery { repository.getEntity(target.entityId) } returns state(70f)
         coEvery { repository.getEntityChanges(any()) } returns changes
-        val enteredAt = System.currentTimeMillis() - 100L
+        val enteredAt = clock.now().toEpochMilliseconds() - 100L
 
         coordinator.observeVisibleTile(10, target, enteredAt)
         runCurrent()
@@ -226,12 +242,18 @@ class ThermostatCommandCoordinatorTest {
     @Test
     fun `screen going to sleep cancels live subscription`() = runTest {
         var interactive = true
-        val coordinator = ThermostatCommandCoordinator(observationContext { interactive }, servers, backgroundScope) {}
+        val clock = testClock()
+        val coordinator = ThermostatCommandCoordinator(
+            observationContext { interactive },
+            servers,
+            backgroundScope,
+            clock,
+        ) {}
         val changes = MutableSharedFlow<EntityChange>()
         coEvery { repository.getEntity(target.entityId) } returns state(70f)
         coEvery { repository.getEntityChanges(any()) } returns changes
 
-        coordinator.observeVisibleTile(10, target, System.currentTimeMillis())
+        coordinator.observeVisibleTile(10, target, clock.now().toEpochMilliseconds())
         runCurrent()
         assertEquals(1, changes.subscriptionCount.value)
 
@@ -243,11 +265,12 @@ class ThermostatCommandCoordinatorTest {
 
     @Test
     fun `observation expires and stale visibility cannot restart it`() = runTest {
-        val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope) {}
+        val clock = testClock()
+        val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope, clock) {}
         val changes = MutableSharedFlow<EntityChange>()
         coEvery { repository.getEntity(target.entityId) } returns state(70f)
         coEvery { repository.getEntityChanges(any()) } returns changes
-        val enteredAt = System.currentTimeMillis()
+        val enteredAt = clock.now().toEpochMilliseconds()
 
         coordinator.observeVisibleTile(10, target, enteredAt)
         runCurrent()
@@ -258,7 +281,7 @@ class ThermostatCommandCoordinatorTest {
         assertEquals(0, changes.subscriptionCount.value)
 
         coordinator.observeVisibleTile(10, target, enteredAt)
-        coordinator.observeVisibleTile(10, target, System.currentTimeMillis() - 20_000L)
+        coordinator.observeVisibleTile(10, target, clock.now().toEpochMilliseconds() - 20_000L)
         runCurrent()
         assertEquals(0, changes.subscriptionCount.value)
         coVerify(exactly = 1) { repository.getEntityChanges(any()) }
@@ -266,12 +289,13 @@ class ThermostatCommandCoordinatorTest {
 
     @Test
     fun `unavailable subscription retries within observation window`() = runTest {
-        val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope) {}
+        val clock = testClock()
+        val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope, clock) {}
         val changes = MutableSharedFlow<EntityChange>()
         coEvery { repository.getEntity(target.entityId) } returns state(70f)
         coEvery { repository.getEntityChanges(any()) } returnsMany listOf(null, changes)
 
-        coordinator.observeVisibleTile(10, target, System.currentTimeMillis())
+        coordinator.observeVisibleTile(10, target, clock.now().toEpochMilliseconds())
         runCurrent()
         assertEquals(0, changes.subscriptionCount.value)
         coVerify(exactly = 1) { repository.getEntityChanges(any()) }
@@ -284,7 +308,8 @@ class ThermostatCommandCoordinatorTest {
 
     @Test
     fun `live events cannot overwrite a command in flight`() = runTest {
-        val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope) {}
+        val clock = testClock()
+        val coordinator = ThermostatCommandCoordinator(observationContext(), servers, backgroundScope, clock) {}
         val changes = MutableSharedFlow<EntityChange>(extraBufferCapacity = 8)
         val initial = state(70f)
         val intermediate = state(71f, LocalDateTime.of(2026, 1, 1, 0, 0, 1))
@@ -295,7 +320,7 @@ class ThermostatCommandCoordinatorTest {
         coEvery { repository.callAction("climate", "set_temperature", any()) } coAnswers { gate.await() }
         coordinator.rememberEntity(target, EntityDisplayWithoutContext(initial))
 
-        coordinator.observeVisibleTile(10, target, System.currentTimeMillis())
+        coordinator.observeVisibleTile(10, target, clock.now().toEpochMilliseconds())
         runCurrent()
         coordinator.submitTemperature(target, false, null, null, 72f)
         runCurrent()
@@ -317,8 +342,22 @@ class ThermostatCommandCoordinatorTest {
     }
 
     @Test
+    fun `Given cached state when virtual cache lifetime elapses then it expires`() = runTest {
+        val clock = testClock()
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
+        val entity = EntityDisplayWithoutContext(state(70f))
+        coordinator.rememberEntity(target, entity)
+
+        advanceTimeBy(119_999L)
+        assertEquals(entity, coordinator.cachedEntity(target))
+        advanceTimeBy(1L)
+        assertNull(coordinator.cachedEntity(target))
+    }
+
+    @Test
     fun `given another server refresh when a command is submitted then refresh is retained`() = runTest {
-        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) {}
+        val clock = testClock()
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val other = target.copy(serverId = 2)
         val otherRepository = mockk<IntegrationRepository>()
         val response = CompletableDeferred<Entity>()
@@ -339,7 +378,8 @@ class ThermostatCommandCoordinatorTest {
 
     @Test
     fun `given outstanding refresh when same target command fails then old refresh is discarded`() = runTest {
-        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) {}
+        val clock = testClock()
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val response = CompletableDeferred<Entity>()
         coEvery { repository.getEntity(target.entityId) } coAnswers { response.await() }
         coEvery { repository.callAction("climate", "set_temperature", any()) } throws IllegalStateException()
@@ -357,7 +397,8 @@ class ThermostatCommandCoordinatorTest {
 
     @Test
     fun `given newer cached state when stale matching response arrives then command remains pending`() = runTest {
-        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) {}
+        val clock = testClock()
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val newer = LocalDateTime.of(2026, 1, 1, 0, 0, 2)
         val changes = MutableSharedFlow<EntityChange>(extraBufferCapacity = 1)
         coordinator.rememberEntity(target, EntityDisplayWithoutContext(state(70f, newer)))
@@ -379,7 +420,8 @@ class ThermostatCommandCoordinatorTest {
 
     @Test
     fun `given rapid adjustments when fan command intervenes then both increments are retained`() = runTest {
-        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) {}
+        val clock = testClock()
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val gate = CompletableDeferred<Unit>()
         val snapshot = EntityDisplayWithoutContext(
             state(70f).copy(
@@ -423,7 +465,8 @@ class ThermostatCommandCoordinatorTest {
 
     @Test
     fun `given simultaneous taps when both use the same snapshot then neither adjustment is lost`() = runTest {
-        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) {}
+        val clock = testClock()
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val gate = CompletableDeferred<Unit>()
         val snapshot = EntityDisplayWithoutContext(state(70f))
         val units = ThermostatDisplayUnits("°F", "default")
@@ -448,7 +491,8 @@ class ThermostatCommandCoordinatorTest {
 
     @Test
     fun `given a pending range when adjusting its other bound then both values are retained`() = runTest {
-        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) {}
+        val clock = testClock()
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val snapshot = EntityDisplayWithoutContext(
             state(70f).copy(
                 state = "heat_cool",
@@ -464,7 +508,8 @@ class ThermostatCommandCoordinatorTest {
 
     @Test
     fun `given failed command when display timeout elapses then failure is cleared`() = runTest {
-        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) {}
+        val clock = testClock()
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         coEvery { repository.callAction("climate", "set_temperature", any()) } throws IllegalStateException()
         coordinator.submitTemperature(target, false, null, null, 72f)
         runCurrent()

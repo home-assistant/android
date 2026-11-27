@@ -223,7 +223,7 @@ class ThermostatTile : TileService() {
                         // Pending commands monitor acknowledgment; the coordinator suppresses redundant reads.
                         if (tileConfig.refreshInterval != 0L) {
                             val visibleAt = if (lastId.isNotEmpty()) {
-                                System.currentTimeMillis()
+                                commandCoordinator.nowMillis()
                             } else {
                                 requestParams.lastVisibleTime.toEpochMilli()
                             }

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalTime::class)
+
 package io.homeassistant.companion.android.tiles
 
 import android.content.Context
@@ -17,6 +19,8 @@ import java.util.concurrent.locks.ReentrantLock
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.concurrent.withLock
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -64,13 +68,15 @@ class ThermostatCommandCoordinator internal constructor(
     context: Context,
     private val serverManager: ServerManager,
     private val scope: CoroutineScope,
+    private val clock: Clock,
     private val requestTileUpdate: () -> Unit,
 ) {
     @Inject
-    constructor(@ApplicationContext context: Context, serverManager: ServerManager) : this(
+    constructor(@ApplicationContext context: Context, serverManager: ServerManager, clock: Clock) : this(
         context,
         serverManager,
         CoroutineScope(SupervisorJob() + Dispatchers.IO),
+        clock,
         { TileService.getUpdater(context).requestUpdate(ThermostatTile::class.java) },
     )
 
@@ -122,10 +128,12 @@ class ThermostatCommandCoordinator internal constructor(
     private var liveGeneration = 0L
     private var lastVisibilityAt = 0L
 
+    internal fun nowMillis(): Long = clock.now().toEpochMilliseconds()
+
     // Early exits keep visibility checks and lock ownership explicit.
     @Suppress("ReturnCount")
     fun observeVisibleTile(tileId: Int, target: Target, visibleAt: Long) {
-        val age = System.currentTimeMillis() - visibleAt
+        val age = nowMillis() - visibleAt
         if (age !in 0L..VISIBILITY_MAX_AGE_MS || powerManager?.isInteractive != true) return
         lock.withLock {
             if (visibleAt <= lastVisibilityAt) return
@@ -201,7 +209,7 @@ class ThermostatCommandCoordinator internal constructor(
         }
     }
 
-    fun stopObservingTile(tileId: Int, leftAt: Long = System.currentTimeMillis()) {
+    fun stopObservingTile(tileId: Int, leftAt: Long = nowMillis()) {
         lock.withLock {
             if (liveTileId != tileId || leftAt < lastVisibilityAt) return
             lastVisibilityAt = leftAt
@@ -233,7 +241,7 @@ class ThermostatCommandCoordinator internal constructor(
         val previousUpdated = previous?.lastUpdated
         val updated = entity.lastUpdated
         if (previousUpdated != null && updated != null && updated < previousUpdated) return
-        entityCache[target] = CachedEntity(entity, System.currentTimeMillis())
+        entityCache[target] = CachedEntity(entity, nowMillis())
         if (previous == null || displayChanged(previous, entity)) {
             Timber.i("Thermostat live state changed: %s", target.entityId)
             refresh()
@@ -246,7 +254,7 @@ class ThermostatCommandCoordinator internal constructor(
             previous.climateControls != entity.climateControls
 
     fun cachedEntity(target: Target): EntityDisplayWithoutContext? =
-        entityCache[target]?.takeIf { System.currentTimeMillis() - it.receivedAt < ENTITY_CACHE_TTL_MS }?.item
+        entityCache[target]?.takeIf { nowMillis() - it.receivedAt in 0L until ENTITY_CACHE_TTL_MS }?.item
 
     fun rememberEntity(target: Target, entity: EntityDisplayWithoutContext): Boolean = lock.withLock {
         if (entity.entityId != target.entityId) return false
@@ -254,7 +262,7 @@ class ThermostatCommandCoordinator internal constructor(
         val previousUpdated = previous?.item?.lastUpdated
         val updated = entity.lastUpdated
         if (previousUpdated != null && updated != null && updated < previousUpdated) return false
-        entityCache[target] = CachedEntity(entity, System.currentTimeMillis())
+        entityCache[target] = CachedEntity(entity, nowMillis())
         // A state change should appear without waiting for the tile's long periodic interval.
         if (previous != null && previous.item != entity) refresh()
         true
@@ -266,11 +274,11 @@ class ThermostatCommandCoordinator internal constructor(
         // A command already provides state updates. Avoid a second request from tile rendering.
         val (entry, refreshToken) = lock.withLock {
             if (latest.keys.any { it.target == target } || target in refreshInFlight) return
-            val now = System.currentTimeMillis()
+            val now = nowMillis()
             val cached = entityCache[target]
-            if (cached != null && now - cached.receivedAt < maxAgeMillis) return
-            val previousAttempt = refreshAttemptAt[target] ?: 0L
-            if (now - previousAttempt < maxAgeMillis) return
+            if (cached != null && now - cached.receivedAt in 0L until maxAgeMillis) return
+            val previousAttempt = refreshAttemptAt[target]
+            if (previousAttempt != null && now - previousAttempt in 0L until maxAgeMillis) return
             val token = Any()
             refreshInFlight[target] = token
             refreshAttemptAt[target] = now

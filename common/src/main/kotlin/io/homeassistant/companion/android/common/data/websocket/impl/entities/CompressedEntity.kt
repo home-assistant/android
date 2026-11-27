@@ -4,9 +4,11 @@ package io.homeassistant.companion.android.common.data.websocket.impl.entities
 
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.util.MapAnySerializer
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
-import kotlin.math.round
+import kotlin.math.floor
+import kotlin.math.roundToLong
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
@@ -68,9 +70,9 @@ data class CompressedEntityState(
             entityId = entityId,
             state = state ?: JsonNull,
             attributes = attributes,
-            lastChanged = LocalDateTime.ofEpochSecond(round(lastChanged).toLong(), 0, ZoneOffset.UTC),
+            lastChanged = compressedTimestamp(lastChanged),
             // The subscription omits lastUpdated when it equals lastChanged
-            lastUpdated = LocalDateTime.ofEpochSecond(round(lastUpdated ?: lastChanged).toLong(), 0, ZoneOffset.UTC),
+            lastUpdated = compressedTimestamp(lastUpdated ?: lastChanged),
         )
     }
 }
@@ -84,3 +86,13 @@ data class CompressedEntityRemoved(
     @JsonNames("a")
     val attributes: List<String>? = null,
 )
+
+private const val MICROSECONDS_PER_SECOND = 1_000_000L
+private const val NANOSECONDS_PER_MICROSECOND = 1_000L
+
+/** Match Home Assistant's microsecond-resolution timestamps, without rounding to whole seconds. */
+internal fun compressedTimestamp(timestamp: Double): LocalDateTime {
+    val seconds = floor(timestamp).toLong()
+    val micros = ((timestamp - seconds) * MICROSECONDS_PER_SECOND).roundToLong()
+    return LocalDateTime.ofInstant(Instant.ofEpochSecond(seconds, micros * NANOSECONDS_PER_MICROSECOND), ZoneOffset.UTC)
+}

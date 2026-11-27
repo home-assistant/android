@@ -29,9 +29,9 @@ class EntityTest {
 
     private val baseDateTime = LocalDateTime.of(2024, 1, 1, 12, 0, 0)
 
-    private val newDateTime = LocalDateTime.of(2025, 1, 1, 12, 0, 0)
+    private val newDateTime = LocalDateTime.of(2025, 1, 1, 12, 0, 0, 123_456_000)
 
-    private val newDateTimeEpoch = newDateTime.toEpochSecond(ZoneOffset.UTC).toDouble()
+    private val newDateTimeEpoch = newDateTime.toEpochSecond(ZoneOffset.UTC) + newDateTime.nano / 1_000_000_000.0
 
     private fun createEntity(
         entityId: String = "light.living_room",
