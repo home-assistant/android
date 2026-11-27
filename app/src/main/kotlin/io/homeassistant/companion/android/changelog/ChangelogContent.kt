@@ -35,6 +35,10 @@ internal val currentChangelog = Changelog(
             platforms = setOf(ChangelogPlatform.APP),
             action = ChangelogAction.OpenSensor(FoldableSensorManager.hingeStatus.id),
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_thermostat_tile_power,
+            platforms = setOf(ChangelogPlatform.WEAR),
+        ),
     ),
     improved = listOf(),
     fixed = listOf(
