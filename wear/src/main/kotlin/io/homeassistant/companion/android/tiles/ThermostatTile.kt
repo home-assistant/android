@@ -157,7 +157,6 @@ class ThermostatTile : TileService() {
                         val entityId = checkNotNull(tileConfig.entityId)
                         val serverId = checkNotNull(serverManager.getServer()) { "No active server" }.id
                         val target = ThermostatCommandCoordinator.Target(serverId, entityId)
-                        val requestStarted = android.os.SystemClock.elapsedRealtime()
                         // Render warm tiles immediately; fetch only the selected entity on a cache miss.
                         val cached = commandCoordinator.cachedEntity(target)
                         val entity = cached ?: withTimeoutOrNull(6_000L) {
@@ -179,13 +178,6 @@ class ThermostatTile : TileService() {
                             clickedId.removePrefix(actionPrefix)
                         } else {
                             ""
-                        }
-                        if (clickedId.isNotEmpty()) {
-                            Timber.i(
-                                "Thermostat tile action resolved after %d ms; valid=%s",
-                                android.os.SystemClock.elapsedRealtime() - requestStarted,
-                                lastId.isNotEmpty(),
-                            )
                         }
                         val controls = climateControls
                         if (controls != null && entity.rawState !in listOf("unavailable", "unknown")) {
@@ -252,13 +244,6 @@ class ThermostatTile : TileService() {
                         }
                         val temperatureUnit = metadata.sourceUnit ?: "°"
                         val displayEntity = entity.copy(name = metadata.name)
-                        if (clickedId.isNotEmpty()) {
-                            Timber.i(
-                                "Thermostat tile action processed after %d ms; pending=%s",
-                                android.os.SystemClock.elapsedRealtime() - requestStarted,
-                                pending != null,
-                            )
-                        }
                         val views = ThermostatTileViews(this@ThermostatTile)
                         tile.setTileTimeline(
                             if (tileConfig.layoutStyle == "classic") {

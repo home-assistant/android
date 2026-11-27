@@ -4,7 +4,6 @@ package io.homeassistant.companion.android.tiles
 
 import android.content.Context
 import android.os.PowerManager
-import android.os.SystemClock
 import androidx.wear.tiles.TileService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.integration.EntityChange
@@ -160,7 +159,6 @@ class ThermostatCommandCoordinator internal constructor(
     private suspend fun runLiveObservation(target: Target, generation: Long) {
         try {
             if (!supportsFilteredSubscription(target)) return
-            Timber.i("Thermostat live observation started: %s", target.entityId)
             refreshEntityIfStale(target, LIVE_INITIAL_CACHE_AGE_MS)
             // Leave events can be delayed on Wear OS 6+. Never keep a socket collector
             // alive indefinitely based on uncertain visibility.
@@ -193,7 +191,6 @@ class ThermostatCommandCoordinator internal constructor(
                     }
                 }
             }
-            Timber.i("Thermostat live observation stopped: %s", target.entityId)
         }
     }
 
@@ -248,7 +245,6 @@ class ThermostatCommandCoordinator internal constructor(
         if (previousUpdated != null && updated != null && updated < previousUpdated) return
         entityCache[target] = CachedEntity(entity, nowMillis())
         if (previous == null || displayChanged(previous, entity)) {
-            Timber.i("Thermostat live state changed: %s", target.entityId)
             refresh()
         }
     }
@@ -541,7 +537,6 @@ class ThermostatCommandCoordinator internal constructor(
         confirmed: (EntityDisplay) -> Boolean,
     ) {
         val key = PendingKey(target, kind)
-        val submittedAt = SystemClock.elapsedRealtime()
         val dispatched = CompletableDeferred<Unit>()
         val token = ++nextToken
         latest[key] = token
@@ -552,15 +547,9 @@ class ThermostatCommandCoordinator internal constructor(
         store(key, Pending(value, Pending.Status.WAITING, single, low, high), updateTile = false)
         val predecessor = dispatchTails.put(target, dispatched)
         scope.launch {
-            val started = submittedAt
             try {
                 try {
                     predecessor?.await()
-                    Timber.i(
-                        "Thermostat %s dispatch starting after %d ms",
-                        action,
-                        SystemClock.elapsedRealtime() - started,
-                    )
                     serverManager.integrationRepository(target.serverId).callAction("climate", action, data)
                 } finally {
                     // Always release the following command, including after a failed service call.
@@ -571,7 +560,6 @@ class ThermostatCommandCoordinator internal constructor(
                         }
                     }
                 }
-                Timber.i("Thermostat %s service accepted after %d ms", action, SystemClock.elapsedRealtime() - started)
                 val monitor = coroutineContext.job
                 lock.withLock {
                     if (latest[key] != token) return@launch
@@ -584,18 +572,9 @@ class ThermostatCommandCoordinator internal constructor(
                     lock.withLock {
                         if (latest[key] != token) return@launch
                         if (acknowledged) {
-                            Timber.i(
-                                "Thermostat %s state confirmed after %d ms",
-                                action,
-                                SystemClock.elapsedRealtime() - started,
-                            )
                             clear(key)
                         } else {
-                            Timber.w(
-                                "Thermostat %s unconfirmed after %d ms",
-                                action,
-                                SystemClock.elapsedRealtime() - started,
-                            )
+                            Timber.w("Thermostat %s unconfirmed for %s", action, target.entityId)
                             store(key, Pending(value, Pending.Status.FAILED))
                             latest.remove(key)
                         }
@@ -610,7 +589,7 @@ class ThermostatCommandCoordinator internal constructor(
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
-                Timber.e(error, "Thermostat tile command failed: %s", action)
+                Timber.e(error, "Thermostat %s command failed for %s", action, target.entityId)
                 lock.withLock {
                     if (latest[key] == token) {
                         store(key, Pending(value, Pending.Status.FAILED))

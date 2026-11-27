@@ -24,7 +24,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** Layout traversal adapted from the test approach in home-assistant/android PR #7877. */
+/** Layout traversal adapted from the test approach in https://github.com/home-assistant/android/pull/7877. */
 @RunWith(RobolectricTestRunner::class)
 @Config(application = HiltTestApplication::class)
 class ThermostatTileViewsTest {
