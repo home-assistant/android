@@ -60,6 +60,39 @@ private const val MODE_WIDTH_DP = 39f
 private const val COMPACT_TARGET_ROW_HEIGHT_DP = 32f
 private const val TARGET_ROW_HEIGHT_DP = 36f
 
+private const val COMPACT_WIDTH_THRESHOLD_DP = 220
+private const val COMPACT_HEIGHT_THRESHOLD_DP = 225
+private const val COMPACT_ROW_GAP_DP = 2f
+private const val SETPOINT_ROW_GAP_DP = 2f
+private const val COMPACT_SECONDARY_WIDTH_DP = 29f
+private const val SECONDARY_WIDTH_DP = 32f
+private const val COMPACT_PRIMARY_WIDTH_DP = 33f
+private const val PRIMARY_WIDTH_DP = 37f
+private const val COMPACT_VALUE_WIDTH_DP = 42f
+private const val VALUE_WIDTH_DP = 48f
+private const val COMPACT_SETPOINT_GAP_DP = 1f
+private const val SETPOINT_GAP_DP = 2f
+private const val SINGLE_ICON_DP = 25f
+private const val AUTO_ICON_DP = 17f
+private const val AUTO_ICON_GAP_DP = 1f
+private const val CLASSIC_ACTIVITY_ARC_DP = 2f
+
+private const val TRANSPARENT_COLOR = 0x00000000
+private const val PRIMARY_TEXT_COLOR = 0xFFFFFFFF.toInt()
+private const val NAME_TEXT_COLOR = 0xFFCBD5E1.toInt()
+private const val WAITING_TEXT_COLOR = 0xFFFFD778.toInt()
+private const val FAILED_TEXT_COLOR = 0xFFFF9797.toInt()
+private const val HEAT_TEXT_COLOR = 0xFFFFA19A.toInt()
+private const val COOL_TEXT_COLOR = 0xFF8DCBFF.toInt()
+private const val AUTO_TEXT_COLOR = 0xFFD9C4FF.toInt()
+private const val IDLE_TEXT_COLOR = 0xFFBFC9D7.toInt()
+private const val HEAT_SELECTED_COLOR = 0xFF9A3D40.toInt()
+private const val COOL_SELECTED_COLOR = 0xFF286FAD.toInt()
+private const val AUTO_SELECTED_COLOR = 0xFF6961A6.toInt()
+private const val FAN_SELECTED_COLOR = 0xFF277766.toInt()
+private const val OFF_SELECTED_COLOR = 0xFF7A4355.toInt()
+private const val BUTTON_BACKGROUND_COLOR = 0xFF293447.toInt()
+
 private data class ButtonSize(val width: Float, val height: Float)
 
 internal object ThermostatTileIds {
@@ -123,7 +156,7 @@ internal class ThermostatTileViews(private val context: Context) {
                 val hvacActionColor = when (hvacAction) {
                     "heating" -> context.getColor(commonR.color.colorDeviceControlsThermostatHeat)
                     "cooling" -> context.getColor(commonR.color.colorDeviceControlsDefaultOn)
-                    else -> 0x00000000
+                    else -> TRANSPARENT_COLOR
                 }
 
                 val friendlyHvacAction = stateLabel(hvacAction.ifBlank { entity.rawState })
@@ -186,7 +219,7 @@ internal class ThermostatTileViews(private val context: Context) {
                         .addContent(
                             LayoutElementBuilders.ArcLine.Builder()
                                 .setLength(DimensionBuilders.DegreesProp.Builder(FULL_CIRCLE_DEGREES).build())
-                                .setThickness(DimensionBuilders.DpProp.Builder(2f).build())
+                                .setThickness(DimensionBuilders.DpProp.Builder(CLASSIC_ACTIVITY_ARC_DP).build())
                                 .setColor(ColorBuilders.argb(hvacActionColor))
                                 .build(),
                         )
@@ -203,7 +236,7 @@ internal class ThermostatTileViews(private val context: Context) {
                                 LayoutElementBuilders.ArcLine.Builder()
                                     .setLength(DimensionBuilders.DegreesProp.Builder(FULL_CIRCLE_DEGREES).build())
                                     .setThickness(DimensionBuilders.DpProp.Builder(CLASSIC_NAME_ARC_DP).build())
-                                    .setColor(ColorBuilders.argb(0x00000000)) // Fully transparent
+                                    .setColor(ColorBuilders.argb(TRANSPARENT_COLOR)) // Fully transparent
                                     .build(),
                             )
                             .addContent(
@@ -280,7 +313,7 @@ internal class ThermostatTileViews(private val context: Context) {
         val units = ThermostatDisplayUnits(temperatureUnit, config.temperatureUnit)
         val current = units.display(controls?.currentTemperature)?.let { nice(it) } ?: "--"
         // Compact circular watches must not crop rows at the upper/lower edges.
-        val compact = screenWidthDp < 220 || screenHeightDp < 225
+        val compact = screenWidthDp < COMPACT_WIDTH_THRESHOLD_DP || screenHeightDp < COMPACT_HEIGHT_THRESHOLD_DP
         val layout = EnhancedLayout(config, entity, pending, actionPrefix, compact, units)
         val column = LayoutElementBuilders.Column.Builder()
             .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
@@ -292,11 +325,11 @@ internal class ThermostatTileViews(private val context: Context) {
             temperatureText(
                 units.enhancedText(current),
                 enhancedCurrentTextSize(state, compact),
-                0xFFFFFFFF.toInt(),
+                PRIMARY_TEXT_COLOR,
             ),
         )
         addActivity(column, layout)
-        column.addContent(verticalGap(if (compact) 2f else ROW_GAP_DP))
+        column.addContent(verticalGap(if (compact) COMPACT_ROW_GAP_DP else ROW_GAP_DP))
         addSetpoints(column, layout, range)
         addControlRows(column, layout, controls)
         addRangeBottomClearance(column, range, compact)
@@ -344,7 +377,7 @@ internal class ThermostatTileViews(private val context: Context) {
     ) {
         if (layout.entity.rawState in listOf("unavailable", "unknown")) return
         if (controls != null && (layout.config.showHvacModes || layout.config.showFanControl)) {
-            column.addContent(verticalGap(if (layout.compact) 2f else CONTROL_SECTION_GAP_DP))
+            column.addContent(verticalGap(if (layout.compact) COMPACT_ROW_GAP_DP else CONTROL_SECTION_GAP_DP))
             addModes(column, layout, controls)
             addUtilities(column, layout, controls)
         }
@@ -358,7 +391,7 @@ internal class ThermostatTileViews(private val context: Context) {
                 LayoutElementBuilders.ArcLine.Builder()
                     .setLength(DimensionBuilders.DegreesProp.Builder(FULL_CIRCLE_DEGREES).build())
                     .setThickness(DimensionBuilders.DpProp.Builder(ENHANCED_NAME_ARC_DP).build())
-                    .setColor(ColorBuilders.argb(0x00000000))
+                    .setColor(ColorBuilders.argb(TRANSPARENT_COLOR))
                     .build(),
             )
             .addContent(
@@ -371,7 +404,7 @@ internal class ThermostatTileViews(private val context: Context) {
                                     if (compact) COMPACT_NAME_TEXT_SP else NAME_TEXT_SP,
                                 ),
                             )
-                            .setColor(ColorBuilders.argb(0xFFCBD5E1.toInt()))
+                            .setColor(ColorBuilders.argb(NAME_TEXT_COLOR))
                             .build(),
                     )
                     .build(),
@@ -427,8 +460,8 @@ internal class ThermostatTileViews(private val context: Context) {
                 displayState
             }
             val activityColor = when (pending?.status) {
-                ThermostatCommandCoordinator.Pending.Status.WAITING -> 0xFFFFD778.toInt()
-                ThermostatCommandCoordinator.Pending.Status.FAILED -> 0xFFFF9797.toInt()
+                ThermostatCommandCoordinator.Pending.Status.WAITING -> WAITING_TEXT_COLOR
+                ThermostatCommandCoordinator.Pending.Status.FAILED -> FAILED_TEXT_COLOR
                 null -> modeColor
             }
             column.addContent(
@@ -444,10 +477,10 @@ internal class ThermostatTileViews(private val context: Context) {
     }
 
     private fun activityModeColor(state: String): Int = when (state) {
-        "heat" -> 0xFFFFA19A.toInt()
-        "cool" -> 0xFF8DCBFF.toInt()
-        "heat_cool", "auto" -> 0xFFD9C4FF.toInt()
-        else -> 0xFFBFC9D7.toInt()
+        "heat" -> HEAT_TEXT_COLOR
+        "cool" -> COOL_TEXT_COLOR
+        "heat_cool", "auto" -> AUTO_TEXT_COLOR
+        else -> IDLE_TEXT_COLOR
     }
 
     private fun addSetpoints(column: LayoutElementBuilders.Column.Builder, layout: EnhancedLayout, range: Boolean) {
@@ -465,20 +498,20 @@ internal class ThermostatTileViews(private val context: Context) {
                         "heat",
                         layout.units.display(pending?.low ?: controls.targetTemperatureLow),
                         context.getString(commonR.string.thermostat_tile_heat_short),
-                        0xFFFFA19A.toInt(),
+                        HEAT_TEXT_COLOR,
                         layout.secondaryStep,
                         compact,
                         targetRowHeight,
                         actionPrefix,
                     ),
                 )
-                column.addContent(verticalGap(2f))
+                column.addContent(verticalGap(SETPOINT_ROW_GAP_DP))
                 column.addContent(
                     temperatureRow(
                         "cool",
                         layout.units.display(pending?.high ?: controls.targetTemperatureHigh),
                         context.getString(commonR.string.thermostat_tile_cool_short),
-                        0xFF8DCBFF.toInt(),
+                        COOL_TEXT_COLOR,
                         layout.secondaryStep,
                         compact,
                         targetRowHeight,
@@ -486,7 +519,7 @@ internal class ThermostatTileViews(private val context: Context) {
                     ),
                 )
             } else if (controls.targetTemperature != null) {
-                val accent = if (state == "cool") 0xFF8DCBFF.toInt() else 0xFFFFA19A.toInt()
+                val accent = if (state == "cool") COOL_TEXT_COLOR else HEAT_TEXT_COLOR
                 column.addContent(
                     temperatureRow(
                         "single",
@@ -540,13 +573,13 @@ internal class ThermostatTileViews(private val context: Context) {
                 "heat",
                 ICON_HEAT,
                 context.getString(commonR.string.thermostat_tile_heat_mode),
-                0xFF9A3D40.toInt(),
+                HEAT_SELECTED_COLOR,
             )
             addMode(
                 "cool",
                 ICON_COOL,
                 context.getString(commonR.string.thermostat_tile_cool_mode),
-                0xFF286FAD.toInt(),
+                COOL_SELECTED_COLOR,
             )
             addMode(
                 if ("heat_cool" in available) "heat_cool" else "auto",
@@ -560,7 +593,7 @@ internal class ThermostatTileViews(private val context: Context) {
                         commonR.string.thermostat_tile_auto_mode
                     },
                 ),
-                0xFF6961A6.toInt(),
+                AUTO_SELECTED_COLOR,
                 ICON_COOL,
             )
         }
@@ -592,7 +625,7 @@ internal class ThermostatTileViews(private val context: Context) {
                     on,
                     modeWidth,
                     modeHeight,
-                    0xFF277766.toInt(),
+                    FAN_SELECTED_COLOR,
                     context.getString(
                         commonR.string.thermostat_tile_fan_mode,
                         stateLabel(controls.fanMode.orEmpty()),
@@ -609,13 +642,13 @@ internal class ThermostatTileViews(private val context: Context) {
                     state == "off",
                     modeWidth,
                     modeHeight,
-                    0xFF7A4355.toInt(),
+                    OFF_SELECTED_COLOR,
                     context.getString(commonR.string.thermostat_tile_turn_off),
                 ),
             )
         }
         if (showFan || showOff) {
-            column.addContent(verticalGap(if (compact) 2f else ROW_GAP_DP))
+            column.addContent(verticalGap(if (compact) COMPACT_ROW_GAP_DP else ROW_GAP_DP))
             column.addContent(utilityRow.build())
         }
     }
@@ -650,10 +683,10 @@ internal class ThermostatTileViews(private val context: Context) {
                 quantity,
             )
         }
-        val outerWidth = if (compact) 29f else 32f
-        val primaryWidth = if (compact) 33f else 37f
-        val valueWidth = if (compact) 42f else 48f
-        val gap = if (compact) 1f else 2f
+        val outerWidth = if (compact) COMPACT_SECONDARY_WIDTH_DP else SECONDARY_WIDTH_DP
+        val primaryWidth = if (compact) COMPACT_PRIMARY_WIDTH_DP else PRIMARY_WIDTH_DP
+        val valueWidth = if (compact) COMPACT_VALUE_WIDTH_DP else VALUE_WIDTH_DP
+        val gap = if (compact) COMPACT_SETPOINT_GAP_DP else SETPOINT_GAP_DP
         val row = LayoutElementBuilders.Row.Builder()
             .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
         if (extra != null) {
@@ -723,11 +756,11 @@ internal class ThermostatTileViews(private val context: Context) {
         height: Float,
         description: String,
     ): LayoutElement = enhancedButton(
-        temperatureText(label, BUTTON_TEXT_SP, 0xFFFFFFFF.toInt()),
+        temperatureText(label, BUTTON_TEXT_SP, PRIMARY_TEXT_COLOR),
         action,
         ButtonSize(width, height),
         description,
-        0xFF293447.toInt(),
+        BUTTON_BACKGROUND_COLOR,
     )
 
     /** The five mode/utility buttons use image resources, not font-dependent symbols. */
@@ -744,14 +777,14 @@ internal class ThermostatTileViews(private val context: Context) {
         secondIconId: String? = null,
     ): LayoutElementBuilders.LayoutElement {
         val content: LayoutElementBuilders.LayoutElement = if (secondIconId == null) {
-            tileIcon(iconId, 25f)
+            tileIcon(iconId, SINGLE_ICON_DP)
         } else {
             // Auto is two readable symbols: red/yellow heat and blue cool.
             LayoutElementBuilders.Row.Builder()
                 .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
-                .addContent(tileIcon(iconId, 17f))
-                .addContent(horizontalGap(1f))
-                .addContent(tileIcon(secondIconId, 17f))
+                .addContent(tileIcon(iconId, AUTO_ICON_DP))
+                .addContent(horizontalGap(AUTO_ICON_GAP_DP))
+                .addContent(tileIcon(secondIconId, AUTO_ICON_DP))
                 .build()
         }
         return enhancedButton(
@@ -759,7 +792,7 @@ internal class ThermostatTileViews(private val context: Context) {
             action,
             ButtonSize(width, height),
             if (selected) context.getString(commonR.string.thermostat_tile_selected, description) else description,
-            if (selected) activeColor else 0xFF293447.toInt(),
+            if (selected) activeColor else BUTTON_BACKGROUND_COLOR,
         )
     }
 
