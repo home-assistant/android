@@ -133,7 +133,8 @@ class AuthenticationRepositoryImpl internal constructor(
                     server.copy(
                         session = ServerSessionInfo(
                             accessToken = refreshedToken.accessToken,
-                            refreshToken = refreshToken,
+                            // The server may omit the refresh token, the current one then stays valid.
+                            refreshToken = refreshedToken.refreshToken ?: refreshToken,
                             tokenExpiration = System.currentTimeMillis() / 1000 + refreshedToken.expiresIn,
                             tokenType = refreshedToken.tokenType,
                             installId = installId,
