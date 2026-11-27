@@ -191,6 +191,16 @@
             </intent-filter>
         </receiver>
 
+        <!-- Restart the BLE transmitter after boot or an app update. -->
+        <receiver
+            android:name="io.homeassistant.companion.android.common.sensors.TransmitterRestartReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
         <receiver android:name=".widgets.button.ButtonWidget" android:label="@string/widget_button_image_description"
             android:exported="false">
             <intent-filter>

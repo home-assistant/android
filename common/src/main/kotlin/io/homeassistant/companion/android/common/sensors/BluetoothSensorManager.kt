@@ -32,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import timber.log.Timber
 
 @Singleton
 class BluetoothSensorManager @Inject constructor(
@@ -185,6 +186,11 @@ class BluetoothSensorManager @Inject constructor(
 
     private val ioScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
     private val bleUuidMutex = Mutex()
+
+    // Serializes transmitter restarts: the scheduled sensor update (SensorReceiver) and the
+    // boot / app-update receiver both reconcile the transmitter settings and start or stop
+    // advertising on the same shared state, so they must not overlap.
+    private val transmitterRestartMutex = Mutex()
 
     override fun docsLink(): String {
         return "https://companion.home-assistant.io/docs/core/sensors#bluetooth-sensors"
@@ -446,32 +452,52 @@ class BluetoothSensorManager @Inject constructor(
         }
     }
 
-    private suspend fun updateBLESensor() {
-        // get device details from settings
-        updateBLEDevice()
+    /**
+     * Restarts the BLE transmitter if it is enabled and should be transmitting.
+     *
+     * Local only: reads the transmitter settings from the database and starts or stops
+     * advertising. Does not send any sensor state to the server, so it is safe to call
+     * from a broadcast receiver on boot or package replacement, where a server sync
+     * could be slow or dropped.
+     *
+     * When starting, suspends until the advertising callback reports success or failure,
+     * so a caller holding a broadcast pending result does not finish it while startup
+     * is still in flight.
+     */
+    suspend fun restartTransmitterIfNeeded() {
+        transmitterRestartMutex.withLock {
+            // get device details from settings
+            updateBLEDevice()
 
-        // sensor disabled, stop transmitting if we have been
-        if (!isEnabled(bleTransmitter)) {
-            TransmitterManager.stopTransmitting(bleTransmitterDevice)
-            return
-        }
-        // transmit when BT is on, if we are not already transmitting, or details have changed, and we're permitted on this wifi network
-        if (isBtOn()) {
-            if (bleTransmitterDevice.transmitRequested &&
-                (!bleTransmitterDevice.transmitting || bleTransmitterDevice.restartRequired) &&
-                (!bleTransmitterDevice.onlyTransmitOnHomeWifiSetting || isPermittedOnThisNetwork())
+            // sensor disabled, stop transmitting if we have been
+            if (!isEnabled(bleTransmitter)) {
+                TransmitterManager.stopTransmitting(bleTransmitterDevice)
+                return
+            }
+            // transmit when BT is on, if we are not already transmitting, or details have changed, and we're permitted on this wifi network
+            if (isBtOn()) {
+                if (bleTransmitterDevice.transmitRequested &&
+                    (!bleTransmitterDevice.transmitting || bleTransmitterDevice.restartRequired) &&
+                    (!bleTransmitterDevice.onlyTransmitOnHomeWifiSetting || isPermittedOnThisNetwork())
+                ) {
+                    Timber.d("Starting BLE transmitter")
+                    TransmitterManager.startTransmittingAndAwait(applicationContext, bleTransmitterDevice)
+                }
+            }
+
+            // BT off, or TransmitToggled off, or not permitted on this network - stop transmitting if we have been
+            if (!isBtOn() ||
+                !bleTransmitterDevice.transmitRequested ||
+                (bleTransmitterDevice.onlyTransmitOnHomeWifiSetting && !isPermittedOnThisNetwork())
             ) {
-                TransmitterManager.startTransmitting(applicationContext, bleTransmitterDevice)
+                TransmitterManager.stopTransmitting(bleTransmitterDevice)
             }
         }
+    }
 
-        // BT off, or TransmitToggled off, or not permitted on this network - stop transmitting if we have been
-        if (!isBtOn() ||
-            !bleTransmitterDevice.transmitRequested ||
-            (bleTransmitterDevice.onlyTransmitOnHomeWifiSetting && !isPermittedOnThisNetwork())
-        ) {
-            TransmitterManager.stopTransmitting(bleTransmitterDevice)
-        }
+    private suspend fun updateBLESensor() {
+        restartTransmitterIfNeeded()
+        if (!isEnabled(bleTransmitter)) return
 
         val lastState =
             sensorRepository.get(bleTransmitter.id).firstOrNull()?.state ?: STATE_UNKNOWN
