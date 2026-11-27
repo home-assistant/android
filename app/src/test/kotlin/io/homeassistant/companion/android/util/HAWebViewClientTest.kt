@@ -32,6 +32,7 @@ import kotlin.reflect.KClass
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
@@ -544,25 +545,37 @@ class HAWebViewClientTest {
         }
 
         @Test
-        fun `Given supported WebView when pages start then registers history script once per WebView`() {
+        fun `Given supported WebView when observing history changes then registers history script once per WebView`() {
             mockWebViewFeatures(supported = true)
             val client = createClient()
             val firstWebView = mockk<WebView>()
             val recreatedWebView = mockk<WebView>()
 
-            client.onPageStarted(firstWebView, "https://example.com", null)
-            client.onPageStarted(firstWebView, "https://example.com/other", null)
-            client.onPageStarted(recreatedWebView, "https://example.com", null)
+            val observer = checkNotNull(client.historyObserver)
+
+            observer.observe(firstWebView)
+            observer.observe(firstWebView)
+            observer.observe(recreatedWebView)
 
             verifyRegistrations(firstWebView, times = 1)
             verifyRegistrations(recreatedWebView, times = 1)
         }
 
         @Test
+        fun `Given supported WebView when page starts then registers nothing on the loading page`() {
+            mockWebViewFeatures(supported = true)
+            val webView = mockk<WebView>()
+
+            createClient().onPageStarted(webView, "https://example.com", null)
+
+            verifyRegistrations(webView, times = 0)
+        }
+
+        @Test
         fun `Given registered WebView when a frame posts a message then reports current canGoBack`() {
             mockWebViewFeatures(supported = true)
             val webView = mockk<WebView>()
-            createClient().onPageStarted(webView, "https://example.com", null)
+            createClient().historyObserver?.observe(webView)
 
             every { webView.canGoBack() } returns true
             listenerSlot.captured.onPostMessage(webView, mockk(), mockk<Uri>(), false, mockk())
@@ -573,23 +586,18 @@ class HAWebViewClientTest {
         }
 
         @Test
-        fun `Given unsupported WebView when page starts then registers nothing`() {
+        fun `Given unsupported WebView when observing history changes then registers nothing`() {
             mockWebViewFeatures(supported = false)
             val webView = mockk<WebView>()
 
-            createClient().onPageStarted(webView, "https://example.com", null)
+            createClient().historyObserver?.observe(webView)
 
             verifyRegistrations(webView, times = 0)
         }
 
         @Test
-        fun `Given no onCanGoBackChanged callback when page starts then registers nothing`() {
-            mockWebViewFeatures(supported = true)
-            val webView = mockk<WebView>()
-
-            createClient(onCanGoBackChanged = null).onPageStarted(webView, "https://example.com", null)
-
-            verifyRegistrations(webView, times = 0)
+        fun `Given no onCanGoBackChanged callback when creating the client then it has no history observer`() {
+            assertNull(createClient(onCanGoBackChanged = null).historyObserver)
         }
     }
 

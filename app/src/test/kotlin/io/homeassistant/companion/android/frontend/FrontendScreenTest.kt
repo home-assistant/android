@@ -6,6 +6,7 @@ import android.util.Rational
 import android.view.View
 import android.webkit.PermissionRequest as WebViewPermissionRequest
 import android.webkit.WebChromeClient
+import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.result.ActivityResultRegistry
@@ -34,6 +35,8 @@ import androidx.core.util.TypedValueCompat.pxToDp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.test.ext.junit.rules.ActivityScenarioRule
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
 import com.google.zxing.BarcodeFormat
 import com.wifi.improv.ErrorState
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -59,9 +62,13 @@ import io.homeassistant.companion.android.frontend.permissions.PermissionRequest
 import io.homeassistant.companion.android.launch.PipReadiness
 import io.homeassistant.companion.android.testing.unit.stringResource
 import io.homeassistant.companion.android.util.FakePermissionResultRegistry
+import io.homeassistant.companion.android.util.HAWebViewClient
+import io.homeassistant.companion.android.util.HISTORY_CHANGED_LISTENER
 import io.homeassistant.companion.android.util.compose.webview.HA_WEBVIEW_TAG
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import io.mockk.verify
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -76,6 +83,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 private const val STATUS_BAR_HEIGHT_PX = 48
@@ -514,6 +522,78 @@ class FrontendScreenTest {
         checkLocalNetworkPermissionUseCase = mockk(relaxed = true),
         prefsRepository = mockk(relaxed = true),
     )
+
+    @Test
+    fun `Given resolved URL when WebView is set up then history is observed once before the first loadUrl`() {
+        val firstUrl = "https://example.com"
+        val secondUrl = "https://example.com/other"
+        // The screen creates its own WebView, which cannot be mocked to verify the call order. Each registration
+        // records instead what the WebView had loaded at that moment: null as long as loadUrl was not called.
+        val loadedUrlAtListenerRegistration = mutableListOf<String?>()
+        val loadedUrlAtScriptRegistration = mutableListOf<String?>()
+        var webView: WebView? = null
+        mockkStatic(WebViewFeature::class, WebViewCompat::class)
+        try {
+            every { WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT) } returns true
+            every { WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER) } returns true
+            every { WebViewCompat.addWebMessageListener(any(), HISTORY_CHANGED_LISTENER, any(), any()) } answers {
+                webView = firstArg()
+                loadedUrlAtListenerRegistration += shadowOf(firstArg<WebView>()).lastLoadedUrl
+            }
+            every { WebViewCompat.addDocumentStartJavaScript(any(), any(), any()) } answers {
+                loadedUrlAtScriptRegistration += shadowOf(firstArg<WebView>()).lastLoadedUrl
+                mockk()
+            }
+            val webViewClient = HAWebViewClient(
+                keyChainRepository = mockk(relaxed = true),
+                clientCertProvider = mockk(relaxed = true),
+                currentUrlFlow = MutableStateFlow(firstUrl),
+                onFrontendError = {},
+                onCrash = null,
+                onUrlIntercepted = null,
+                onPageFinished = null,
+                onReceivedHttpAuthRequest = null,
+                onCanGoBackChanged = {},
+            )
+            val viewState = mutableStateOf<FrontendViewState>(
+                FrontendViewState.Content(serverId = 1, url = firstUrl),
+            )
+            composeTestRule.setContent {
+                FrontendScreenContent(
+                    viewState = viewState.value,
+                    getWebViewClient = { webViewClient },
+                    webChromeClient = WebChromeClient(),
+                    frontendJsCallback = FrontendJsBridge.noOp,
+                    onBlockInsecureRetry = {},
+                    onOpenExternalLink = {},
+                    onBlockInsecureHelpClick = {},
+                    onOpenSettings = {},
+                    onChangeSecurityLevel = {},
+                    onOpenLocationSettings = {},
+                    onConfigureHomeNetwork = { _ -> },
+                    onSecurityLevelHelpClick = {},
+                    onShowSnackbar = { _, _ -> true },
+                    onWebViewCreationFailed = {},
+                )
+            }
+
+            composeTestRule.runOnIdle {
+                assertEquals(listOf<String?>(null), loadedUrlAtListenerRegistration)
+                assertEquals(listOf<String?>(null), loadedUrlAtScriptRegistration)
+                assertEquals(firstUrl, shadowOf(webView).lastLoadedUrl)
+            }
+
+            viewState.value = FrontendViewState.Content(serverId = 1, url = secondUrl)
+
+            composeTestRule.runOnIdle {
+                assertEquals(secondUrl, shadowOf(webView).lastLoadedUrl)
+                assertEquals(1, loadedUrlAtListenerRegistration.size)
+                assertEquals(1, loadedUrlAtScriptRegistration.size)
+            }
+        } finally {
+            unmockkStatic(WebViewFeature::class, WebViewCompat::class)
+        }
+    }
 
     private fun AndroidComposeTestRule<ActivityScenarioRule<HiltComponentActivity>, HiltComponentActivity>.setFrontendScreen(
         viewState: FrontendViewState,

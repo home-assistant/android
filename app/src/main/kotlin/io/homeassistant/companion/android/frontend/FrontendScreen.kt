@@ -99,6 +99,7 @@ import io.homeassistant.companion.android.loading.LoadingScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionScreen
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModel
 import io.homeassistant.companion.android.onboarding.locationforsecureconnection.LocationForSecureConnectionViewModelFactory
+import io.homeassistant.companion.android.util.HAWebViewClient
 import io.homeassistant.companion.android.util.compose.HAPreviews
 import io.homeassistant.companion.android.util.compose.media.player.HAMediaPlayer
 import io.homeassistant.companion.android.util.compose.webview.HAWebView
@@ -740,7 +741,10 @@ private fun WebViewEffects(
 ) {
     if (webView != null) {
         LaunchedEffect(webView, url) {
-            webView.webViewClient = getWebViewClient()
+            val webViewClient = getWebViewClient()
+            webView.webViewClient = webViewClient
+            // Every listener must be registered before loadUrl, see WebViewHistoryObserver.observe.
+            if (webViewClient is HAWebViewClient) webViewClient.historyObserver?.observe(webView)
             frontendJsCallback.attachToWebView(webView)
             // Must run after the WebViewClient is set and before loadUrl, see
             // FrontendViewModel.prepareUrlLoad.
