@@ -131,20 +131,12 @@ class HAWebViewClient internal constructor(
     /** Last resource URL loaded by the WebView, used to identify the resource requesting auth. */
     private var lastResourceUrl: String? = null
 
-    /**
-     * Weak reference to the WebView already reporting history changes. This client outlives the WebViews
-     * recreated by the screen, so a new WebView is detected and observed as well.
-     */
-    private var historyObservedWebView: WeakReference<WebView>? = null
+    /** Reports the history changes of a WebView through `onCanGoBackChanged`, `null` without that callback. */
+    val historyObserver: WebViewHistoryObserver? = onCanGoBackChanged?.let(::WebViewHistoryObserver)
 
     override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
         super.onPageStarted(view, url, favicon)
         onPageStarted?.invoke(url)
-        val onCanGoBackChanged = onCanGoBackChanged
-        if (view != null && onCanGoBackChanged != null && historyObservedWebView?.get() !== view) {
-            historyObservedWebView = WeakReference(view)
-            view.observeHistoryChanges(onCanGoBackChanged)
-        }
     }
 
     override fun onLoadResource(view: WebView?, url: String?) {
@@ -329,14 +321,40 @@ class HAWebViewClient internal constructor(
 }
 
 /**
+ * Reports whether a WebView can navigate back when its back/forward list changes, including the changes
+ * inside iframes.
+ */
+class WebViewHistoryObserver internal constructor(private val onCanGoBackChanged: (canGoBack: Boolean) -> Unit) {
+
+    /**
+     * Weak reference to the WebView already observed. This observer outlives the WebViews recreated by the
+     * screen, so a new WebView is detected and observed as well.
+     */
+    private var observedWebView: WeakReference<WebView>? = null
+
+    /**
+     * Starts reporting the history changes of [webView]. Does nothing when [webView] is already observed.
+     *
+     * Call it before the first `loadUrl` on [webView]: registering a listener on a WebView that already
+     * shows a page crashes the app natively as soon as that page posts to a listener registered earlier.
+     * See https://issues.chromium.org/issues/573671233.
+     */
+    fun observe(webView: WebView) {
+        if (observedWebView?.get() === webView) return
+        observedWebView = WeakReference(webView)
+        webView.registerHistoryChangesListener(onCanGoBackChanged)
+    }
+}
+
+/**
  * Reports [WebView.canGoBack] through [onCanGoBackChanged] when the history entry of any frame changes.
  *
  * `doUpdateVisitedHistory` only fires for the main frame, so a script injected in every frame posts an
  * empty message whenever the frame's history entry changes, triggering a new read of [WebView.canGoBack].
- * The script only runs in frames that begin loading afterward, so call it from `onPageStarted` at the latest.
+ * The script only runs in frames that begin loading afterward.
  */
 @SuppressLint("RequiresFeature")
-private fun WebView.observeHistoryChanges(onCanGoBackChanged: (canGoBack: Boolean) -> Unit) {
+private fun WebView.registerHistoryChangesListener(onCanGoBackChanged: (canGoBack: Boolean) -> Unit) {
     if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT) &&
         WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)
     ) {
