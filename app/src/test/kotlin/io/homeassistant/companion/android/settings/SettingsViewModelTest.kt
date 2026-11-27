@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -62,5 +63,17 @@ class SettingsViewModelTest {
 
         if (enabled) assertTrue(result) else assertFalse(result)
         coVerify { appLockStateManager.isAppLockEnabled(serverId = 1) }
+    }
+
+    @Test
+    fun `Given settings opened when unlocked in the foreground and then left then the state follows`() {
+        viewModel = SettingsViewModel(appLockStateManager)
+        assertFalse(viewModel.unlockedInForeground.value)
+
+        viewModel.setUnlockedInForeground(true)
+        assertTrue(viewModel.unlockedInForeground.value)
+
+        viewModel.setUnlockedInForeground(false)
+        assertFalse(viewModel.unlockedInForeground.value)
     }
 }

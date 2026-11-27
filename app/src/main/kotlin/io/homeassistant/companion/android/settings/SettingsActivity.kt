@@ -10,6 +10,7 @@ import androidx.activity.viewModels
 import androidx.biometric.BiometricManager
 import androidx.core.content.IntentCompat
 import androidx.fragment.app.commit
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -80,6 +81,9 @@ class SettingsActivity : BaseActivity() {
         data object AssistSettings : Deeplink
         data object Gestures : Deeplink
         data object MediaControls : Deeplink
+
+        /** Opens the settings, scrolled to the Home Assistant mode. */
+        data object HomeAssistantMode : Deeplink
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -124,7 +128,7 @@ class SettingsActivity : BaseActivity() {
                             Deeplink.AssistSettings -> AssistSettingsFragment::class.java
                             Deeplink.Gestures -> GesturesFragment::class.java
                             Deeplink.MediaControls -> MediaControlsSettingsFragment::class.java
-                            null -> SettingsFragment::class.java
+                            Deeplink.HomeAssistantMode, null -> SettingsFragment::class.java
                         },
                         when (settingsNavigation) {
                             is Deeplink.HomeNetwork -> {
@@ -133,6 +137,10 @@ class SettingsActivity : BaseActivity() {
 
                             is Deeplink.Sensor -> {
                                 SensorDetailFragment.newInstance(settingsNavigation.sensorId).arguments
+                            }
+
+                            Deeplink.HomeAssistantMode -> {
+                                SettingsFragment.scrollTo(SettingsFragment.PREF_HOME_ASSISTANT_MODE)
                             }
 
                             is Deeplink.QSTile -> {
@@ -245,12 +253,14 @@ class SettingsActivity : BaseActivity() {
 
     /**
      * Set the app active for the currently active server, and the currently visible server if
-     * different
+     * different. The app is active once it is unlocked, or when no unlock was needed.
      */
     private fun setAppActive(active: Boolean) {
         val serverFragment = supportFragmentManager.findFragmentByTag(ServerSettingsFragment.TAG)
         serverFragment?.let { viewModel.setAppActive((it as ServerSettingsFragment).getServerId(), active) }
         viewModel.setAppActive(ServerManager.SERVER_ID_ACTIVE, active)
+        // The check that the app is unlocked can end after the user left the settings again
+        viewModel.setUnlockedInForeground(active && lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

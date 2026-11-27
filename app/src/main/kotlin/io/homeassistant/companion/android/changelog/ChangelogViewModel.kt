@@ -6,9 +6,11 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.modes.HomeAssistantModeManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.AppVersion
 import io.homeassistant.companion.android.di.qualifiers.IsAutomotive
+import io.homeassistant.companion.android.settings.SettingsActivity
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -51,6 +53,7 @@ class ChangelogViewModel @VisibleForTesting constructor(
     flavor: String,
     appVersion: AppVersion,
     private val sensorManagers: Set<SensorManager>,
+    homeAssistantModeManager: HomeAssistantModeManager,
     changelog: Changelog,
     private val backgroundDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
@@ -61,12 +64,14 @@ class ChangelogViewModel @VisibleForTesting constructor(
         @IsAutomotive isAutomotive: Boolean,
         appVersion: AppVersion,
         sensorManagers: Set<@JvmSuppressWildcards SensorManager>,
+        homeAssistantModeManager: HomeAssistantModeManager,
     ) : this(
         prefsRepository = prefsRepository,
         isAutomotive = isAutomotive,
         flavor = BuildConfig.FLAVOR,
         appVersion = appVersion,
         sensorManagers = sensorManagers,
+        homeAssistantModeManager = homeAssistantModeManager,
         changelog = currentChangelog,
         backgroundDispatcher = Dispatchers.Default,
     )
@@ -78,6 +83,7 @@ class ChangelogViewModel @VisibleForTesting constructor(
         viewModelScope.launch {
             val versionWithoutFlavor = appVersion.name.removeSuffix("-$flavor")
             val sections = changelog.toSections().withEntriesAvailableOn(flavor)
+                .withoutModeAction(homeAssistantModeManager.isSupported())
             _uiState.value = ChangelogUiState.Content(
                 versionName = versionWithoutFlavor,
                 releaseUrl = RELEASE_TAG_URL_PREFIX + versionWithoutFlavor,
@@ -129,3 +135,15 @@ private fun List<ChangelogSection>.withSensorActionsFor(availableSensorIds: Set<
             },
         )
     }
+
+/**
+ * @return these sections, without the link to the setting of the Home Assistant mode on a device without Modes
+ * ([modeSupported] `false`), where the setting is hidden
+ */
+private fun List<ChangelogSection>.withoutModeAction(modeSupported: Boolean): List<ChangelogSection> {
+    if (modeSupported) return this
+    val modeAction = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.HomeAssistantMode)
+    return map { section ->
+        section.copy(entries = section.entries.map { if (it.action == modeAction) it.copy(action = null) else it })
+    }
+}

@@ -2,11 +2,14 @@ package io.homeassistant.companion.android.changelog
 
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.prefs.PrefsRepository
+import io.homeassistant.companion.android.common.modes.HomeAssistantModeManager
 import io.homeassistant.companion.android.common.sensors.SensorManager
 import io.homeassistant.companion.android.common.util.AppVersion
+import io.homeassistant.companion.android.settings.SettingsActivity
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -18,6 +21,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
+import org.junit.jupiter.params.provider.ValueSource
 
 private const val CURRENT_VERSION_CODE = 42
 private const val SENSOR_ID = "test_sensor"
@@ -136,11 +140,34 @@ class ChangelogViewModelTest {
         assertEquals(Changelog(fixed = listOf(plainEntry, minimalFlavorEntry)).toSections(), state.sections)
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = [true, false])
+    fun `Given Modes support when reading state then only the link to the mode setting depends on it`(supported: Boolean) = runTest {
+        val modeEntry = ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_home_assistant_mode,
+            platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.HomeAssistantMode),
+        )
+        val otherEntry = ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_edge_gestures,
+            platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.Gestures),
+        )
+
+        val state = resolvedState(
+            createViewModel(homeAssistantModeSupported = supported, changelog = Changelog(new = listOf(modeEntry, otherEntry))),
+        )
+
+        val shownModeEntry = if (supported) modeEntry else modeEntry.copy(action = null)
+        assertEquals(listOf(ChangelogSection(ChangelogCategory.NEW, listOf(shownModeEntry, otherEntry))), state.sections)
+    }
+
     private fun TestScope.createViewModel(
         isAutomotive: Boolean = false,
         flavor: String = FULL_FLAVOR,
         appVersion: AppVersion = AppVersion("2026.7.6-$flavor", CURRENT_VERSION_CODE),
         sensorManagers: Set<SensorManager> = setOf(sensorManager(hasSensor = true)),
+        homeAssistantModeSupported: Boolean = true,
         changelog: Changelog = fixtureChangelog,
     ) = ChangelogViewModel(
         prefsRepository = prefsRepository,
@@ -148,6 +175,7 @@ class ChangelogViewModelTest {
         flavor = flavor,
         appVersion = appVersion,
         sensorManagers = sensorManagers,
+        homeAssistantModeManager = mockk<HomeAssistantModeManager> { every { isSupported() } returns homeAssistantModeSupported },
         changelog = changelog,
         backgroundDispatcher = StandardTestDispatcher(testScheduler),
     )

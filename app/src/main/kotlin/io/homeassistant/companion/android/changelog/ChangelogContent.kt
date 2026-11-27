@@ -35,6 +35,13 @@ internal val currentChangelog = Changelog(
             platforms = setOf(ChangelogPlatform.APP),
             action = ChangelogAction.OpenSensor(FoldableSensorManager.hingeStatus.id),
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_home_assistant_mode,
+            platforms = setOf(ChangelogPlatform.APP),
+            // Removed on devices without Modes, also cars, by ChangelogViewModel.withoutModeAction: remove that
+            // function and the HomeAssistantModeManager it injects together with this entry
+            action = ChangelogAction.OpenSettings(SettingsActivity.Deeplink.HomeAssistantMode),
+        ),
     ),
     improved = listOf(),
     fixed = listOf(

@@ -496,6 +496,17 @@
             android:exported="false" />
 
         <activity
+            android:name=".modes.HomeAssistantModeSettingsActivity"
+            android:exported="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.app.action.AUTOMATIC_ZEN_RULE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name=".settings.SettingsActivity"
             android:parentActivityName=".launch.LaunchActivity"
             android:exported="false"
