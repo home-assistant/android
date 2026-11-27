@@ -130,6 +130,7 @@ class OnboardingPresenterImpl @Inject constructor(
                         url,
                         code,
                         null,
+                        codeVerifier.value,
                     ),
                 ) { "Registration failed" }
             } catch (e: Exception) {

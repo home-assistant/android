@@ -26,6 +26,7 @@ interface AuthenticationService {
         @Field("grant_type") grandType: String,
         @Field("code") code: String,
         @Field("client_id") clientId: String,
+        @Field("code_verifier") codeVerifier: String? = null,
     ): Token
 
     @FormUrlEncoded

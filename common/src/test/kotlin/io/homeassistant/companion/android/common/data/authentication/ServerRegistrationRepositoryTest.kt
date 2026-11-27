@@ -74,6 +74,63 @@ class ServerRegistrationRepositoryTest {
     }
 
     @Test
+    fun `Given a PKCE code verifier, when registering auth code, then send the verifier with the token request`() = runTest {
+        val token = Token(
+            accessToken = "access_token",
+            expiresIn = 3600,
+            refreshToken = "refresh_token",
+            tokenType = "Bearer",
+        )
+        coEvery { installIdProvider.invoke() } returns "install_id"
+        coEvery {
+            authenticationService.getToken(any(), any(), any(), any(), any())
+        } returns token
+
+        val result = repository.registerAuthorizationCode(
+            url = "https://homeassistant.local:8123",
+            authorizationCode = "auth_code",
+            allowInsecureConnection = null,
+            codeVerifier = "test_code_verifier",
+        )
+
+        assertNotNull(result)
+        coVerify(exactly = 1) {
+            authenticationService.getToken(
+                any(),
+                AuthenticationService.GRANT_TYPE_CODE,
+                "auth_code",
+                AuthenticationService.CLIENT_ID,
+                "test_code_verifier",
+            )
+        }
+    }
+
+    @Test
+    fun `Given no PKCE code verifier, when registering auth code, then send no verifier`() = runTest {
+        val token = Token(
+            accessToken = "access_token",
+            expiresIn = 3600,
+            refreshToken = "refresh_token",
+            tokenType = "Bearer",
+        )
+
+        coEvery { installIdProvider.invoke() } returns "install_id"
+        coEvery {
+            authenticationService.getToken(any(), any(), any(), any(), any())
+        } returns token
+
+        repository.registerAuthorizationCode(
+            url = "https://homeassistant.local:8123",
+            authorizationCode = "auth_code",
+            allowInsecureConnection = null,
+        )
+
+        coVerify(exactly = 1) {
+            authenticationService.getToken(any(), any(), any(), any(), isNull())
+        }
+    }
+
+    @Test
     fun `Given valid URL and token without refresh token, when registering auth code, then return null`() = runTest {
         val token = Token(
             accessToken = "access_token",
