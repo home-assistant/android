@@ -317,6 +317,24 @@ abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetD
      * update your data source from elsewhere in the app, make sure to call `update` in case a
      * Worker for this widget is not currently running.
      */
+    /** Schedules a single widget update on the receiver's existing lifecycle scope. */
+    protected fun updateGlanceWidget(context: Context, appWidgetId: Int) {
+        setupWidgetScope()
+        widgetScope.launch { updateView(context, appWidgetId) }
+    }
+
+    /** Schedules a full refresh on the receiver's existing lifecycle scope. */
+    protected fun updateAllGlanceWidgets(context: Context) {
+        setupWidgetScope()
+        widgetScope.launch { glanceAppWidget.updateAll(context) }
+    }
+
+    /** Schedules widget-specific reconciliation on the receiver's lifecycle scope. */
+    protected fun launchWidgetWork(block: suspend () -> Unit) {
+        setupWidgetScope()
+        widgetScope.launch { block() }
+    }
+
     private suspend fun updateView(context: Context, appWidgetId: Int) {
         val manager = glanceManagerProvider(context)
         if (appWidgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
