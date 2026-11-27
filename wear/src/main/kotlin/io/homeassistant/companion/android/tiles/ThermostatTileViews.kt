@@ -103,11 +103,7 @@ internal class ThermostatTileViews(private val context: Context) {
         val classicRangeMode = entity.rawState == "heat_cool"
         val rangeAvailable = controls?.targetTemperatureLow != null && controls.targetTemperatureHigh != null
         val temperatureEnabled = available &&
-            (if (classicRangeMode) rangeAvailable else controls?.targetTemperature != null) &&
-            !(
-                pending?.status == ThermostatCommandCoordinator.Pending.Status.WAITING &&
-                    pending.value in listOf("on", "off")
-                )
+            (if (classicRangeMode) rangeAvailable else controls?.targetTemperature != null)
         val targetTemperature = if (classicRangeMode) {
             val waiting = pending?.takeIf { it.status == ThermostatCommandCoordinator.Pending.Status.WAITING }
             val low = units.display(waiting?.low ?: controls?.targetTemperatureLow)

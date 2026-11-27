@@ -185,143 +185,35 @@ class ThermostatTile : TileService() {
                         }
                         val controls = climateControls
                         if (controls != null && entity.rawState !in listOf("unavailable", "unknown")) {
-                            val step = controls.targetTemperatureStep?.takeIf { it > 0 } ?: 1f
-                            val min = controls.minTemperature ?: units.minimum()
-                            val max = controls.maxTemperature ?: units.maximum()
-                            // A failed command is not an authoritative temperature baseline.
-                            val waitingCommand = commandCoordinator.get(tileId, target)
-                                ?.takeIf { it.status == ThermostatCommandCoordinator.Pending.Status.WAITING }
+                            val classic = tileConfig.layoutStyle == "classic"
                             when {
-                                tileConfig.layoutStyle == "classic" &&
-                                    lastId in listOf(TAP_ACTION_DOWN, TAP_ACTION_UP) &&
-                                    entity.rawState == "heat_cool" &&
-                                    controls.targetTemperatureLow != null &&
-                                    controls.targetTemperatureHigh != null &&
-                                    waitingCommand?.value !in listOf("on", "off") -> {
-                                    val displayStep = if (units.hasOverride) units.adjustment(1f, step) else step
-                                    val delta = if (lastId == TAP_ACTION_UP) displayStep else -displayStep
-                                    val low = waitingCommand?.low ?: checkNotNull(controls.targetTemperatureLow)
-                                    val high = waitingCommand?.high ?: checkNotNull(controls.targetTemperatureHigh)
-                                    val revised = ThermostatTemperatureLogic.shiftRange(
-                                        delta,
-                                        low to high,
-                                        min,
-                                        max,
-                                        step,
-                                    )
-                                    if (revised != (low to high)) {
-                                        commandCoordinator.submitTemperature(
-                                            tileId,
-                                            target,
-                                            true,
-                                            revised.first,
-                                            revised.second,
-                                            null,
-                                        )
-                                    }
-                                }
-                                // Preserve the Classic tile's original +/- buttons, but dispatch
-                                // asynchronously through the same fast coordinator as Enhanced.
-                                tileConfig.layoutStyle == "classic" &&
-                                    lastId in listOf(TAP_ACTION_DOWN, TAP_ACTION_UP) &&
-                                    entity.rawState !in listOf("off", "heat_cool") &&
-                                    controls.targetTemperature != null &&
-                                    waitingCommand?.value !in listOf("on", "off") -> {
-                                    val displayStep = if (units.hasOverride) units.adjustment(1f, step) else step
-                                    val delta = if (lastId == TAP_ACTION_UP) displayStep else -displayStep
-                                    val baseline = waitingCommand?.single
-                                        ?: checkNotNull(controls.targetTemperature)
-                                    val proposed = ThermostatTemperatureLogic.snap(
-                                        baseline + delta,
-                                        step,
-                                        min,
-                                        max,
-                                    )
-                                    commandCoordinator.submitTemperature(
-                                        tileId,
-                                        target,
-                                        false,
-                                        null,
-                                        null,
-                                        proposed,
-                                    )
-                                }
-                                tileConfig.layoutStyle != "classic" &&
-                                    tileConfig.showHvacModes &&
-                                    lastId.startsWith(TAP_MODE_PREFIX) -> {
-                                    val mode = lastId.removePrefix(TAP_MODE_PREFIX)
-                                    if (mode in controls.hvacModes) {
-                                        commandCoordinator.submitHvac(tileId, target, mode)
-                                    }
-                                }
-                                tileConfig.layoutStyle != "classic" &&
-                                    tileConfig.showFanControl &&
-                                    lastId == TAP_FAN &&
-                                    controls.fanModes.isNotEmpty() -> {
-                                    val modes = controls.fanModes
-                                    // WearDash uses fan on/auto. Prefer that pair if both are offered.
-                                    val nextMode = if ("on" in modes && "auto" in modes) {
-                                        if (controls.fanMode == "on") "auto" else "on"
+                                classic && lastId in listOf(TAP_ACTION_DOWN, TAP_ACTION_UP) -> {
+                                    val slot = if (entity.rawState == "heat_cool") {
+                                        ThermostatCommandCoordinator.TemperatureSlot.CLASSIC_RANGE
                                     } else {
-                                        modes[(modes.indexOf(controls.fanMode) + 1) % modes.size]
+                                        ThermostatCommandCoordinator.TemperatureSlot.CLASSIC_SINGLE
                                     }
-                                    commandCoordinator.submitFan(tileId, target, nextMode)
+                                    val amount = if (lastId == TAP_ACTION_UP) 1f else -1f
+                                    commandCoordinator.adjustTemperature(target, entity, units, slot, amount)
                                 }
-                                tileConfig.layoutStyle != "classic" &&
-                                    lastId.startsWith("Temp:") &&
-                                    entity.rawState != "off" -> {
+                                !classic && tileConfig.showHvacModes && lastId.startsWith(TAP_MODE_PREFIX) -> {
+                                    val mode = lastId.removePrefix(TAP_MODE_PREFIX)
+                                    if (mode in controls.hvacModes) commandCoordinator.submitHvac(target, mode)
+                                }
+                                !classic && tileConfig.showFanControl && lastId == TAP_FAN -> {
+                                    commandCoordinator.cycleFan(target, entity)
+                                }
+                                !classic && lastId.startsWith("Temp:") -> {
                                     val items = lastId.split(":")
-                                    val slot = items.getOrNull(1)
+                                    val slot = when (items.getOrNull(1)) {
+                                        "single" -> ThermostatCommandCoordinator.TemperatureSlot.SINGLE
+                                        "heat" -> ThermostatCommandCoordinator.TemperatureSlot.HEAT
+                                        "cool" -> ThermostatCommandCoordinator.TemperatureSlot.COOL
+                                        else -> null
+                                    }
                                     val amount = items.getOrNull(2)?.toFloatOrNull()
-                                    if (amount != null &&
-                                        amount.isFinite() &&
-                                        slot in listOf("single", "heat", "cool")
-                                    ) {
-                                        val delta = units.adjustment(amount, step)
-                                        val range = entity.rawState == "heat_cool" &&
-                                            controls.targetTemperatureLow != null &&
-                                            controls.targetTemperatureHigh != null
-                                        // Ignore a tap from an outdated layout after a mode change.
-                                        if (range && (slot == "heat" || slot == "cool")) {
-                                            val currentLow = waitingCommand?.low
-                                                ?: checkNotNull(controls.targetTemperatureLow)
-                                            val currentHigh = waitingCommand?.high
-                                                ?: checkNotNull(controls.targetTemperatureHigh)
-                                            val revised = ThermostatTemperatureLogic.adjustRange(
-                                                if (slot == "heat") currentLow + delta else currentHigh + delta,
-                                                slot == "cool",
-                                                currentLow,
-                                                currentHigh,
-                                                min,
-                                                max,
-                                                step,
-                                            )
-                                            commandCoordinator.submitTemperature(
-                                                tileId,
-                                                target,
-                                                true,
-                                                revised.first,
-                                                revised.second,
-                                                null,
-                                            )
-                                        } else if (!range && slot == "single" && controls.targetTemperature != null) {
-                                            val baseline = waitingCommand?.single
-                                                ?: checkNotNull(controls.targetTemperature)
-                                            val proposed = ThermostatTemperatureLogic.snap(
-                                                baseline + delta,
-                                                step,
-                                                min,
-                                                max,
-                                            )
-                                            commandCoordinator.submitTemperature(
-                                                tileId,
-                                                target,
-                                                false,
-                                                null,
-                                                null,
-                                                proposed,
-                                            )
-                                        }
+                                    if (slot != null && amount != null && amount.isFinite()) {
+                                        commandCoordinator.adjustTemperature(target, entity, units, slot, amount)
                                     }
                                 }
                             }
@@ -339,7 +231,7 @@ class ThermostatTile : TileService() {
                         } else {
                             commandCoordinator.stopObservingTile(tileId)
                         }
-                        val pending = commandCoordinator.get(tileId, target)
+                        val pending = commandCoordinator.get(target)
                         if (pending != null) {
                             val pendingFreshness = if (freshness == 0L) 5L else minOf(freshness, 5L)
                             tile.setFreshnessIntervalMillis(TimeUnit.SECONDS.toMillis(pendingFreshness))

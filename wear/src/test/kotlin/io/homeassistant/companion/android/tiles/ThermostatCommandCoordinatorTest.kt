@@ -16,10 +16,12 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import java.time.LocalDateTime
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.advanceTimeBy
@@ -44,34 +46,18 @@ class ThermostatCommandCoordinatorTest {
     private val target = ThermostatCommandCoordinator.Target(1, "climate.living_room")
 
     @Before
-    fun clearPendingState() {
-        context.getSharedPreferences("thermostat_tile_commands", Context.MODE_PRIVATE).edit().clear().commit()
+    fun setUp() {
         coEvery { servers.integrationRepository(1) } returns repository
         coEvery { servers.getServer(1) } returns mockk<Server> {
             every { version } returns HomeAssistantVersion(2026, 9, 2)
         }
     }
 
-    @Test
-    fun `preferences are loaded lazily and reused`() = runTest {
-        val deferredContext = mockk<Context>()
-        val preferences = context.getSharedPreferences("thermostat_tile_commands", Context.MODE_PRIVATE)
-        every { deferredContext.getSharedPreferences(any(), any()) } returns preferences
-        val coordinator = ThermostatCommandCoordinator(deferredContext, servers, backgroundScope) {}
-        verify(exactly = 0) { deferredContext.getSharedPreferences(any(), any()) }
-        assertNull(coordinator.get(10, target))
-        verify(exactly = 1) { deferredContext.getSharedPreferences(any(), any()) }
-        assertNull(coordinator.get(10, target))
-        verify(exactly = 1) { deferredContext.getSharedPreferences(any(), any()) }
-    }
-
     private fun observationContext(interactive: () -> Boolean = { true }): Context {
         val powerManager = mockk<PowerManager>()
         every { powerManager.isInteractive } answers { interactive() }
-        val preferences = context.getSharedPreferences("thermostat_tile_commands", Context.MODE_PRIVATE)
         return mockk<Context>().also {
             every { it.getSystemService(PowerManager::class.java) } returns powerManager
-            every { it.getSharedPreferences(any(), any()) } returns preferences
         }
     }
 
@@ -92,11 +78,11 @@ class ThermostatCommandCoordinatorTest {
         val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) { refreshes++ }
         coEvery { repository.callAction("climate", "set_temperature", any()) } returns Unit
         coEvery { repository.getEntity(target.entityId) } returns state(72f)
-        coordinator.submitTemperature(10, target, false, null, null, 72f)
-        assertEquals(72f, coordinator.get(10, target)?.single)
+        coordinator.submitTemperature(target, false, null, null, 72f)
+        assertEquals(72f, coordinator.get(target)?.single)
         assertEquals(0, refreshes)
         runCurrent()
-        assertNull(coordinator.get(10, target))
+        assertNull(coordinator.get(target))
         assertEquals(1, refreshes)
         assertEquals(EntityDisplayWithoutContext(state(72f)), coordinator.cachedEntity(target))
         coVerify(exactly = 1) { repository.getEntity(target.entityId) }
@@ -116,17 +102,17 @@ class ThermostatCommandCoordinatorTest {
         coEvery { repository.getEntity(target.entityId) } returns state(70f)
         coEvery { repository.getEntityChanges(any()) } returns flowOf(EntityChange.StateChanged(state(73f)))
 
-        coordinator.submitTemperature(10, target, false, null, null, 71f)
-        coordinator.submitTemperature(10, target, false, null, null, 72f)
-        coordinator.submitTemperature(10, target, false, null, null, 73f)
+        coordinator.submitTemperature(target, false, null, null, 71f)
+        coordinator.submitTemperature(target, false, null, null, 72f)
+        coordinator.submitTemperature(target, false, null, null, 73f)
         runCurrent()
         assertEquals(listOf(71f), sent)
-        assertEquals(73f, coordinator.get(10, target)?.single)
+        assertEquals(73f, coordinator.get(target)?.single)
 
         gate.complete(Unit)
         runCurrent()
         assertEquals(listOf(71f, 72f, 73f), sent)
-        assertNull(coordinator.get(10, target))
+        assertNull(coordinator.get(target))
         coVerify(exactly = 1) { repository.getEntityChanges(EntityFilter(entityIds = setOf(target.entityId))) }
         coVerify(exactly = 1) { repository.getEntity(any()) }
     }
@@ -142,11 +128,11 @@ class ThermostatCommandCoordinatorTest {
         }
         coEvery { repository.getEntityChanges(any()) } returns null
         coEvery { repository.getEntity(target.entityId) } returnsMany listOf(null, state(72f))
-        coordinator.submitTemperature(10, target, false, null, null, 71f)
-        coordinator.submitTemperature(10, target, false, null, null, 72f)
+        coordinator.submitTemperature(target, false, null, null, 71f)
+        coordinator.submitTemperature(target, false, null, null, 72f)
         runCurrent()
         assertEquals(listOf(71f, 72f), sent)
-        assertNull(coordinator.get(10, target))
+        assertNull(coordinator.get(target))
         coVerify(exactly = 2) { repository.getEntity(target.entityId) }
     }
 
@@ -160,10 +146,9 @@ class ThermostatCommandCoordinatorTest {
         coordinator.rememberEntity(other, secondEntity)
         assertEquals(firstEntity, coordinator.cachedEntity(target))
         assertEquals(secondEntity, coordinator.cachedEntity(other))
-        coordinator.submitTemperature(10, target, false, null, null, 72f)
-        assertEquals(72f, coordinator.get(10, target)?.single)
-        assertNull(coordinator.get(10, other))
-        assertNull(coordinator.get(11, target))
+        coordinator.submitTemperature(target, false, null, null, 72f)
+        assertEquals(72f, coordinator.get(target)?.single)
+        assertNull(coordinator.get(other))
         val otherRepository = mockk<IntegrationRepository>()
         coEvery { servers.integrationRepository(2) } returns otherRepository
         coEvery { servers.getServer(2) } returns null
@@ -172,14 +157,14 @@ class ThermostatCommandCoordinatorTest {
         coEvery { otherRepository.callAction("climate", "set_temperature", any()) } returns Unit
         coEvery { repository.getEntity(target.entityId) } returns state(72f)
         coEvery { otherRepository.getEntity(target.entityId) } returns state(77f)
-        coordinator.submitTemperature(10, other, false, null, null, 77f)
+        coordinator.submitTemperature(other, false, null, null, 77f)
         runCurrent()
         coVerify(exactly = 1) { repository.callAction("climate", "set_temperature", mapOf("entity_id" to target.entityId, "temperature" to 72f)) }
         coVerify(exactly = 1) { otherRepository.callAction("climate", "set_temperature", mapOf("entity_id" to target.entityId, "temperature" to 77f)) }
         coVerify(exactly = 0) { repository.getEntityChanges(any()) }
         coVerify(exactly = 0) { otherRepository.getEntityChanges(any()) }
-        assertNull(coordinator.get(10, target))
-        assertNull(coordinator.get(10, other))
+        assertNull(coordinator.get(target))
+        assertNull(coordinator.get(other))
     }
 
     @Test
@@ -312,17 +297,17 @@ class ThermostatCommandCoordinatorTest {
 
         coordinator.observeVisibleTile(10, target, System.currentTimeMillis())
         runCurrent()
-        coordinator.submitTemperature(10, target, false, null, null, 72f)
+        coordinator.submitTemperature(target, false, null, null, 72f)
         runCurrent()
         check(changes.tryEmit(EntityChange.StateChanged(intermediate)))
         runCurrent()
-        assertEquals(72f, coordinator.get(10, target)?.single)
+        assertEquals(72f, coordinator.get(target)?.single)
         assertEquals(EntityDisplayWithoutContext(initial), coordinator.cachedEntity(target))
 
         coEvery { repository.getEntity(target.entityId) } returns confirmed
         gate.complete(Unit)
         runCurrent()
-        assertNull(coordinator.get(10, target))
+        assertNull(coordinator.get(target))
         assertEquals(EntityDisplayWithoutContext(confirmed), coordinator.cachedEntity(target))
 
         check(changes.tryEmit(EntityChange.StateChanged(intermediate)))
@@ -344,7 +329,7 @@ class ThermostatCommandCoordinatorTest {
 
         coordinator.refreshEntityIfStale(other, 0L)
         runCurrent()
-        coordinator.submitTemperature(10, target, false, null, null, 72f)
+        coordinator.submitTemperature(target, false, null, null, 72f)
         runCurrent()
         response.complete(state(76f))
         runCurrent()
@@ -361,13 +346,13 @@ class ThermostatCommandCoordinatorTest {
 
         coordinator.refreshEntityIfStale(target, 0L)
         runCurrent()
-        coordinator.submitTemperature(10, target, false, null, null, 72f)
+        coordinator.submitTemperature(target, false, null, null, 72f)
         runCurrent()
         response.complete(state(70f))
         runCurrent()
 
         assertNull(coordinator.cachedEntity(target))
-        assertEquals(ThermostatCommandCoordinator.Pending.Status.FAILED, coordinator.get(10, target)?.status)
+        assertEquals(ThermostatCommandCoordinator.Pending.Status.FAILED, coordinator.get(target)?.status)
     }
 
     @Test
@@ -380,16 +365,113 @@ class ThermostatCommandCoordinatorTest {
         coEvery { repository.getEntity(target.entityId) } returns state(72f, newer.minusSeconds(1))
         coEvery { repository.getEntityChanges(any()) } returns changes
 
-        coordinator.submitTemperature(10, target, false, null, null, 72f)
+        coordinator.submitTemperature(target, false, null, null, 72f)
         runCurrent()
 
-        assertEquals(ThermostatCommandCoordinator.Pending.Status.WAITING, coordinator.get(10, target)?.status)
+        assertEquals(ThermostatCommandCoordinator.Pending.Status.WAITING, coordinator.get(target)?.status)
         assertEquals(EntityDisplayWithoutContext(state(70f, newer)), coordinator.cachedEntity(target))
 
         check(changes.tryEmit(EntityChange.StateChanged(state(72f, newer.plusSeconds(1)))))
         runCurrent()
-        assertNull(coordinator.get(10, target))
+        assertNull(coordinator.get(target))
         assertEquals(EntityDisplayWithoutContext(state(72f, newer.plusSeconds(1))), coordinator.cachedEntity(target))
+    }
+
+    @Test
+    fun `given rapid adjustments when fan command intervenes then both increments are retained`() = runTest {
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) {}
+        val gate = CompletableDeferred<Unit>()
+        val snapshot = EntityDisplayWithoutContext(
+            state(70f).copy(
+                attributes = mapOf(
+                    "temperature" to 70f,
+                    "fan_mode" to "auto",
+                    "fan_modes" to listOf("auto", "on"),
+                    "supported_features" to 9,
+                ),
+            ),
+        )
+        val sent = mutableListOf<Pair<String, Any?>>()
+        coEvery { repository.callAction("climate", any(), any()) } coAnswers {
+            val action = secondArg<String>()
+            val data = thirdArg<Map<String, Any?>>()
+            sent.add(action to (data["temperature"] ?: data["fan_mode"]))
+            gate.await()
+        }
+        coEvery { repository.getEntity(target.entityId) } returns state(70f)
+        coEvery { repository.getEntityChanges(any()) } returns null
+        val units = ThermostatDisplayUnits("°F", "default")
+        val slot = ThermostatCommandCoordinator.TemperatureSlot.SINGLE
+        coordinator.adjustTemperature(target, snapshot, units, slot, 1f)
+        coordinator.cycleFan(target, snapshot)
+        coordinator.adjustTemperature(target, snapshot, units, slot, 1f)
+        coordinator.cycleFan(target, snapshot)
+        assertEquals(72f, coordinator.get(target)?.single)
+        runCurrent()
+        gate.complete(Unit)
+        runCurrent()
+        assertEquals(
+            listOf(
+                "set_temperature" to 71f,
+                "set_fan_mode" to "on",
+                "set_temperature" to 72f,
+                "set_fan_mode" to "auto",
+            ),
+            sent,
+        )
+    }
+
+    @Test
+    fun `given simultaneous taps when both use the same snapshot then neither adjustment is lost`() = runTest {
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) {}
+        val gate = CompletableDeferred<Unit>()
+        val snapshot = EntityDisplayWithoutContext(state(70f))
+        val units = ThermostatDisplayUnits("°F", "default")
+        val slot = ThermostatCommandCoordinator.TemperatureSlot.SINGLE
+        val sent = mutableListOf<Float>()
+        coEvery { repository.callAction("climate", "set_temperature", any()) } coAnswers {
+            sent.add(thirdArg<Map<String, Any?>>()["temperature"] as Float)
+            gate.await()
+        }
+        coEvery { repository.getEntity(target.entityId) } returns state(72f)
+        val taps = List(2) {
+            async(Dispatchers.Default) { coordinator.adjustTemperature(target, snapshot, units, slot, 1f) }
+        }
+        taps.awaitAll()
+        assertEquals(72f, coordinator.get(target)?.single)
+        runCurrent()
+        gate.complete(Unit)
+        runCurrent()
+        assertEquals(listOf(71f, 72f), sent)
+        assertNull(coordinator.get(target))
+    }
+
+    @Test
+    fun `given a pending range when adjusting its other bound then both values are retained`() = runTest {
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) {}
+        val snapshot = EntityDisplayWithoutContext(
+            state(70f).copy(
+                state = "heat_cool",
+                attributes = mapOf("target_temp_low" to 67f, "target_temp_high" to 85f, "supported_features" to 2),
+            ),
+        )
+        val units = ThermostatDisplayUnits("°F", "default")
+        coordinator.adjustTemperature(target, snapshot, units, ThermostatCommandCoordinator.TemperatureSlot.HEAT, 1f)
+        coordinator.adjustTemperature(target, snapshot, units, ThermostatCommandCoordinator.TemperatureSlot.COOL, -1f)
+        assertEquals(68f, coordinator.get(target)?.low)
+        assertEquals(84f, coordinator.get(target)?.high)
+    }
+
+    @Test
+    fun `given failed command when display timeout elapses then failure is cleared`() = runTest {
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope) {}
+        coEvery { repository.callAction("climate", "set_temperature", any()) } throws IllegalStateException()
+        coordinator.submitTemperature(target, false, null, null, 72f)
+        runCurrent()
+        assertEquals(ThermostatCommandCoordinator.Pending.Status.FAILED, coordinator.get(target)?.status)
+        advanceTimeBy(15_000L)
+        runCurrent()
+        assertNull(coordinator.get(target))
     }
 
     @Test

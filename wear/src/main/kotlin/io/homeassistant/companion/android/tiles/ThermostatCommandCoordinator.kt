@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.PowerManager
 import android.os.SystemClock
 import androidx.annotation.WorkerThread
-import androidx.core.content.edit
 import androidx.wear.tiles.TileService
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.integration.EntityChange
@@ -48,6 +47,7 @@ private const val LIVE_RETRY_INTERVAL_MS = 3_000L
 private const val INITIAL_CONFIRMATION_TIMEOUT_MS = 3_000L
 private const val SUBSCRIPTION_CONFIRMATION_TIMEOUT_MS = 4_000L
 private const val COMMAND_CONFIRMATION_TIMEOUT_MS = 18_000L
+private const val FAILED_COMMAND_DISPLAY_MS = 15_000L
 
 /**
  * Keeps slow thermostat acknowledgments out of the gesture path. A pending request is stored
@@ -93,13 +93,12 @@ class ThermostatCommandCoordinator internal constructor(
         val actionPrefix: String get() = "$serverId|$entityId|"
     }
 
-    private data class PendingKey(val tileId: Int, val target: Target) {
-        val prefix: String get() = "v2.${target.serverId}.${target.entityId}.$tileId"
-    }
+    private enum class CommandKind { TEMPERATURE, HVAC, FAN }
 
-    private val prefs by lazy {
-        context.getSharedPreferences("thermostat_tile_commands", Context.MODE_PRIVATE)
-    }
+    private data class PendingKey(val target: Target, val kind: CommandKind)
+
+    // Pending commands belong to the running process, not persistent tile settings.
+    private val pendingCommands = mutableMapOf<PendingKey, Pending>()
     private val latest = mutableMapOf<PendingKey, Long>()
     private val lock = ReentrantLock()
     private var nextToken = 0L
@@ -303,42 +302,26 @@ class ThermostatCommandCoordinator internal constructor(
     }
 
     @WorkerThread
-    fun get(tileId: Int, target: Target): Pending? = lock.withLock {
-        val key = PendingKey(tileId, target)
-        val prefix = key.prefix
-        val time = prefs.getLong("$prefix.time", 0L)
-        if (time == 0L) return null
-        val failed = prefs.getBoolean("$prefix.failed", false)
-        val maxAge = if (failed) 15_000 else 45_000
-        if (System.currentTimeMillis() - time > maxAge) {
-            clear(key)
-            return null
-        }
-        fun floatOrNull(key: String) = if (prefs.contains("$prefix.$key")) prefs.getFloat("$prefix.$key", 0f) else null
-        return Pending(
-            value = prefs.getString("$prefix.value", "").orEmpty(),
-            status = if (failed) Pending.Status.FAILED else Pending.Status.WAITING,
-            single = floatOrNull("single"),
-            low = floatOrNull("low"),
-            high = floatOrNull("high"),
-        )
+    fun get(target: Target): Pending? = lock.withLock {
+        val commands = CommandKind.entries.mapNotNull { pendingCommands[PendingKey(target, it)] }
+        commands.firstOrNull { it.status == Pending.Status.WAITING } ?: commands.firstOrNull()
     }
+
+    private fun waiting(target: Target, kind: CommandKind): Pending? =
+        pendingCommands[PendingKey(target, kind)]?.takeIf { it.status == Pending.Status.WAITING }
 
     // Called under lock, so a newer request cannot be overwritten by an older reply.
     private fun store(key: PendingKey, pending: Pending, updateTile: Boolean = true) {
-        val failed = pending.status == Pending.Status.FAILED
-        val prefix = key.prefix
-        prefs.edit {
-            putLong("$prefix.time", System.currentTimeMillis())
-            putString("$prefix.value", pending.value)
-            putBoolean("$prefix.failed", failed)
-            if (!failed) {
-                remove("$prefix.single")
-                remove("$prefix.low")
-                remove("$prefix.high")
-                pending.single?.let { putFloat("$prefix.single", it) }
-                pending.low?.let { putFloat("$prefix.low", it) }
-                pending.high?.let { putFloat("$prefix.high", it) }
+        pendingCommands[key] = pending
+        if (pending.status == Pending.Status.FAILED) {
+            scope.launch {
+                delay(FAILED_COMMAND_DISPLAY_MS)
+                lock.withLock {
+                    if (pendingCommands[key] === pending) {
+                        pendingCommands.remove(key)
+                        refresh()
+                    }
+                }
             }
         }
         if (updateTile) refresh()
@@ -346,22 +329,97 @@ class ThermostatCommandCoordinator internal constructor(
 
     private fun clear(key: PendingKey) {
         latest.remove(key)
-        val prefix = key.prefix
-        prefs.edit {
-            remove("$prefix.time")
-            remove("$prefix.value")
-            remove("$prefix.failed")
-            remove("$prefix.single")
-            remove("$prefix.low")
-            remove("$prefix.high")
-        }
+        pendingCommands.remove(key)
         refresh()
+    }
+
+    internal enum class TemperatureSlot { CLASSIC_SINGLE, CLASSIC_RANGE, SINGLE, HEAT, COOL }
+
+    // Calculate and publish the new absolute target in the same critical section.
+    @WorkerThread
+    @Suppress("ReturnCount")
+    internal fun adjustTemperature(
+        target: Target,
+        snapshot: EntityDisplayWithoutContext,
+        units: ThermostatDisplayUnits,
+        slot: TemperatureSlot,
+        amount: Float,
+    ) {
+        lock.withLock {
+            val entity = entityCache[target]?.item ?: snapshot
+            val controls = entity.climateControls ?: return
+            if (entity.rawState in listOf("off", "unknown", "unavailable")) return
+            // A mode change may invalidate the layout from which the tap originated.
+            val pendingMode = waiting(target, CommandKind.HVAC)?.value
+            if (pendingMode != null && pendingMode != entity.rawState) return
+            val step = controls.targetTemperatureStep?.takeIf { it > 0 } ?: 1f
+            val min = controls.minTemperature ?: units.minimum()
+            val max = controls.maxTemperature ?: units.maximum()
+            val classic = slot == TemperatureSlot.CLASSIC_SINGLE || slot == TemperatureSlot.CLASSIC_RANGE
+            val delta = if (classic && !units.hasOverride) amount * step else units.adjustment(amount, step)
+            val pending = waiting(target, CommandKind.TEMPERATURE)
+            if (entity.rawState == "heat_cool") {
+                val low = pending?.low ?: controls.targetTemperatureLow ?: return
+                val high = pending?.high ?: controls.targetTemperatureHigh ?: return
+                val revised = when (slot) {
+                    TemperatureSlot.CLASSIC_RANGE -> ThermostatTemperatureLogic.shiftRange(
+                        delta,
+                        low to high,
+                        min,
+                        max,
+                        step,
+                    )
+                    TemperatureSlot.HEAT -> ThermostatTemperatureLogic.adjustRange(
+                        low + delta,
+                        false,
+                        low,
+                        high,
+                        min,
+                        max,
+                        step,
+                    )
+                    TemperatureSlot.COOL -> ThermostatTemperatureLogic.adjustRange(
+                        high + delta,
+                        true,
+                        low,
+                        high,
+                        min,
+                        max,
+                        step,
+                    )
+                    else -> return
+                }
+                if (revised != (low to high)) submitTemperature(target, true, revised.first, revised.second, null)
+            } else if (slot == TemperatureSlot.SINGLE || slot == TemperatureSlot.CLASSIC_SINGLE) {
+                val baseline = pending?.single ?: controls.targetTemperature ?: return
+                val proposed = ThermostatTemperatureLogic.snap(baseline + delta, step, min, max)
+                if (proposed != baseline) submitTemperature(target, false, null, null, proposed)
+            }
+        }
+    }
+
+    @WorkerThread
+    fun cycleFan(target: Target, snapshot: EntityDisplayWithoutContext) {
+        lock.withLock {
+            val entity = entityCache[target]?.item ?: snapshot
+            if (entity.rawState in listOf("unknown", "unavailable")) return
+            val controls = entity.climateControls ?: return
+            val modes = controls.fanModes
+            if (modes.isEmpty()) return
+            val current = waiting(target, CommandKind.FAN)?.value ?: controls.fanMode
+            val next = if ("on" in modes && "auto" in modes) {
+                if (current == "on") "auto" else "on"
+            } else {
+                modes[(modes.indexOf(current) + 1) % modes.size]
+            }
+            submitFan(target, next)
+        }
     }
 
     // Nullable single/range values match the existing tile and test call sites.
     @Suppress("LongParameterList")
     @WorkerThread
-    fun submitTemperature(tileId: Int, target: Target, isRange: Boolean, low: Float?, high: Float?, single: Float?) {
+    fun submitTemperature(target: Target, isRange: Boolean, low: Float?, high: Float?, single: Float?) {
         val data: Map<String, Any?> = when {
             isRange && low != null && high != null -> mapOf(
                 "entity_id" to target.entityId,
@@ -372,7 +430,7 @@ class ThermostatCommandCoordinator internal constructor(
             else -> return
         }
         val displayValue = if (isRange) "$low–$high°" else "$single°"
-        submit(tileId, target, "set_temperature", data, displayValue, single, low, high) { entity ->
+        submit(target, CommandKind.TEMPERATURE, "set_temperature", data, displayValue, single, low, high) { entity ->
             val state = entity.climateControls ?: return@submit false
             if (isRange) {
                 approximately(state.targetTemperatureLow, low) && approximately(state.targetTemperatureHigh, high)
@@ -383,18 +441,18 @@ class ThermostatCommandCoordinator internal constructor(
     }
 
     @WorkerThread
-    fun submitHvac(tileId: Int, target: Target, mode: String) = submit(
-        tileId,
+    fun submitHvac(target: Target, mode: String) = submit(
         target,
+        CommandKind.HVAC,
         "set_hvac_mode",
         mapOf("entity_id" to target.entityId, "hvac_mode" to mode),
         mode,
     ) { entity -> entity.rawState == mode }
 
     @WorkerThread
-    fun submitFan(tileId: Int, target: Target, mode: String) = submit(
-        tileId,
+    private fun submitFan(target: Target, mode: String) = submit(
         target,
+        CommandKind.FAN,
         "set_fan_mode",
         mapOf("entity_id" to target.entityId, "fan_mode" to mode),
         mode,
@@ -406,8 +464,8 @@ class ThermostatCommandCoordinator internal constructor(
     // Keep dispatch, acknowledgement ownership and failure cleanup together in one coroutine.
     @Suppress("LongParameterList", "LongMethod")
     private fun submit(
-        tileId: Int,
         target: Target,
+        kind: CommandKind,
         action: String,
         data: Map<String, Any?>,
         value: String,
@@ -416,7 +474,7 @@ class ThermostatCommandCoordinator internal constructor(
         high: Float? = null,
         confirmed: (EntityDisplay) -> Boolean,
     ) {
-        val key = PendingKey(tileId, target)
+        val key = PendingKey(target, kind)
         val submittedAt = SystemClock.elapsedRealtime()
         val dispatched = CompletableDeferred<Unit>()
         val (token, predecessor) = lock.withLock {
