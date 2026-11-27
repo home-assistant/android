@@ -28,6 +28,10 @@ import timber.log.Timber
 @VisibleForTesting
 internal const val POST_DETECTION_COOLDOWN_CHUNKS = 200
 
+/** Time without any audio after which a running detection is considered stalled (the recorder emits every 10ms). */
+@VisibleForTesting
+internal const val AUDIO_STALL_TIMEOUT_MS = 2_000L
+
 /**
  * Warm-up of a new engine: 4s (400 chunks of 160 samples at 16kHz) of low background noise.
  * The microWakeWord feature generator needs 1 to 2s of background audio to prime its denoising
@@ -82,7 +86,23 @@ class WakeWordListener(
     ) -> MicroWakeWord = { modelConfig -> createMicroWakeWord(context, modelConfig) },
 ) {
     private val detectionMutex = Mutex()
+
+    @Volatile
     private var detectionJob: Job? = null
+
+    @VisibleForTesting
+    internal var currentTimeMillis: () -> Long = System::currentTimeMillis
+
+    @Volatile
+    private var lastAudioAtMillis = 0L
+
+    /**
+     * Whether a detection is currently running and getting audio, i.e. [start] was called, neither [stop] nor
+     * an error ended it, and the recorder did not stay silent for more than [AUDIO_STALL_TIMEOUT_MS]. The
+     * recorder can fail to start without ending the audio flow, which would leave a running but deaf detection.
+     */
+    val isListening: Boolean
+        get() = detectionJob?.isActive == true && currentTimeMillis() - lastAudioAtMillis <= AUDIO_STALL_TIMEOUT_MS
 
     /**
      * Start listening for wake words.
@@ -101,6 +121,7 @@ class WakeWordListener(
     ) {
         detectionMutex.withLock {
             detectionJob?.cancel()
+            lastAudioAtMillis = currentTimeMillis()
             detectionJob = coroutineScope.launch {
                 // Run detection on background thread to avoid blocking Main
                 withContext(coroutineContext) {
@@ -141,6 +162,7 @@ class WakeWordListener(
         var cooldownChunksRemaining = 0
 
         voiceAudioRecorder.audioData().collect { buffer ->
+            lastAudioAtMillis = currentTimeMillis()
             if (cooldownChunksRemaining > 0) {
                 cooldownChunksRemaining--
             } else {
