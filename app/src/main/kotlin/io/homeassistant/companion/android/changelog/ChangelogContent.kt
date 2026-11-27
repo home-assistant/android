@@ -35,6 +35,13 @@ internal val currentChangelog = Changelog(
             platforms = setOf(ChangelogPlatform.APP),
             action = ChangelogAction.OpenSensor(FoldableSensorManager.hingeStatus.id),
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_progress_style_notifications,
+            platforms = setOf(ChangelogPlatform.APP),
+            action = ChangelogAction.OpenUrl(
+                "https://companion.home-assistant.io/docs/notifications/notifications-basic#styling-the-progress-bar",
+            ),
+        ),
     ),
     improved = listOf(),
     fixed = listOf(

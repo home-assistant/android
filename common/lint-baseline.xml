@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 9.5.0" type="baseline" client="gradle" dependencies="false" name="AGP (9.5.0)" variant="all" version="9.5.0">
+<issues format="6" by="lint 9.5.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.5.1)" variant="all" version="9.5.1">
 
     <issue
         id="MissingPermission"
@@ -107,7 +107,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="404"
+            line="407"
             column="5"/>
     </issue>
 
@@ -140,7 +140,7 @@
         errorLine2="                                                    ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/websocket/impl/WebSocketCoreImpl.kt"
-            line="286"
+            line="292"
             column="53"/>
     </issue>
 
@@ -151,7 +151,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~">
         <location
             file="src/main/kotlin/io/homeassistant/companion/android/common/data/websocket/impl/WebSocketCoreImpl.kt"
-            line="568"
+            line="567"
             column="17"/>
     </issue>
 
