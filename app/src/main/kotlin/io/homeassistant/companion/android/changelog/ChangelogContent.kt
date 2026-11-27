@@ -36,7 +36,9 @@ internal val currentChangelog = Changelog(
         ChangelogEntry(
             contentRes = commonR.string.changelog_entry_progress_style_notifications,
             platforms = setOf(ChangelogPlatform.APP),
-            action = ChangelogAction.OpenUrl("https://companion.home-assistant.io/docs/notifications/notifications-basic#styling-the-progress-bar"),
+            action = ChangelogAction.OpenUrl(
+                "https://companion.home-assistant.io/docs/notifications/notifications-basic#styling-the-progress-bar",
+            ),
         ),
     ),
     improved = listOf(),
