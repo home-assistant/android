@@ -12,6 +12,8 @@ import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class WearPrefsRepositoryImplTest {
@@ -71,5 +73,38 @@ class WearPrefsRepositoryImplTest {
         coVerify(exactly = 1) { localStorage.getInt(MIGRATION_PREF) }
         // No migration was needed, so the integration storage was never consulted.
         coVerify(exactly = 0) { integrationStorage.getString(any()) }
+    }
+
+    @Test
+    fun `Given missing invitation preference when reading then it is not acknowledged`() = runTest {
+        initRepository()
+        coEvery { localStorage.getBooleanOrNull("thermostat_layout_invitation_1") } returns null
+        assertFalse(repository.isThermostatLayoutInvitationAcknowledged(1))
+    }
+
+    @Test
+    fun `Given two tiles when acknowledging one invitation then the other remains unacknowledged`() = runTest {
+        initRepository()
+        val preferences = mutableMapOf<String, Boolean>()
+        coEvery { localStorage.putBoolean(any(), any()) } coAnswers {
+            preferences[firstArg()] = secondArg()
+        }
+        coEvery { localStorage.getBooleanOrNull(any()) } coAnswers { preferences[firstArg()] }
+        repository.setThermostatLayoutInvitationAcknowledged(1, true)
+        assertTrue(repository.isThermostatLayoutInvitationAcknowledged(1))
+        assertFalse(repository.isThermostatLayoutInvitationAcknowledged(2))
+        coVerify(exactly = 1) { localStorage.putBoolean("thermostat_layout_invitation_1", true) }
+    }
+
+    @Test
+    fun `Given acknowledged invitation when clearing it then the key is removed`() = runTest {
+        initRepository()
+        var acknowledged: Boolean? = true
+        coEvery { localStorage.getBooleanOrNull("thermostat_layout_invitation_1") } coAnswers { acknowledged }
+        coEvery { localStorage.remove("thermostat_layout_invitation_1") } coAnswers { acknowledged = null }
+        assertTrue(repository.isThermostatLayoutInvitationAcknowledged(1))
+        repository.setThermostatLayoutInvitationAcknowledged(1, false)
+        coVerify(exactly = 1) { localStorage.remove("thermostat_layout_invitation_1") }
+        assertFalse(repository.isThermostatLayoutInvitationAcknowledged(1))
     }
 }

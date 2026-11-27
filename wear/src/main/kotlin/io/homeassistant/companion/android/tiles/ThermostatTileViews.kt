@@ -67,6 +67,8 @@ internal object ThermostatTileIds {
     const val TAP_ACTION_DOWN = "Down"
     const val TAP_MODE_PREFIX = "Mode:"
     const val TAP_FAN = "CycleFan"
+    const val INVITATION_ACCEPT = "thermostat_invitation_accept"
+    const val INVITATION_DECLINE = "thermostat_invitation_decline"
 
     // Stable ProtoLayout resource IDs; the tile's resource version changes only when icons change.
     const val ICON_HEAT = "thermostat_heat_v1"

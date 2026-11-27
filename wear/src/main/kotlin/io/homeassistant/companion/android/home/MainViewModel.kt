@@ -528,16 +528,18 @@ class MainViewModel @Inject constructor(
 
     private fun updateThermostatTile(tileId: Int, update: (ThermostatTile) -> ThermostatTile) = viewModelScope.launch {
         thermostatSettingsMutex.withLock {
-            val current = thermostatTileDao.get(tileId) ?: return@withLock
-            val updated = update(current)
-            thermostatTileDao.add(updated)
-            if (updated.layoutStyle != current.layoutStyle) {
-                wearPrefsRepository.setThermostatLayoutInvitationAcknowledged(tileId, true)
+            withContext(Dispatchers.IO) {
+                val current = thermostatTileDao.get(tileId)
+                val updated = update(current ?: ThermostatTile(id = tileId, layoutStyle = "enhanced"))
+                thermostatTileDao.add(updated)
+                if (current == null || updated.layoutStyle != current.layoutStyle) {
+                    wearPrefsRepository.setThermostatLayoutInvitationAcknowledged(tileId, true)
+                }
             }
-            TileService.getUpdater(getApplication<Application>()).requestUpdate(
-                io.homeassistant.companion.android.tiles.ThermostatTile::class.java,
-            )
         }
+        TileService.getUpdater(getApplication<Application>()).requestUpdate(
+            io.homeassistant.companion.android.tiles.ThermostatTile::class.java,
+        )
     }
 
     fun setThermostatTileEntity(tileId: Int, entityId: String) =

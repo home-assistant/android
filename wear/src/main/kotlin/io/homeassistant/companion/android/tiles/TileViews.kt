@@ -253,7 +253,7 @@ internal fun thermostatInvitationTimeline(context: Context, requestParams: Reque
                         ).build(),
                     )
                     .addContent(
-                        choice(commonR.string.thermostat_tile_invitation_accept, "thermostat_invitation_accept"),
+                        choice(commonR.string.thermostat_tile_invitation_accept, ThermostatTileIds.INVITATION_ACCEPT),
                     )
                     .addContent(
                         LayoutElementBuilders.Spacer.Builder().setHeight(
@@ -261,7 +261,7 @@ internal fun thermostatInvitationTimeline(context: Context, requestParams: Reque
                         ).build(),
                     )
                     .addContent(
-                        choice(commonR.string.thermostat_tile_invitation_decline, "thermostat_invitation_decline"),
+                        choice(commonR.string.thermostat_tile_invitation_decline, ThermostatTileIds.INVITATION_DECLINE),
                     )
                     .build(),
             )

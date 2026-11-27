@@ -42,9 +42,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.guava.future
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -52,6 +53,9 @@ import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
 internal val thermostatSettingsMutex = Mutex()
+
+// Lifecycle writes must finish even if Wear OS destroys the TileService after the callback.
+private val thermostatLifecycleScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
 @AndroidEntryPoint
 class ThermostatTile : TileService() {
@@ -90,10 +94,11 @@ class ThermostatTile : TileService() {
             val invitationChoice = requestParams.currentState.lastClickableId
             val tileConfig = thermostatSettingsMutex.withLock {
                 val config = thermostatTileDao.get(tileId) ?: return@withLock null
-                if (invitationChoice in listOf("thermostat_invitation_accept", "thermostat_invitation_decline") &&
+                if (invitationChoice in
+                    listOf(ThermostatTileIds.INVITATION_ACCEPT, ThermostatTileIds.INVITATION_DECLINE) &&
                     shouldShowInvitation(config, tileId)
                 ) {
-                    val updated = if (invitationChoice == "thermostat_invitation_accept") {
+                    val updated = if (invitationChoice == ThermostatTileIds.INVITATION_ACCEPT) {
                         config.copy(layoutStyle = "enhanced").also { thermostatTileDao.add(it) }
                     } else {
                         config
@@ -431,23 +436,36 @@ class ThermostatTile : TileService() {
             resources.build()
         }
 
-    override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) = runBlocking {
-        withContext(Dispatchers.IO) {
-            thermostatSettingsMutex.withLock {
-                if (thermostatTileDao.get(requestParams.tileId) == null) {
-                    wearPrefsRepository.setThermostatLayoutInvitationAcknowledged(requestParams.tileId, true)
-                    thermostatTileDao.add(ThermostatTile(id = requestParams.tileId, layoutStyle = "enhanced"))
-                }
+    override fun onTileAddEvent(requestParams: EventBuilders.TileAddEvent) {
+        val tileId = requestParams.tileId
+        launchSettingsEvent {
+            if (thermostatTileDao.get(tileId) == null) {
+                thermostatTileDao.add(ThermostatTile(id = tileId, layoutStyle = "enhanced"))
+                wearPrefsRepository.setThermostatLayoutInvitationAcknowledged(tileId, true)
             }
         }
     }
 
-    override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) = runBlocking {
-        withContext(Dispatchers.IO) {
-            commandCoordinator.stopObservingTile(requestParams.tileId)
-            thermostatSettingsMutex.withLock {
-                thermostatTileDao.delete(requestParams.tileId)
-                wearPrefsRepository.setThermostatLayoutInvitationAcknowledged(requestParams.tileId, false)
+    override fun onTileRemoveEvent(requestParams: EventBuilders.TileRemoveEvent) {
+        val tileId = requestParams.tileId
+        launchSettingsEvent {
+            commandCoordinator.stopObservingTile(tileId)
+            thermostatTileDao.delete(tileId)
+            wearPrefsRepository.setThermostatLayoutInvitationAcknowledged(tileId, false)
+        }
+    }
+
+    private fun launchSettingsEvent(action: suspend () -> Unit) {
+        // Main.immediate starts lock acquisition in callback order without blocking Main.
+        thermostatLifecycleScope.launch {
+            try {
+                thermostatSettingsMutex.withLock {
+                    withContext(Dispatchers.IO) { action() }
+                }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                Timber.e(error, "Thermostat tile lifecycle update failed")
             }
         }
     }
