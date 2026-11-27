@@ -139,16 +139,18 @@ class ThermostatTile : TileService() {
                             now - (tileConfig.targetTemperatureAt ?: 0L) < PRESUMED_TIMEOUT.inWholeMilliseconds
                         }
                         var updatedConfig = tileConfig.copy(
-                            targetTemperature = null,
-                            targetTemperatureAt = null,
+                            targetTemperature = pendingTargetTemp,
+                            targetTemperatureAt = tileConfig.targetTemperatureAt.takeIf { pendingTargetTemp != null },
                             presumedPowerOn = pendingOn,
                             presumedPowerAt = tileConfig.presumedPowerAt.takeIf { pendingOn != null },
                         )
 
                         var targetTemp = pendingTargetTemp ?: climateControls.targetTemperature
 
-                        // The entity reports its unit, which spares opening the websocket for the server config
-                        val temperatureUnit = climateControls.temperatureUnit.orEmpty()
+                        // The unit attribute is optional, only ask the server config when the entity has none
+                        val temperatureUnit = climateControls.temperatureUnit
+                            ?: serverManager.webSocketRepository().getConfig()
+                                ?.unitSystem?.getValue("temperature")?.toString().orEmpty()
 
                         if (targetTemp != null && (lastId == TAP_ACTION_UP || lastId == TAP_ACTION_DOWN)) {
                             val stepSize = climateControls.targetTemperatureStep
@@ -171,7 +173,7 @@ class ThermostatTile : TileService() {
                         }
 
                         var shownOn = pendingOn ?: serverOn
-                        if (lastId == TAP_ACTION_TOGGLE) {
+                        if (lastId == TAP_ACTION_TOGGLE && entity.rawState != "unavailable") {
                             // Toggle what is shown, as the server may still report the previous state
                             serverManager.integrationRepository().callAction(
                                 entity.domain,
