@@ -30,7 +30,7 @@ internal class ThermostatDisplayUnits(source: String?, preference: String) {
 
     /** A temperature difference has no offset. Respect the smallest supported server step. */
     fun adjustment(amount: Float, serverStep: Float): Float {
-        if (!hasOverride || amount == 0f) return amount
+        if (amount == 0f) return amount
         val delta = when {
             !converts -> amount
             sourceUnit == Unit.CELSIUS -> amount / SCALE

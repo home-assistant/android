@@ -427,10 +427,11 @@ class ThermostatCommandCoordinator internal constructor(
             if (entity.rawState == "heat_cool") {
                 val low = pending?.low ?: controls.targetTemperatureLow ?: return@withFreshBaseline
                 val high = pending?.high ?: controls.targetTemperatureHigh ?: return@withFreshBaseline
+                val setpoints = SetpointRange(low, high)
                 val revised = when (slot) {
                     TemperatureSlot.CLASSIC_RANGE -> ThermostatTemperatureLogic.shiftRange(
                         delta,
-                        low to high,
+                        setpoints,
                         min,
                         max,
                         step,
@@ -438,8 +439,7 @@ class ThermostatCommandCoordinator internal constructor(
                     TemperatureSlot.HEAT -> ThermostatTemperatureLogic.adjustRange(
                         low + delta,
                         false,
-                        low,
-                        high,
+                        setpoints,
                         min,
                         max,
                         step,
@@ -447,15 +447,14 @@ class ThermostatCommandCoordinator internal constructor(
                     TemperatureSlot.COOL -> ThermostatTemperatureLogic.adjustRange(
                         high + delta,
                         true,
-                        low,
-                        high,
+                        setpoints,
                         min,
                         max,
                         step,
                     )
                     else -> return@withFreshBaseline
                 }
-                if (revised != (low to high)) submitTemperatureLocked(target, true, revised.first, revised.second, null)
+                if (revised != setpoints) submitTemperatureLocked(target, true, revised.low, revised.high, null)
             } else if (slot == TemperatureSlot.SINGLE || slot == TemperatureSlot.CLASSIC_SINGLE) {
                 val baseline = pending?.single ?: controls.targetTemperature ?: return@withFreshBaseline
                 val proposed = ThermostatTemperatureLogic.snap(baseline + delta, step, min, max)

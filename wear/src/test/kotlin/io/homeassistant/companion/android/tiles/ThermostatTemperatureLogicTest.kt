@@ -12,32 +12,73 @@ class ThermostatTemperatureLogicTest {
     }
 
     @Test
+    fun `snap uses the step grid independently of the minimum`() {
+        assertEquals(21.5f, ThermostatTemperatureLogic.snap(21.5f, 0.5f, 7.2f, 35f))
+        assertEquals(7.2f, ThermostatTemperatureLogic.snap(6f, 0.5f, 7.2f, 35f))
+        assertEquals(30.8f, ThermostatTemperatureLogic.snap(40f, 1f, 7.2f, 30.8f))
+        assertEquals(
+            SetpointRange(21.5f, 25f),
+            ThermostatTemperatureLogic.adjustRange(21.5f, false, SetpointRange(21f, 25f), 7.2f, 35f, 0.5f),
+        )
+    }
+
+    @Test
     fun `heat cooling range never crosses`() {
         assertEquals(
-            50f to 70f,
-            ThermostatTemperatureLogic.adjustRange(50f, false, 69f, 70f, 50f, 90f, 1f),
+            SetpointRange(50f, 70f),
+            ThermostatTemperatureLogic.adjustRange(50f, false, SetpointRange(69f, 70f), 50f, 90f, 1f),
         )
         assertEquals(
-            69f to 70f,
-            ThermostatTemperatureLogic.adjustRange(60f, true, 69f, 70f, 50f, 90f, 1f),
+            SetpointRange(69f, 70f),
+            ThermostatTemperatureLogic.adjustRange(60f, true, SetpointRange(69f, 70f), 50f, 90f, 1f),
         )
         assertEquals(
-            69f to 80f,
-            ThermostatTemperatureLogic.adjustRange(80f, true, 69f, 70f, 50f, 90f, 1f),
+            SetpointRange(69f, 80f),
+            ThermostatTemperatureLogic.adjustRange(80f, true, SetpointRange(69f, 70f), 50f, 90f, 1f),
         )
     }
 
     @Test
     fun `classic range preserves separation and respects limits`() {
-        assertEquals(74f to 79f, ThermostatTemperatureLogic.shiftRange(1f, 73f to 78f, 50f, 90f, 1f))
-        assertEquals(72f to 77f, ThermostatTemperatureLogic.shiftRange(-1f, 73f to 78f, 50f, 90f, 1f))
-        assertEquals(85f to 90f, ThermostatTemperatureLogic.shiftRange(3f, 84f to 89f, 50f, 90f, 1f))
-        assertEquals(50f to 55f, ThermostatTemperatureLogic.shiftRange(-3f, 51f to 56f, 50f, 90f, 1f))
-        assertEquals(85f to 90f, ThermostatTemperatureLogic.shiftRange(1f, 85f to 90f, 50f, 90f, 1f))
-        assertEquals(18.5f to 22.5f, ThermostatTemperatureLogic.shiftRange(0.5f, 18f to 22f, 5f, 30f, 0.5f))
-        assertEquals(73f to 78f, ThermostatTemperatureLogic.shiftRange(1f, 73f to 78f, 50f, 90f, 0f))
-        assertEquals(49f to 55f, ThermostatTemperatureLogic.shiftRange(1f, 49f to 55f, 50f, 90f, 1f))
-        assertEquals(85f to 91f, ThermostatTemperatureLogic.shiftRange(1f, 85f to 91f, 50f, 90f, 1f))
-        assertEquals(78f to 73f, ThermostatTemperatureLogic.shiftRange(1f, 78f to 73f, 50f, 90f, 1f))
+        assertEquals(
+            SetpointRange(74f, 79f),
+            ThermostatTemperatureLogic.shiftRange(1f, SetpointRange(73f, 78f), 50f, 90f, 1f),
+        )
+        assertEquals(
+            SetpointRange(72f, 77f),
+            ThermostatTemperatureLogic.shiftRange(-1f, SetpointRange(73f, 78f), 50f, 90f, 1f),
+        )
+        assertEquals(
+            SetpointRange(85f, 90f),
+            ThermostatTemperatureLogic.shiftRange(3f, SetpointRange(84f, 89f), 50f, 90f, 1f),
+        )
+        assertEquals(
+            SetpointRange(50f, 55f),
+            ThermostatTemperatureLogic.shiftRange(-3f, SetpointRange(51f, 56f), 50f, 90f, 1f),
+        )
+        assertEquals(
+            SetpointRange(85f, 90f),
+            ThermostatTemperatureLogic.shiftRange(1f, SetpointRange(85f, 90f), 50f, 90f, 1f),
+        )
+        assertEquals(
+            SetpointRange(18.5f, 22.5f),
+            ThermostatTemperatureLogic.shiftRange(0.5f, SetpointRange(18f, 22f), 5f, 30f, 0.5f),
+        )
+        assertEquals(
+            SetpointRange(73f, 78f),
+            ThermostatTemperatureLogic.shiftRange(1f, SetpointRange(73f, 78f), 50f, 90f, 0f),
+        )
+        assertEquals(
+            SetpointRange(49f, 55f),
+            ThermostatTemperatureLogic.shiftRange(1f, SetpointRange(49f, 55f), 50f, 90f, 1f),
+        )
+        assertEquals(
+            SetpointRange(85f, 91f),
+            ThermostatTemperatureLogic.shiftRange(1f, SetpointRange(85f, 91f), 50f, 90f, 1f),
+        )
+        assertEquals(
+            SetpointRange(78f, 73f),
+            ThermostatTemperatureLogic.shiftRange(1f, SetpointRange(78f, 73f), 50f, 90f, 1f),
+        )
     }
 }

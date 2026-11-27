@@ -38,9 +38,27 @@ class ThermostatDisplayUnitsTest {
         assertEquals(75f, ThermostatTemperatureLogic.snap(73f + units.adjustment(1f, step), step, 45f, 95f))
         assertEquals(95f, ThermostatTemperatureLogic.snap(94f + units.adjustment(5f, step), step, 45f, 95f))
         assertEquals(
-            77f to 78f,
-            ThermostatTemperatureLogic.adjustRange(75f + units.adjustment(3f, step), false, 75f, 78f, 45f, 95f, step),
+            SetpointRange(77f, 78f),
+            ThermostatTemperatureLogic.adjustRange(
+                75f + units.adjustment(3f, step),
+                false,
+                SetpointRange(75f, 78f),
+                45f,
+                95f,
+                step,
+            ),
         )
+    }
+
+    @Test
+    fun `default and unknown units respect larger server steps in both directions`() {
+        val default = ThermostatDisplayUnits("°C", "default")
+        val unknown = ThermostatDisplayUnits(null, "F")
+        for (units in listOf(default, unknown)) {
+            assertEquals(24f, ThermostatTemperatureLogic.snap(22f + units.adjustment(1f, 2f), 2f, 10f, 40f))
+            assertEquals(20f, ThermostatTemperatureLogic.snap(22f + units.adjustment(-1f, 2f), 2f, 10f, 40f))
+            assertEquals(0f, units.adjustment(0f, 2f))
+        }
     }
 
     @Test
@@ -52,7 +70,7 @@ class ThermostatDisplayUnitsTest {
         assertEquals(21.5f, default.display(21.5f))
         assertEquals(21.5f, unknown.display(21.5f))
         assertEquals("°", unknown.symbol)
-        assertEquals(1f, unknown.adjustment(1f, 2f))
+        assertEquals(2f, unknown.adjustment(1f, 2f))
         assertEquals("target|", default.actionPrefix("target|"))
         assertEquals("target|", unknown.actionPrefix("target|"))
         val fahrenheit = ThermostatDisplayUnits("°C", "F")
