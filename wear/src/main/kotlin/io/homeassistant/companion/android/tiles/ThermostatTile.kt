@@ -194,14 +194,14 @@ class ThermostatTile : TileService() {
                                         ThermostatCommandCoordinator.TemperatureSlot.CLASSIC_SINGLE
                                     }
                                     val amount = if (lastId == TAP_ACTION_UP) 1f else -1f
-                                    commandCoordinator.adjustTemperature(target, entity, units, slot, amount)
+                                    commandCoordinator.adjustTemperature(target, units, slot, amount)
                                 }
                                 !classic && tileConfig.showHvacModes && lastId.startsWith(TAP_MODE_PREFIX) -> {
                                     val mode = lastId.removePrefix(TAP_MODE_PREFIX)
                                     if (mode in controls.hvacModes) commandCoordinator.submitHvac(target, mode)
                                 }
                                 !classic && tileConfig.showFanControl && lastId == TAP_FAN -> {
-                                    commandCoordinator.cycleFan(target, entity)
+                                    commandCoordinator.cycleFan(target)
                                 }
                                 !classic && lastId.startsWith("Temp:") -> {
                                     val items = lastId.split(":")
@@ -213,7 +213,7 @@ class ThermostatTile : TileService() {
                                     }
                                     val amount = items.getOrNull(2)?.toFloatOrNull()
                                     if (slot != null && amount != null && amount.isFinite()) {
-                                        commandCoordinator.adjustTemperature(target, entity, units, slot, amount)
+                                        commandCoordinator.adjustTemperature(target, units, slot, amount)
                                     }
                                 }
                             }

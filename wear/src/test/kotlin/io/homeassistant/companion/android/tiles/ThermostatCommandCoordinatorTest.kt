@@ -461,12 +461,13 @@ class ThermostatCommandCoordinatorTest {
         }
         coEvery { repository.getEntity(target.entityId) } returns state(70f)
         coEvery { repository.getEntityChanges(any()) } returns null
+        coordinator.rememberEntity(target, snapshot)
         val units = ThermostatDisplayUnits("°F", "default")
         val slot = ThermostatCommandCoordinator.TemperatureSlot.SINGLE
-        coordinator.adjustTemperature(target, snapshot, units, slot, 1f)
-        coordinator.cycleFan(target, snapshot)
-        coordinator.adjustTemperature(target, snapshot, units, slot, 1f)
-        coordinator.cycleFan(target, snapshot)
+        coordinator.adjustTemperature(target, units, slot, 1f)
+        coordinator.cycleFan(target)
+        coordinator.adjustTemperature(target, units, slot, 1f)
+        coordinator.cycleFan(target)
         assertEquals(72f, coordinator.get(target)?.single)
         runCurrent()
         gate.complete(Unit)
@@ -488,6 +489,7 @@ class ThermostatCommandCoordinatorTest {
         val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, clock) {}
         val gate = CompletableDeferred<Unit>()
         val snapshot = EntityDisplayWithoutContext(state(70f))
+        coordinator.rememberEntity(target, snapshot)
         val units = ThermostatDisplayUnits("°F", "default")
         val slot = ThermostatCommandCoordinator.TemperatureSlot.SINGLE
         val sent = mutableListOf<Float>()
@@ -497,7 +499,7 @@ class ThermostatCommandCoordinatorTest {
         }
         coEvery { repository.getEntity(target.entityId) } returns state(72f)
         val taps = List(2) {
-            async(Dispatchers.Default) { coordinator.adjustTemperature(target, snapshot, units, slot, 1f) }
+            async(Dispatchers.Default) { coordinator.adjustTemperature(target, units, slot, 1f) }
         }
         taps.awaitAll()
         assertEquals(72f, coordinator.get(target)?.single)
@@ -518,11 +520,56 @@ class ThermostatCommandCoordinatorTest {
                 attributes = mapOf("target_temp_low" to 67f, "target_temp_high" to 85f, "supported_features" to 2),
             ),
         )
+        coordinator.rememberEntity(target, snapshot)
         val units = ThermostatDisplayUnits("°F", "default")
-        coordinator.adjustTemperature(target, snapshot, units, ThermostatCommandCoordinator.TemperatureSlot.HEAT, 1f)
-        coordinator.adjustTemperature(target, snapshot, units, ThermostatCommandCoordinator.TemperatureSlot.COOL, -1f)
+        coordinator.adjustTemperature(target, units, ThermostatCommandCoordinator.TemperatureSlot.HEAT, 1f)
+        coordinator.adjustTemperature(target, units, ThermostatCommandCoordinator.TemperatureSlot.COOL, -1f)
         assertEquals(68f, coordinator.get(target)?.low)
         assertEquals(84f, coordinator.get(target)?.high)
+    }
+
+    @Test
+    fun `Given an expired baseline when adjusting then uses current server temperature`() = runTest {
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, testClock()) {}
+        coordinator.rememberEntity(target, EntityDisplayWithoutContext(state(70f)))
+        advanceTimeBy(6_000L)
+        coEvery { repository.getEntity(target.entityId) } returns state(75f)
+        coEvery { repository.getEntityChanges(any()) } returns null
+        coEvery { repository.callAction("climate", "set_temperature", any()) } returns Unit
+        val units = ThermostatDisplayUnits("°F", "default")
+        val slot = ThermostatCommandCoordinator.TemperatureSlot.SINGLE
+
+        coordinator.adjustTemperature(target, units, slot, 1f)
+        coordinator.adjustTemperature(target, units, slot, 1f)
+
+        assertEquals(77f, coordinator.get(target)?.single)
+        coVerify(exactly = 1) { repository.getEntity(target.entityId) }
+        runCurrent()
+        coVerify(exactly = 1) {
+            repository.callAction("climate", "set_temperature", mapOf("entity_id" to target.entityId, "temperature" to 76f))
+        }
+        coVerify(exactly = 1) {
+            repository.callAction("climate", "set_temperature", mapOf("entity_id" to target.entityId, "temperature" to 77f))
+        }
+    }
+
+    @Test
+    fun `Given an expired baseline when refresh fails then does not send an adjustment`() = runTest {
+        val coordinator = ThermostatCommandCoordinator(context, servers, backgroundScope, testClock()) {}
+        coordinator.rememberEntity(target, EntityDisplayWithoutContext(state(70f)))
+        advanceTimeBy(6_000L)
+        coEvery { repository.getEntity(target.entityId) } returns null
+
+        coordinator.adjustTemperature(
+            target,
+            ThermostatDisplayUnits("°F", "default"),
+            ThermostatCommandCoordinator.TemperatureSlot.SINGLE,
+            1f,
+        )
+        runCurrent()
+
+        assertEquals(ThermostatCommandCoordinator.Pending.Status.FAILED, coordinator.get(target)?.status)
+        coVerify(exactly = 0) { repository.callAction(any(), any(), any()) }
     }
 
     @Test

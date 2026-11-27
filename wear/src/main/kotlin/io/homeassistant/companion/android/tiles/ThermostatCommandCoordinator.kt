@@ -40,6 +40,7 @@ import timber.log.Timber
 
 private const val VISIBILITY_MAX_AGE_MS = 10_000L
 private const val LIVE_INITIAL_CACHE_AGE_MS = 1_000L
+private const val COMMAND_BASELINE_MAX_AGE_MS = 5_000L
 private const val LIVE_OBSERVATION_TIMEOUT_MS = 90_000L
 private const val SCREEN_CHECK_INTERVAL_MS = 1_000L
 private const val ENTITY_CACHE_TTL_MS = 120_000L
@@ -108,6 +109,7 @@ class ThermostatCommandCoordinator internal constructor(
     private val pendingCommands = mutableMapOf<PendingKey, Pending>()
     private val latest = mutableMapOf<PendingKey, Long>()
     private val lock = Mutex()
+    private val relativeCommandLocks = ConcurrentHashMap<Target, Mutex>()
     private var nextToken = 0L
 
     // Queue service dispatches in submission order for the same entity. The next
@@ -352,22 +354,70 @@ class ThermostatCommandCoordinator internal constructor(
 
     internal enum class TemperatureSlot { CLASSIC_SINGLE, CLASSIC_RANGE, SINGLE, HEAT, COOL }
 
+    // Relative commands require a recent server baseline, unless a pending command already
+    // provides the value to adjust. Serialize only relative commands for the same target;
+    // network reads must never hold the shared state mutex.
+    private suspend fun withFreshBaseline(
+        target: Target,
+        kind: CommandKind,
+        action: (EntityDisplayWithoutContext) -> Unit,
+    ) {
+        relativeCommandLocks.getOrPut(target) { Mutex() }.withLock {
+            val handled = lock.withLock {
+                val entity = entityCache[target]?.item
+                if (entity != null && hasFreshBaseline(target, kind)) {
+                    action(entity)
+                    true
+                } else {
+                    false
+                }
+            }
+            if (handled) return@withLock
+
+            val current = try {
+                withTimeoutOrNull(INITIAL_CONFIRMATION_TIMEOUT_MS) {
+                    serverManager.integrationRepository(target.serverId).getEntity(target.entityId)
+                }
+            } catch (error: CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                Timber.w(error, "Unable to refresh thermostat command baseline: %s", target.entityId)
+                null
+            }
+            lock.withLock {
+                if (!hasFreshBaseline(target, kind) && current != null) {
+                    rememberEntityLocked(target, EntityDisplayWithoutContext(current))
+                }
+                val entity = entityCache[target]?.item
+                if (entity != null && hasFreshBaseline(target, kind)) {
+                    action(entity)
+                } else if (waiting(target, kind) == null) {
+                    // Never send a relative command calculated from an expired snapshot.
+                    store(PendingKey(target, kind), Pending("", Pending.Status.FAILED))
+                }
+            }
+        }
+    }
+
+    private fun hasFreshBaseline(target: Target, kind: CommandKind): Boolean {
+        val cached = entityCache[target] ?: return false
+        return waiting(target, kind) != null || nowMillis() - cached.receivedAt in 0L until COMMAND_BASELINE_MAX_AGE_MS
+    }
+
     // Calculate and publish the new absolute target in the same critical section.
     @Suppress("ReturnCount")
     internal suspend fun adjustTemperature(
         target: Target,
-        snapshot: EntityDisplayWithoutContext,
         units: ThermostatDisplayUnits,
         slot: TemperatureSlot,
         amount: Float,
     ) {
-        lock.withLock {
-            val entity = entityCache[target]?.item ?: snapshot
-            val controls = entity.climateControls ?: return
-            if (entity.rawState in listOf("off", "unknown", "unavailable")) return
+        withFreshBaseline(target, CommandKind.TEMPERATURE) { entity ->
+            val controls = entity.climateControls ?: return@withFreshBaseline
+            if (entity.rawState in listOf("off", "unknown", "unavailable")) return@withFreshBaseline
             // A mode change may invalidate the layout from which the tap originated.
             val pendingMode = waiting(target, CommandKind.HVAC)?.value
-            if (pendingMode != null && pendingMode != entity.rawState) return
+            if (pendingMode != null && pendingMode != entity.rawState) return@withFreshBaseline
             val step = controls.targetTemperatureStep?.takeIf { it > 0 } ?: 1f
             val min = controls.minTemperature ?: units.minimum()
             val max = controls.maxTemperature ?: units.maximum()
@@ -375,8 +425,8 @@ class ThermostatCommandCoordinator internal constructor(
             val delta = if (classic && !units.hasOverride) amount * step else units.adjustment(amount, step)
             val pending = waiting(target, CommandKind.TEMPERATURE)
             if (entity.rawState == "heat_cool") {
-                val low = pending?.low ?: controls.targetTemperatureLow ?: return
-                val high = pending?.high ?: controls.targetTemperatureHigh ?: return
+                val low = pending?.low ?: controls.targetTemperatureLow ?: return@withFreshBaseline
+                val high = pending?.high ?: controls.targetTemperatureHigh ?: return@withFreshBaseline
                 val revised = when (slot) {
                     TemperatureSlot.CLASSIC_RANGE -> ThermostatTemperatureLogic.shiftRange(
                         delta,
@@ -403,24 +453,23 @@ class ThermostatCommandCoordinator internal constructor(
                         max,
                         step,
                     )
-                    else -> return
+                    else -> return@withFreshBaseline
                 }
                 if (revised != (low to high)) submitTemperatureLocked(target, true, revised.first, revised.second, null)
             } else if (slot == TemperatureSlot.SINGLE || slot == TemperatureSlot.CLASSIC_SINGLE) {
-                val baseline = pending?.single ?: controls.targetTemperature ?: return
+                val baseline = pending?.single ?: controls.targetTemperature ?: return@withFreshBaseline
                 val proposed = ThermostatTemperatureLogic.snap(baseline + delta, step, min, max)
                 if (proposed != baseline) submitTemperatureLocked(target, false, null, null, proposed)
             }
         }
     }
 
-    suspend fun cycleFan(target: Target, snapshot: EntityDisplayWithoutContext) {
-        lock.withLock {
-            val entity = entityCache[target]?.item ?: snapshot
-            if (entity.rawState in listOf("unknown", "unavailable")) return
-            val controls = entity.climateControls ?: return
+    suspend fun cycleFan(target: Target) {
+        withFreshBaseline(target, CommandKind.FAN) { entity ->
+            if (entity.rawState in listOf("unknown", "unavailable")) return@withFreshBaseline
+            val controls = entity.climateControls ?: return@withFreshBaseline
             val modes = controls.fanModes
-            if (modes.isEmpty()) return
+            if (modes.isEmpty()) return@withFreshBaseline
             val current = waiting(target, CommandKind.FAN)?.value ?: controls.fanMode
             val next = if ("on" in modes && "auto" in modes) {
                 if (current == "on") "auto" else "on"
