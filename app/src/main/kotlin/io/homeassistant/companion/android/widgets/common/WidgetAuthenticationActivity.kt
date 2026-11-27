@@ -50,7 +50,7 @@ class WidgetAuthenticationActivity : AppCompatActivity() {
             }
 
             AuthenticationResult.ERROR -> {
-                Timber.d("Authentication failed, retry attempts allowed")
+                Timber.d("Authentication error, closing activity")
                 Toast.makeText(
                     applicationContext,
                     getString(R.string.widget_error_authenticating),
@@ -58,6 +58,8 @@ class WidgetAuthenticationActivity : AppCompatActivity() {
                 ).show()
                 finishAffinity()
             }
+
+            AuthenticationResult.FAILED -> Timber.d("Authentication attempt not recognized, retry allowed")
         }
     }
 }
