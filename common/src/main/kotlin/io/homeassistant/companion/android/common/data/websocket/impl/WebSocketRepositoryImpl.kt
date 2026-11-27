@@ -338,20 +338,13 @@ class WebSocketRepositoryImpl internal constructor(
         text: String,
         pipelineId: String?,
         conversationId: String?,
-    ): Flow<AssistPipelineEvent> {
-        val data = buildMap {
-            put("start_stage", "intent")
-            put("end_stage", "intent")
-            put("input", mapOf("text" to text))
-            put("conversation_id", conversationId)
-            pipelineId?.let { put("pipeline", it) }
-            webSocketCore.server()?.deviceRegistryId?.let { put("device_id", it) }
-        }
-        return webSocketCore.subscribeTo(
-            SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-            data,
-        )
-    }
+    ): Flow<AssistPipelineEvent> = runAssistPipeline(
+        startStage = "intent",
+        endStage = "intent",
+        input = mapOf("text" to text),
+        pipelineId = pipelineId,
+        conversationId = conversationId,
+    )
 
     @Suppress("UNCHECKED_CAST")
     override suspend fun runAssistPipelineForVoice(
@@ -360,26 +353,16 @@ class WebSocketRepositoryImpl internal constructor(
         pipelineId: String?,
         conversationId: String?,
         wakeWordPhrase: String?,
-    ): Flow<AssistPipelineEvent> {
-        val data = buildMap {
-            put("start_stage", "stt")
-            put("end_stage", if (outputTts) "tts" else "intent")
-            put(
-                "input",
-                buildMap<String, Any?> {
-                    put("sample_rate", sampleRate)
-                    wakeWordPhrase?.let { put("wake_word_phrase", it) }
-                },
-            )
-            put("conversation_id", conversationId)
-            pipelineId?.let { put("pipeline", it) }
-            webSocketCore.server()?.deviceRegistryId?.let { put("device_id", it) }
-        }
-        return webSocketCore.subscribeTo(
-            SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
-            data,
-        )
-    }
+    ): Flow<AssistPipelineEvent> = runAssistPipeline(
+        startStage = "stt",
+        endStage = if (outputTts) "tts" else "intent",
+        input = buildMap {
+            put("sample_rate", sampleRate)
+            wakeWordPhrase?.let { put("wake_word_phrase", it) }
+        },
+        pipelineId = pipelineId,
+        conversationId = conversationId,
+    )
 
     override suspend fun sendVoiceData(binaryHandlerId: Int, data: ByteArray): Boolean =
         webSocketCore.sendBytes(byteArrayOf(binaryHandlerId.toByte()) + data)
@@ -572,6 +555,30 @@ class WebSocketRepositoryImpl internal constructor(
             ),
         )
         return response?.success == true
+    }
+
+    private suspend fun runAssistPipeline(
+        startStage: String,
+        endStage: String,
+        input: Map<String, Any?>,
+        pipelineId: String?,
+        conversationId: String?,
+    ): Flow<AssistPipelineEvent> {
+        val data = buildMap {
+            put("start_stage", startStage)
+            put("end_stage", endStage)
+            put("input", input)
+            put("conversation_id", conversationId)
+            pipelineId?.let { put("pipeline", it) }
+            webSocketCore.server()?.deviceRegistryId?.let { put("device_id", it) }
+        }
+        return webSocketCore.subscribeTo(
+            SUBSCRIBE_TYPE_ASSIST_PIPELINE_RUN,
+            data,
+            // The server drops the run with the connection; replaying the command would start a new
+            // run, executing the request a second time
+            reconnectPolicy = SubscriptionReconnectPolicy.Complete,
+        )
     }
 
     /**
