@@ -62,6 +62,9 @@ interface PrefsRepository {
 
     suspend fun getCurrentNightModeTheme(): NightModeTheme?
 
+    /** Emits the current "Theme" preference immediately on collection, then on every change. */
+    suspend fun nightModeThemeFlow(): Flow<NightModeTheme?>
+
     suspend fun saveNightModeTheme(nightModeTheme: NightModeTheme)
 
     suspend fun getCurrentLang(): String?

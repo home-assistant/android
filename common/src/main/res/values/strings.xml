@@ -91,6 +91,7 @@
     <string name="basic_sensor_name_device_secure">Device secure</string>
     <string name="basic_sensor_name_doze">Doze mode</string>
     <string name="basic_sensor_name_external_storage">External storage</string>
+    <string name="basic_sensor_name_hinge_status">Hinge status</string>
     <string name="basic_sensor_name_geolocation">Geocoded location</string>
     <string name="basic_sensor_name_headset_mounted">In use</string>
     <string name="basic_sensor_name_high_accuracy_mode">High accuracy mode</string>
@@ -347,7 +348,7 @@
     <string name="icon">Icon</string>
     <string name="input_booleans">Input booleans</string>
     <string name="input_buttons">Input buttons</string>
-    <string name="input_cloud">Use Home Assistant Cloud</string>
+    <string name="input_cloud">Use Home Assistant Link</string>
     <string name="input_url_hint">https://example.duckdns.org</string>
     <string name="input_url">Home Assistant URL</string>
     <string name="install">Install</string>
@@ -621,7 +622,7 @@
     <string name="select_entity_to_display">Select entity to display</string>
     <string name="select_file">Select file</string>
     <string name="sensor_description_active_calories_burned">Last recorded active calories burned from Health Connect</string>
-    <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the sensor updates notifications. Attributes will include the contents of all notifications if the corresponding setting is enabled. It\'s enabled by default.</string>
+    <string name="sensor_description_active_notification_count">Total count of active notifications that are visible to the user including silent, persistent and the sensor updates notifications. Attributes will include the contents of all notifications if the corresponding setting is enabled. It\'s disabled by default.</string>
     <string name="sensor_description_app_importance">If the app is in the foreground, background or any other state it can be</string>
     <string name="sensor_description_android_auto">If the phone is currently connected to an Android Auto head unit</string>
     <string name="sensor_description_android_os_version">Android OS version</string>
@@ -1205,6 +1206,8 @@
     <string name="sensor_name_tonal_palette_sensor">Tonal palette</string>
     <string name="sensor_description_tonal_palette_sensor">The name of the dynamic color palette theme currently in use</string>
     <string name="sensor_name_dynamic_color">Dynamic color</string>
+    <string name="sensor_name_foldable">Foldable sensors</string>
+    <string name="sensor_description_hinge_status">Whether the foldable device is closed, partially open or fully open.</string>
     <string name="basic_sensor_name_screen_brightness">Screen brightness</string>
     <string name="sensor_description_screen_brightness">The current screen brightness on the device, an attribute also indicates if auto-brightness is enabled</string>
     <string name="sensor_name_display_sensors">Display sensors</string>

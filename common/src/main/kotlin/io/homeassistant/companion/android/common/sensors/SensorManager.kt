@@ -260,6 +260,11 @@ interface SensorManager {
         return true
     }
 
+    /** @return `true` if this manager owns the sensor [sensorId] and the user's device supports it. */
+    suspend fun hasBasicSensor(sensorId: String): Boolean {
+        return getAvailableSensors().any { it.id == sensorId } && hasSensor()
+    }
+
     suspend fun isSettingEnabled(sensor: BasicSensor, settingName: String): Boolean {
         val setting = sensorRepository
             .getSettings(sensor.id)

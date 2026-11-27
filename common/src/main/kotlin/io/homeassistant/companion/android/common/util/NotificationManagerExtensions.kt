@@ -4,21 +4,8 @@ import android.app.Notification.FLAG_GROUP_SUMMARY
 import android.app.NotificationManager
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationManagerCompat
+import io.homeassistant.companion.android.common.notifications.isSystemGeneratedGroupSummary
 import timber.log.Timber
-
-// Groups are defined here:
-// https://cs.android.com/android/platform/superproject/+/android-latest-release:frameworks/base/services/core/java/com/android/server/notification/GroupHelper.java;drc=d5d4670d8a245da5468af767b17d1e57ed7c9278;l=2106
-// Section names are defined here:
-// https://cs.android.com/android/platform/superproject/+/android-latest-release:frameworks/base/services/core/java/com/android/server/notification/GroupHelper.java;drc=d5d4670d8a245da5468af767b17d1e57ed7c9278;l=195-199
-private val ANDROID_AUTO_GROUP_SUFFIXES = listOf(
-    "|g:ranker_group",
-    "|g:Aggregate_AlertingSection",
-    "|g:Aggregate_NewsSection",
-    "|g:Aggregate_PromotionsSection",
-    "|g:Aggregate_RecsSection",
-    "|g:Aggregate_SocialSection",
-    "|g:Aggregate_SilentSection",
-)
 
 fun NotificationManagerCompat.getNotificationManager(): NotificationManager {
     val field = this.javaClass.declaredFields
@@ -39,6 +26,12 @@ fun NotificationManagerCompat.getActiveNotification(tag: String?, id: Int): Stat
 fun NotificationManagerCompat.getActiveNotificationGroup(tag: String?, id: Int): String? =
     getActiveNotification(tag, id)?.notification?.group?.takeIf { it.isNotBlank() }
 
+/**
+ * Check if the notification with the given [tag] and [id] is part of a group, and if it is cancel
+ * the related group if it is the last notification part of that group.
+ *
+ * @return `true` if a group notification was canceled
+ */
 fun NotificationManagerCompat.cancelGroupIfNeeded(tag: String?, id: Int): Boolean = cancelNotificationGroupIfNeeded(
     this.getNotificationManager(),
     tag,
@@ -69,12 +62,10 @@ fun cancelNotificationGroupIfNeeded(
         Timber.d("Notification is in a group ($groupKey). Get all notifications for this group...")
 
         // Check if the group is one of the auto groups of android
-        if (ANDROID_AUTO_GROUP_SUFFIXES.none { groupKey.endsWith(it) }) {
-            // Nope it is a custom group. Get notifications of the group...
-            val groupNotifications =
-                currentActiveNotifications.filter { s -> s.groupKey == groupKey }
-
-            // Is the notification which should be deleted a group summary
+        val groupNotifications =
+            currentActiveNotifications.filter { s -> s.groupKey == groupKey }
+        if (groupNotifications.none { it.notification.isSystemGeneratedGroupSummary() }) {
+            // Custom group: is the notification which should be deleted a group summary?
             val isGroupSummary = statusBarNotification.notification.flags and FLAG_GROUP_SUMMARY != 0
             if (isGroupSummary) {
                 Timber.d("Notification is the group summary.")
@@ -96,7 +87,7 @@ fun cancelNotificationGroupIfNeeded(
                 !isGroupSummary &&
                 groupNotifications.size == 2
             ) {
-                val group = groupNotifications[0].notification.group
+                val group = statusBarNotification.notification.group
 
                 if (isGroupSummary) {
                     Timber.d(

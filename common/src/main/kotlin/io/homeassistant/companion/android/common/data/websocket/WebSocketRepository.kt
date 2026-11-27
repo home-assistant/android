@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.data.websocket
 
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.impl.entities.EntityResponse
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.impl.WebSocketRepositoryImpl
@@ -8,6 +9,9 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Ar
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineListResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraCapabilitiesResponse
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraStreamType
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.CameraWebRtcClientConfigResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateChangedEvent
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ConversationResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CurrentUserResponse
@@ -26,6 +30,8 @@ import io.homeassistant.companion.android.common.data.websocket.impl.entities.Te
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.ThreadDatasetTlvResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.TriggerEvent
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcCandidate
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.WebRtcEvent
 import javax.inject.Inject
 import javax.inject.Provider
 import kotlinx.coroutines.flow.Flow
@@ -36,18 +42,30 @@ interface WebSocketRepository {
     suspend fun sendPing(): Boolean
     suspend fun getCurrentUser(): CurrentUserResponse?
     suspend fun getConfig(): GetConfigResponse?
-    suspend fun getStates(): List<EntityResponse>?
+
+    /**
+     * Current state of the entities selected by [filter], or of every entity when it is empty, as
+     * the server treats an empty filter. The server only sends the selected states when it supports
+     * it (2022.4 for entity ids, 2024.9 for domains), otherwise every state is fetched and filtered
+     * on the device.
+     */
+    suspend fun getStates(filter: EntityFilter = EntityFilter()): List<EntityResponse>?
     suspend fun getAreaRegistry(): List<AreaRegistryResponse>?
     suspend fun getDeviceRegistry(): List<DeviceRegistryResponse>?
     suspend fun getEntityRegistry(): List<EntityRegistryResponse>?
 
     /**
-     * Return [EntityRegistryDisplayResponse], a bandwidth-efficient version of the
-     * entity registry meant for display.
-     * Requires Home Assistant 2023.3 or later. Some fields may require later
-     * versions of Home Assistant, see [EntityRegistryDisplayEntry].
+     * Return [EntityRegistryDisplayResponse], a bandwidth-efficient version of the entity registry
+     * meant for display, limited to the entities selected by [filter] or holding every entity when
+     * it is empty. Pass a filter whenever possible, so the whole registry isn't downloaded to
+     * resolve a few entities; the ones without a registry entry are omitted.
+     *
+     * The server does the filtering since 2026.12. Before that, a filter on entity ids only fetches
+     * their entries, and a filter on domains downloads the whole registry to filter it on the device.
+     * Requires Home Assistant 2024.10 or later, null is returned for older servers. Some fields may
+     * require later versions of Home Assistant, see [EntityRegistryDisplayEntry].
      */
-    suspend fun getEntityRegistryDisplay(): EntityRegistryDisplayResponse?
+    suspend fun getEntityRegistryDisplay(filter: EntityFilter = EntityFilter()): EntityRegistryDisplayResponse?
     suspend fun getEntityRegistryFor(entityId: String): EntityRegistryResponse?
 
     /**
@@ -56,10 +74,25 @@ interface WebSocketRepository {
      */
     suspend fun getFloorRegistry(): List<FloorRegistryResponse>?
     suspend fun getServices(): List<DomainResponse>?
+
+    /**
+     * State changes of every entity of the server.
+     * Prefer [getCompressedStateAndChanges] on servers supporting it.
+     */
     suspend fun getStateChanges(): Flow<StateChangedEvent>?
+
+    /**
+     * State changes of [entityIds], filtered by the server.
+     * Requires the current user to be an admin.
+     * Prefer [getCompressedStateAndChanges] on servers supporting it.
+     */
     suspend fun getStateChanges(entityIds: List<String>): Flow<TriggerEvent>?
-    suspend fun getCompressedStateAndChanges(): Flow<CompressedStateChangedEvent>?
-    suspend fun getCompressedStateAndChanges(entityIds: List<String>): Flow<CompressedStateChangedEvent>?
+
+    /**
+     * State changes of the entities selected by [filter], or of every entity when it is empty.
+     * It requires Home Assistant 2022.4 or later, and 2024.9 or later when [filter] selects domains.
+     */
+    suspend fun getCompressedStateAndChanges(filter: EntityFilter = EntityFilter()): Flow<CompressedStateChangedEvent>?
     suspend fun getAreaRegistryUpdates(): Flow<AreaRegistryUpdatedEvent>?
     suspend fun getDeviceRegistryUpdates(): Flow<DeviceRegistryUpdatedEvent>?
     suspend fun getEntityRegistryUpdates(): Flow<EntityRegistryUpdatedEvent>?
@@ -150,6 +183,49 @@ interface WebSocketRepository {
      * @return `true`/`false` indicating if it was enqueued, or `null` on unexpected failures
      */
     suspend fun sendVoiceData(binaryHandlerId: Int, data: ByteArray): Boolean
+
+    /**
+     * Get the stream types that can be used for a camera entity. Consumers should only start
+     * a WebRTC session when [CameraStreamType.WebRtc] is reported and fall back to HLS
+     * otherwise.
+     *
+     * @return [CameraCapabilitiesResponse] for the entity, or `null` if the server did not return
+     * a successful response.
+     */
+    suspend fun getCameraCapabilities(entityId: String): CameraCapabilitiesResponse?
+
+    /**
+     * Get the WebRTC client configuration (STUN/TURN servers and optional data channel label) to
+     * use when creating a peer connection for a camera entity.
+     *
+     * @return [CameraWebRtcClientConfigResponse] for the entity, or `null` if the server did not
+     * return a successful response, for example when the camera does not support WebRTC
+     * (`webrtc_get_client_config_failed`).
+     */
+    suspend fun getCameraWebRtcClientConfig(entityId: String): CameraWebRtcClientConfigResponse?
+
+    /**
+     * Start a WebRTC session for a camera entity by sending the SDP offer, and subscribe to the
+     * signaling events for this session.
+     *
+     * The subscription lifetime is the session lifetime: when the returned Flow is no longer
+     * collected the subscription is cancelled and closes the WebRTC session on the server
+     * (there is no dedicated close command). The server also closes the session when the
+     * connection is lost and does not reconnect automatically.
+     *
+     * @return a Flow that will emit all [WebRtcEvent]s for the session, or `null` if the
+     * subscription could not be started.
+     */
+    suspend fun startCameraWebRtcSession(entityId: String, offerSdp: String): Flow<WebRtcEvent>?
+
+    /**
+     * Send a local ICE candidate for a WebRTC session previously started with
+     * [startCameraWebRtcSession].
+     *
+     * @param sessionId the session identifier received in [WebRtcEvent.Session]
+     * @return `true` if the server accepted the candidate
+     */
+    suspend fun sendCameraWebRtcCandidate(entityId: String, sessionId: String, candidate: WebRtcCandidate): Boolean
 }
 
 internal class WebSocketRepositoryFactory @Inject internal constructor(

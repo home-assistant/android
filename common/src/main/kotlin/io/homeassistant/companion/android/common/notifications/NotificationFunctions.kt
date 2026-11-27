@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.common.notifications
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -282,3 +283,20 @@ fun handleDeleteIntent(
     )
     builder.setDeleteIntent(deletePendingIntent)
 }
+
+/**
+ * Mirrors the hidden `Notification.FLAG_AUTOGROUP_SUMMARY` system API. Android sets it on every summary it
+ * creates when auto-grouping an app's notifications since auto-grouping was introduced in API 24, both for the
+ * `ranker_group` group and the `Aggregate_*` groups of Android 16+.
+ *
+ * Defined in [Notification.java](https://cs.android.com/android/platform/superproject/main/+/03b7b057c4e76cafc1f96d349adcd60ac0320a5e:frameworks/base/core/java/android/app/Notification.java;l=708).
+ */
+const val FLAG_AUTOGROUP_SUMMARY = 0x00000400
+
+/**
+ * Whether this notification is a group summary that Android generated on behalf of the app.
+ *
+ * Such summaries carry no content of their own and are posted right after the real notification, so reporting
+ * them would replace the real notification data with an empty one.
+ */
+fun Notification.isSystemGeneratedGroupSummary(): Boolean = (flags and FLAG_AUTOGROUP_SUMMARY) != 0

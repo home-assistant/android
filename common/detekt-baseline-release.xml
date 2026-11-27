@@ -43,7 +43,7 @@
     <ID>CyclomaticComplexMethod:SensorUpdater.kt:SensorUpdater$private suspend fun syncSensorsWithServer: Boolean</ID>
     <ID>CyclomaticComplexMethod:SensorWithAttributes.kt:SensorWithAttributes$fun toSensorRegistration: SensorRegistration&lt;Any&gt;</ID>
     <ID>CyclomaticComplexMethod:WearPrefsRepositoryImpl.kt:WearLocalStorageWithMigration$private suspend fun checkMigration</ID>
-    <ID>CyclomaticComplexMethod:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun handleEvent</ID>
+    <ID>CyclomaticComplexMethod:WebSocketCoreImpl.kt:WebSocketCoreImpl$private fun handleEvent</ID>
     <ID>ForbiddenComment:WebSocketRepositoryImpl.kt:WebSocketRepositoryImpl$// TODO: Send default locale of device with request.</ID>
     <ID>ImplicitDefaultLocale:SensorReceiverBase.kt:SensorReceiverBase$String.format( "Sensor(s) %s corresponding to received event %s are disabled, skipping sensors update", sensors.toString(), intent.action, )</ID>
     <ID>ImplicitDefaultLocale:StorageSensorManager.kt:StorageSensorManager$String.format("%,d", sizeLong)</ID>
@@ -85,7 +85,7 @@
     <ID>LongMethod:SensorManager.kt:SensorManager$suspend fun onSensorUpdated</ID>
     <ID>LongMethod:SensorReceiverBase.kt:SensorReceiverBase$override fun onReceive</ID>
     <ID>LongMethod:SensorUpdater.kt:SensorUpdater$private suspend fun syncSensorsWithServer: Boolean</ID>
-    <ID>LongMethod:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun handleEvent</ID>
+    <ID>LongMethod:WebSocketCoreImpl.kt:WebSocketCoreImpl$private fun handleEvent</ID>
     <ID>LongParameterList:HAColors.kt:HAColorScheme</ID>
     <ID>LongParameterList:IntegrationRepository.kt:IntegrationRepositoryFactory</ID>
     <ID>LongParameterList:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl</ID>
@@ -128,7 +128,6 @@
     <ID>MagicNumber:ExoPlayerExt.kt:8.0f</ID>
     <ID>MagicNumber:IBeaconMonitor.kt:IBeaconMonitor$0.5</ID>
     <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$1000</ID>
-    <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$2022</ID>
     <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$2023</ID>
     <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$4</ID>
     <ID>MagicNumber:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$5</ID>
@@ -190,10 +189,9 @@
     <ID>ReturnCount:SensorUpdater.kt:SensorUpdater$private suspend fun loadSensorReconcilingPermission: SensorWithAttributes?</ID>
     <ID>ReturnCount:ServerConnectionStateProviderImpl.kt:ServerConnectionStateProviderImpl$override suspend fun canSafelySendCredentials: Boolean</ID>
     <ID>ReturnCount:ServerConnectionStateProviderImpl.kt:ServerConnectionStateProviderImpl$override suspend fun isInternal: Boolean</ID>
-    <ID>ReturnCount:SuspendLazy.kt:SuspendLazy$suspend fun get: T</ID>
     <ID>ReturnCount:TLSHelper.kt:TLSHelper$private fun withUserInstalledCaFallback: X509TrustManager</ID>
     <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun attemptWebSocketConnection: ConnectionAttemptResult</ID>
-    <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun handleEvent</ID>
+    <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private fun handleEvent</ID>
     <ID>ReturnCount:WebSocketCoreImpl.kt:WebSocketCoreImpl$private suspend fun sendMessage: RawMessageSocketResponse?</ID>
     <ID>SpreadOperator:DatabaseModule.kt:DatabaseModule$(*migrationPath(context))</ID>
     <ID>SuspendFunWithFlowReturnType:AssistAudioStrategy.kt:AssistAudioStrategy$suspend</ID>
@@ -260,8 +258,6 @@
     <ID>UnsafeCallOnNullableType:AuthenticationRepositoryImpl.kt:AuthenticationRepositoryImpl$server.session.refreshToken!!</ID>
     <ID>UnsafeCallOnNullableType:BluetoothUtils.kt:BluetoothUtils$context.applicationContext.getSystemService&lt;BluetoothManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:DeviceCommands.kt:data[DeviceCommandData.BLE_MEASURED_POWER]?.toInt()!!</ID>
-    <ID>UnsafeCallOnNullableType:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$it.newState!!</ID>
-    <ID>UnsafeCallOnNullableType:IntegrationRepositoryImpl.kt:IntegrationRepositoryImpl$it.toState!!</ID>
     <ID>UnsafeCallOnNullableType:KeyguardSensorManager.kt:KeyguardSensorManager$applicationContext.getSystemService&lt;KeyguardManager&gt;()!!</ID>
     <ID>UnsafeCallOnNullableType:LightSensorManager.kt:LightSensorManager$applicationContext.getSystemService()!!</ID>
     <ID>UnsafeCallOnNullableType:MonitoringManager.kt:MonitoringManager$context.getSystemService&lt;NotificationManager&gt;()!!</ID>
@@ -284,7 +280,6 @@
     <ID>UnsafeCallOnNullableType:UrlUtil.kt:UrlUtil$url.toHttpUrlOrNull()!!</ID>
     <ID>UnsafeCallOnNullableType:WearPrefsRepositoryImpl.kt:WearPrefsRepositoryImpl$removeTemplateTile(UNKNOWN_TEMPLATE_TILE_ID)!!</ID>
     <ID>UnsafeCallOnNullableType:WearPrefsRepositoryImpl.kt:WearPrefsRepositoryImpl$removeTileShortcuts(null)!!</ID>
-    <ID>UnsafeCallOnNullableType:WebSocketCoreImpl.kt:WebSocketCoreImpl$urlObserverJob!!</ID>
     <ID>UnsafeCallOnNullableType:WebSocketRepositoryImpl.kt:WebSocketRepositoryImpl$it.connection.webhookId!!</ID>
     <ID>UnusedParameter:LastRebootSensorManager.kt:LastRebootSensorManager$applicationContext: Context</ID>
     <ID>UnusedParameter:MonitoringManager.kt:MonitoringManager$context: Context</ID>

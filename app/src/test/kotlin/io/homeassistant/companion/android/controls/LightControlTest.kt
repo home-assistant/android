@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.common.data.integration.EntityPosition
 import io.homeassistant.companion.android.common.data.integration.LightControls
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -28,7 +29,7 @@ private const val ENTITY_ID = "light.living_room"
 class LightControlTest {
 
     @Test
-    fun `Given a dimmable light off when providing the features then the template is a range that is not checked`() {
+    fun `Given a dimmable light off when providing the features then the template is a range that is not checked`() = runTest {
         val template = templateFor(isActive = false, brightness = EntityPosition(value = 0f, min = 0f, max = 100f))
 
         assertTrue(template is ToggleRangeTemplate)
@@ -37,7 +38,7 @@ class LightControlTest {
     }
 
     @Test
-    fun `Given a dimmable light on when providing the features then the template is a checked range at its level`() {
+    fun `Given a dimmable light on when providing the features then the template is a checked range at its level`() = runTest {
         val template = templateFor(isActive = true, brightness = EntityPosition(value = 60f, min = 0f, max = 100f))
 
         assertTrue(template is ToggleRangeTemplate)
@@ -46,14 +47,14 @@ class LightControlTest {
     }
 
     @Test
-    fun `Given a light without brightness when providing the features then the template is a toggle`() {
+    fun `Given a light without brightness when providing the features then the template is a toggle`() = runTest {
         val template = templateFor(isActive = true, brightness = null)
 
         assertTrue(template is ToggleTemplate)
         assertTrue((template as ToggleTemplate).isChecked)
     }
 
-    private fun templateFor(isActive: Boolean, brightness: EntityPosition?) = LightControl.provideControlFeatures(
+    private suspend fun templateFor(isActive: Boolean, brightness: EntityPosition?) = LightControl.provideControlFeatures(
         context = ApplicationProvider.getApplicationContext(),
         control = Control.StatefulBuilder(ENTITY_ID, pendingIntent()),
         item = EntityDisplayWithContext(

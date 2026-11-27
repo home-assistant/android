@@ -14,6 +14,9 @@ import coil3.request.allowHardware
 import coil3.toBitmap
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.homeassistant.companion.android.common.data.authentication.AuthorizationException
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
+import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.PERSON_DOMAIN
+import io.homeassistant.companion.android.common.data.integration.entityPicturePath
 import io.homeassistant.companion.android.common.data.integration.isPersonOf
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.firstUrlOrNull
@@ -23,15 +26,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-private const val ATTRIBUTE_ENTITY_PICTURE = "entity_picture"
 private const val HEADER_AUTHORIZATION = "Authorization"
 
 /**
  * Cache key for a user avatar.
  *
- * Derived from the stable [serverId] and the server-relative [picturePath] (the `entity_picture`
- * value) rather than the absolute URL: the base URL resolved at download time can be the internal
- * or external address depending on the current network, and keying on it would store the same image
+ * Derived from the stable [serverId] and the server-relative [picturePath] rather than the
+ * absolute URL: the base URL resolved at download time can be the internal or external address
+ * depending on the current network, and keying on it would store the same image
  * twice and re-download it whenever the network changes.
  */
 @VisibleForTesting
@@ -89,13 +91,13 @@ class ServerUserAvatarUseCase @VisibleForTesting constructor(
      * If the server is unavailable, a cached path may be returned.
      */
     private suspend fun findPersonPicturePath(serverId: Int, userId: String): String? {
-        val entities = serverManager.integrationRepository(serverId).getEntities().orEmpty()
-        return if (entities.isEmpty()) { // Read stored path
+        val persons = serverManager.integrationRepository(serverId)
+            .getEntities(EntityFilter(domains = setOf(PERSON_DOMAIN)))
+        return if (persons == null) { // Read stored path
             serverManager.getServer(serverId)?.user?.picturePath
         } else {
             // Read current path, and store in database
-            val path = entities.firstOrNull { it.isPersonOf(userId) }
-                ?.attributes?.get(ATTRIBUTE_ENTITY_PICTURE) as? String
+            val path = persons.firstOrNull { it.isPersonOf(userId) }?.entityPicturePath()
             serverManager.getServer(serverId)?.let { server ->
                 serverManager.updateServer(server.copy(user = server.user.copy(picturePath = path)))
             }

@@ -10,6 +10,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.github.timoptr.mdiicons.Mdi
 import io.github.timoptr.mdiicons.generated.Alert
 import io.homeassistant.companion.android.common.data.integration.ControlsAuthRequiredSetting
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CAMERA_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.CLIMATE_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.COVER_DOMAIN
@@ -117,7 +118,8 @@ class HaControlsProviderService @VisibleForTesting internal constructor(
                 val serverItems = servers.map { server ->
                     async {
                         val items = try {
-                            entitiesForDisplayManager.snapshotInContext(server.id)
+                            entitiesForDisplayManager
+                                .snapshotInContext(server.id, EntityFilter(domains = getSupportedDomains().toSet()))
                                 .awaitLoadedOrNull()
                                 ?.entities
                                 ?.sortedWith(compareBy(nullsLast()) { it.areaName })
@@ -151,6 +153,8 @@ class HaControlsProviderService @VisibleForTesting internal constructor(
                                         item,
                                         info,
                                     )
+                                } catch (e: CancellationException) {
+                                    throw e
                                 } catch (e: Exception) {
                                     Timber.e(e, "Unable to create control for ${item.domain} entity, skipping")
                                     null
@@ -292,7 +296,7 @@ class HaControlsProviderService @VisibleForTesting internal constructor(
 
         /** Follows the entities, failing the controls once they can no longer be followed. */
         suspend fun publishUpdates() {
-            entitiesForDisplayManager.observeInContext(serverId, entityIds)
+            entitiesForDisplayManager.observeInContext(serverId, EntityFilter(entityIds = entityIds.toSet()))
                 .onCompletion { cause ->
                     // Completing after a snapshot means the entities can no longer be followed: the
                     // controls are failed rather than left on a stale state the system would act on
@@ -321,6 +325,10 @@ class HaControlsProviderService @VisibleForTesting internal constructor(
                     sendControl(failedItem(missingEntity, notFound = true), failed = true)
                 }
             }
+            (sentItems.keys - state.entitiesById.keys).forEach { removedEntity ->
+                Timber.w("$removedEntity was removed from Home Assistant")
+                sendControl(failedItem(removedEntity, notFound = true), failed = true)
+            }
             val changedItems = state.entities.filter { sentItems[it.entityId] != it }
             sentItems = state.entitiesById
             Timber.d("Sending ${changedItems.size} of ${state.entities.size} entities to subscriber")
@@ -343,6 +351,8 @@ class HaControlsProviderService @VisibleForTesting internal constructor(
                     item,
                     info,
                 )
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Timber.e(e, "Unable to create control for ${item.domain} entity, sending error entity")
                 domainToHaControl["ha_failed"]?.createControl(

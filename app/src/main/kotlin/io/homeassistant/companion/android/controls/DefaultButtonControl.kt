@@ -15,7 +15,7 @@ import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.R)
 object DefaultButtonControl : HaControl {
-    override fun provideControlFeatures(
+    override suspend fun provideControlFeatures(
         context: Context,
         control: Control.StatefulBuilder,
         item: EntityDisplayWithContext,

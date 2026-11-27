@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.IntegrationDomains.MEDIA_PLAYER_DOMAIN
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
@@ -183,7 +184,7 @@ class MediaControlsSettingsViewModel @Inject constructor(
 
     /** Resolves the media players of [serverId] into the state as they load. */
     private fun mediaPlayersOf(serverId: Int) = entitiesForDisplayManager
-        .snapshotInContext(serverId) { it.domain == MEDIA_PLAYER_DOMAIN }
+        .snapshotInContext(serverId, EntityFilter(domains = setOf(MEDIA_PLAYER_DOMAIN)))
         .onEach { displayState ->
             _uiState.update { state ->
                 state.copy(

@@ -57,7 +57,7 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionColumnT
 import io.homeassistant.companion.android.database.widget.converters.TodoLastUpdateDataConverter
 
 @VisibleForTesting
-const val DATABASE_VERSION = 55
+const val DATABASE_VERSION = 56
 
 @Database(
     entities = [

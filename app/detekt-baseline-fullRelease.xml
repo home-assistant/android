@@ -37,7 +37,6 @@
     <ID>CyclomaticComplexMethod:FrontendMessageHandler.kt:FrontendMessageHandler$private suspend fun handleMessage: FrontendHandlerEvent</ID>
     <ID>CyclomaticComplexMethod:FrontendNavigation.kt:@Composable @VisibleForTesting internal fun FrontendEventHandler</ID>
     <ID>CyclomaticComplexMethod:FrontendViewModel.kt:FrontendViewModel$private suspend fun handleMessageResult</ID>
-    <ID>CyclomaticComplexMethod:HaControl.kt:HaControl$@SuppressLint("ResourceType") fun createControl: Control</ID>
     <ID>CyclomaticComplexMethod:HealthConnectSensorManager.kt:HealthConnectSensorManager$override suspend fun requestSensorUpdate</ID>
     <ID>CyclomaticComplexMethod:HomeAssistantApplication.kt:HomeAssistantApplication$override fun onCreate</ID>
     <ID>CyclomaticComplexMethod:LocationSensorManager.kt:LocationSensorManager$private suspend fun handleGeoUpdate</ID>
@@ -62,7 +61,6 @@
     <ID>CyclomaticComplexMethod:SettingsActivity.kt:SettingsActivity$override fun onCreate</ID>
     <ID>CyclomaticComplexMethod:SettingsFragment.kt:SettingsFragment$override fun onCreatePreferences</ID>
     <ID>CyclomaticComplexMethod:ThreadManagerImpl.kt:ThreadManagerImpl$private suspend fun fullSyncPreferredDataset: ThreadManager.SyncResult</ID>
-    <ID>CyclomaticComplexMethod:TileExtensions.kt:TileExtensions$private suspend fun setTileData: Boolean</ID>
     <ID>CyclomaticComplexMethod:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$override fun onBindViewHolder</ID>
     <ID>DoubleMutabilityForCollection:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity$private var actions = mutableMapOf&lt;Int, HashMap&lt;String, Action&gt;&gt;()</ID>
     <ID>DoubleMutabilityForCollection:ButtonWidgetConfigureActivity.kt:ButtonWidgetConfigureActivity$private var dynamicFields = ArrayList&lt;ActionFieldBinder&gt;()</ID>
@@ -94,7 +92,6 @@
     <ID>InjectDispatcher:BaseGlanceEntityWidgetReceiver.kt:Default</ID>
     <ID>InjectDispatcher:BaseWidgetProvider.kt:BaseWidgetProvider.Companion$Default</ID>
     <ID>InjectDispatcher:ButtonWidget.kt:ButtonWidget.Companion$Default</ID>
-    <ID>InjectDispatcher:CameraControl.kt:CameraControl$IO</ID>
     <ID>InjectDispatcher:CameraWidget.kt:CameraWidget.Companion$Default</ID>
     <ID>InjectDispatcher:CarSensorManager.kt:CarSensorManager$IO</ID>
     <ID>InjectDispatcher:CheckLocationDisabledUseCase.kt:CheckLocationDisabledUseCase$Default</ID>
@@ -124,7 +121,6 @@
     <ID>InjectDispatcher:SettingsWearFavoritesView.kt:IO</ID>
     <ID>InjectDispatcher:TLSWebViewClient.kt:SafeKeyChainAliasCallback$IO</ID>
     <ID>InjectDispatcher:TemplateWidget.kt:TemplateWidget.Companion$Default</ID>
-    <ID>InjectDispatcher:TileExtensions.kt:TileExtensions$IO</ID>
     <ID>InjectDispatcher:WakeWordListener.kt:IO</ID>
     <ID>InjectDispatcher:WearDnsRequestListener.kt:WearDnsRequestListener$IO</ID>
     <ID>InjectDispatcher:WebsocketBroadcastReceiver.kt:WebsocketBroadcastReceiver$Default</ID>
@@ -206,12 +202,12 @@
     <ID>LongMethod:TemplateComponents.kt:@RequiresApi(Build.VERSION_CODES.O) fun getDomainList: ItemList.Builder</ID>
     <ID>LongMethod:TemplateWidget.kt:TemplateWidget$private suspend fun getWidgetRemoteViews: RemoteViews</ID>
     <ID>LongMethod:ThreadManagerImpl.kt:ThreadManagerImpl$private suspend fun fullSyncPreferredDataset: ThreadManager.SyncResult</ID>
-    <ID>LongMethod:TileExtensions.kt:TileExtensions$private suspend fun setTileData: Boolean</ID>
     <ID>LongMethod:TileExtensions.kt:TileExtensions$private suspend fun tileClicked</ID>
     <ID>LongMethod:WebsocketManager.kt:WebsocketManager$private suspend fun createNotification: Boolean</ID>
     <ID>LongMethod:WebsocketSettingView.kt:@Composable fun WebsocketSettingView</ID>
     <ID>LongMethod:WidgetDynamicFieldAdapter.kt:WidgetDynamicFieldAdapter$override fun onBindViewHolder</ID>
     <ID>LongParameterList:AssistActivity.kt:AssistActivity.Companion$fun newInstance: Intent</ID>
+    <ID>LongParameterList:ChangelogViewModel.kt:ChangelogViewModel</ID>
     <ID>LongParameterList:EntityGridVehicleScreen.kt:EntityGridVehicleScreen</ID>
     <ID>LongParameterList:EntityWidget.kt:EntityWidget$private suspend fun resolveTextToShow: ResolvedText</ID>
     <ID>LongParameterList:FrontendMessageHandler.kt:FrontendMessageHandler</ID>
@@ -269,7 +265,6 @@
     <ID>MagicNumber:IconDialogFragment.kt:IconDialogFragment$0.9</ID>
     <ID>MagicNumber:IconDialogFragment.kt:IconDialogFragment$480f</ID>
     <ID>MagicNumber:IconDialogFragment.kt:IconDialogFragment$500f</ID>
-    <ID>MagicNumber:LocationSensorManager.kt:LocationSensorManager$100</ID>
     <ID>MagicNumber:LocationSensorManager.kt:LocationSensorManager$2000L</ID>
     <ID>MagicNumber:LocationSensorManager.kt:LocationSensorManager$2022</ID>
     <ID>MagicNumber:LocationSensorManager.kt:LocationSensorManager$2026</ID>

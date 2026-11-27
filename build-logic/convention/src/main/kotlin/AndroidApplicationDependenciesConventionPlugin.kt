@@ -27,6 +27,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
                 dependencies {
                     "implementation"(project(":common"))
                     "implementation"(project(":microwakeword"))
+                    "implementation"(project(":webrtc"))
 
                     "implementation"(libs.blurView)
                     "implementation"(libs.haze)
@@ -67,6 +68,7 @@ class AndroidApplicationDependenciesConventionPlugin : Plugin<Project> {
 
                     "implementation"(libs.biometric)
                     "implementation"(libs.webkit)
+                    "implementation"(libs.androidx.window)
 
                     "implementation"(libs.bundles.media3)
                     "fullImplementation"(libs.media3.datasource.cronet)

@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.NonRestartableComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -99,6 +100,7 @@ fun <T> rememberSelectedDropdownKey(initialKey: T? = null): MutableState<T?> =
  * @param enabled Controls whether the dropdown can be opened. When false, the field is not clickable
  */
 @Composable
+@NonRestartableComposable
 fun <T> HADropdownMenu(
     @SuppressLint("ComposeUnstableCollections") items: List<HADropdownItem<T>>,
     selectedKey: T?,
