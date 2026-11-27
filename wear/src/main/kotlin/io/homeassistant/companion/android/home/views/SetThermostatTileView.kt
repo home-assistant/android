@@ -20,6 +20,8 @@ import io.github.timoptr.mdiicons.rememberImageVector
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
+import io.homeassistant.companion.android.database.wear.ThermostatLayoutStyle
+import io.homeassistant.companion.android.database.wear.ThermostatTemperatureUnit
 import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.homeassistant.companion.android.theme.WearAppTheme
 import io.homeassistant.companion.android.theme.getFilledTonalButtonColors
@@ -102,7 +104,7 @@ fun SetThermostatTileView(
                     label = { Text(stringResource(commonR.string.setting_thermostat_tile_appearance)) },
                     secondaryLabel = {
                         Text(
-                            if (tile?.layoutStyle == "enhanced") {
+                            if (tile?.layoutStyle == ThermostatLayoutStyle.ENHANCED) {
                                 stringResource(commonR.string.setting_thermostat_enhanced)
                             } else {
                                 stringResource(commonR.string.setting_thermostat_classic)
@@ -113,12 +115,9 @@ fun SetThermostatTileView(
                         tile?.let {
                             onPreferencesChanged(it.id) { current ->
                                 current.copy(
-                                    layoutStyle = if (current.layoutStyle ==
-                                        "enhanced"
-                                    ) {
-                                        "classic"
-                                    } else {
-                                        "enhanced"
+                                    layoutStyle = when (current.layoutStyle) {
+                                        ThermostatLayoutStyle.ENHANCED -> ThermostatLayoutStyle.CLASSIC
+                                        ThermostatLayoutStyle.CLASSIC -> ThermostatLayoutStyle.ENHANCED
                                     },
                                 )
                             }
@@ -127,7 +126,7 @@ fun SetThermostatTileView(
                 )
             }
             temperatureUnitSetting(tile, onPreferencesChanged)
-            if (tile?.layoutStyle == "enhanced") {
+            if (tile?.layoutStyle == ThermostatLayoutStyle.ENHANCED) {
                 enhancedSettings(tile, onPreferencesChanged)
             }
             item {
@@ -173,9 +172,12 @@ private fun ScalingLazyListScope.temperatureUnitSetting(
                 Text(
                     stringResource(
                         when (tile?.temperatureUnit) {
-                            "C" -> commonR.string.setting_thermostat_temperature_unit_celsius
-                            "F" -> commonR.string.setting_thermostat_temperature_unit_fahrenheit
-                            else -> commonR.string.setting_thermostat_temperature_unit_default
+                            ThermostatTemperatureUnit.CELSIUS ->
+                                commonR.string.setting_thermostat_temperature_unit_celsius
+                            ThermostatTemperatureUnit.FAHRENHEIT ->
+                                commonR.string.setting_thermostat_temperature_unit_fahrenheit
+                            ThermostatTemperatureUnit.DEFAULT, null ->
+                                commonR.string.setting_thermostat_temperature_unit_default
                         },
                     ),
                 )
@@ -184,9 +186,9 @@ private fun ScalingLazyListScope.temperatureUnitSetting(
                 tile?.let {
                     onPreferencesChanged(it.id) { current ->
                         val next = when (current.temperatureUnit) {
-                            "C" -> "F"
-                            "F" -> "default"
-                            else -> "C"
+                            ThermostatTemperatureUnit.CELSIUS -> ThermostatTemperatureUnit.FAHRENHEIT
+                            ThermostatTemperatureUnit.FAHRENHEIT -> ThermostatTemperatureUnit.DEFAULT
+                            ThermostatTemperatureUnit.DEFAULT -> ThermostatTemperatureUnit.CELSIUS
                         }
                         current.copy(temperatureUnit = next)
                     }

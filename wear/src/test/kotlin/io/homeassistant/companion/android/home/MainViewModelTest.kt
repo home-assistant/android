@@ -13,6 +13,7 @@ import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
+import io.homeassistant.companion.android.database.wear.ThermostatLayoutStyle
 import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
@@ -101,7 +102,9 @@ class MainViewModelTest {
             createViewModel().setThermostatTileEntity(1, "climate.living").join()
 
             coVerify(exactly = 1) {
-                thermostatTileDao.add(ThermostatTile(id = 1, entityId = "climate.living", layoutStyle = "enhanced"))
+                thermostatTileDao.add(
+                    ThermostatTile(id = 1, entityId = "climate.living", layoutStyle = ThermostatLayoutStyle.ENHANCED),
+                )
             }
             verify(exactly = 1) { updater.requestUpdate(any()) }
         }

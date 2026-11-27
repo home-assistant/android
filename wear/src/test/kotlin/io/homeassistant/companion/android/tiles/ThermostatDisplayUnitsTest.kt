@@ -1,5 +1,6 @@
 package io.homeassistant.companion.android.tiles
 
+import io.homeassistant.companion.android.database.wear.ThermostatTemperatureUnit
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -8,8 +9,8 @@ import org.junit.jupiter.api.Test
 class ThermostatDisplayUnitsTest {
     @Test
     fun `Given Celsius and Fahrenheit values when converting absolute temperatures then preserve the baseline`() {
-        val fahrenheit = ThermostatDisplayUnits("°C", "F")
-        val celsius = ThermostatDisplayUnits("°F", "C")
+        val fahrenheit = ThermostatDisplayUnits("°C", ThermostatTemperatureUnit.FAHRENHEIT)
+        val celsius = ThermostatDisplayUnits("°F", ThermostatTemperatureUnit.CELSIUS)
         assertEquals(73.4f, fahrenheit.display(23f))
         assertEquals(23f, celsius.display(73.4f))
         assertEquals(32f, fahrenheit.display(0f))
@@ -21,8 +22,8 @@ class ThermostatDisplayUnitsTest {
 
     @Test
     fun `Given relative adjustments when converting units then omit the absolute offset`() {
-        val fahrenheit = ThermostatDisplayUnits("°C", "F")
-        val celsius = ThermostatDisplayUnits("°F", "C")
+        val fahrenheit = ThermostatDisplayUnits("°C", ThermostatTemperatureUnit.FAHRENHEIT)
+        val celsius = ThermostatDisplayUnits("°F", ThermostatTemperatureUnit.CELSIUS)
         assertEquals(5f / 9f, fahrenheit.adjustment(1f, 0.5f), 0.0001f)
         assertEquals(-5f, fahrenheit.adjustment(-9f, 0.5f), 0.0001f)
         assertEquals(1.8f, celsius.adjustment(1f, 1f), 0.0001f)
@@ -33,7 +34,7 @@ class ThermostatDisplayUnitsTest {
 
     @Test
     fun `Given converted adjustments when calculating targets then respect bounds and range separation`() {
-        val units = ThermostatDisplayUnits("°F", "C")
+        val units = ThermostatDisplayUnits("°F", ThermostatTemperatureUnit.CELSIUS)
         val step = 1f
         assertEquals(75f, ThermostatTemperatureLogic.snap(73f + units.adjustment(1f, step), step, 45f, 95f))
         assertEquals(95f, ThermostatTemperatureLogic.snap(94f + units.adjustment(5f, step), step, 45f, 95f))
@@ -52,8 +53,8 @@ class ThermostatDisplayUnitsTest {
 
     @Test
     fun `Given default or unknown units when adjusting then respect larger server steps in either direction`() {
-        val default = ThermostatDisplayUnits("°C", "default")
-        val unknown = ThermostatDisplayUnits(null, "F")
+        val default = ThermostatDisplayUnits("°C", ThermostatTemperatureUnit.DEFAULT)
+        val unknown = ThermostatDisplayUnits(null, ThermostatTemperatureUnit.FAHRENHEIT)
         for (units in listOf(default, unknown)) {
             assertEquals(24f, ThermostatTemperatureLogic.snap(22f + units.adjustment(1f, 2f), 2f, 10f, 40f))
             assertEquals(20f, ThermostatTemperatureLogic.snap(22f + units.adjustment(-1f, 2f), 2f, 10f, 40f))
@@ -63,8 +64,8 @@ class ThermostatDisplayUnitsTest {
 
     @Test
     fun `Given no advertised step when using server units then Classic retains original increments`() {
-        val celsius = ThermostatDisplayUnits("°C", "default")
-        val fahrenheit = ThermostatDisplayUnits("°F", "default")
+        val celsius = ThermostatDisplayUnits("°C", ThermostatTemperatureUnit.DEFAULT)
+        val fahrenheit = ThermostatDisplayUnits("°F", ThermostatTemperatureUnit.DEFAULT)
         assertEquals(0.5f, celsius.serverStep(null))
         assertEquals(1f, fahrenheit.serverStep(null))
         assertEquals(2f, celsius.serverStep(2f))
@@ -75,8 +76,8 @@ class ThermostatDisplayUnitsTest {
 
     @Test
     fun `Given default or unknown source units when rendering then preserve original values and actions`() {
-        val default = ThermostatDisplayUnits("°C", "default")
-        val unknown = ThermostatDisplayUnits(null, "F")
+        val default = ThermostatDisplayUnits("°C", ThermostatTemperatureUnit.DEFAULT)
+        val unknown = ThermostatDisplayUnits(null, ThermostatTemperatureUnit.FAHRENHEIT)
         assertFalse(default.hasOverride)
         assertFalse(unknown.hasOverride)
         assertEquals(21.5f, default.display(21.5f))
@@ -85,7 +86,7 @@ class ThermostatDisplayUnitsTest {
         assertEquals(2f, unknown.adjustment(1f, 2f))
         assertEquals("target|", default.actionPrefix("target|"))
         assertEquals("target|", unknown.actionPrefix("target|"))
-        val fahrenheit = ThermostatDisplayUnits("°C", "F")
+        val fahrenheit = ThermostatDisplayUnits("°C", ThermostatTemperatureUnit.FAHRENHEIT)
         assertTrue(fahrenheit.hasOverride)
         assertEquals("target|°F:", fahrenheit.actionPrefix("target|"))
     }

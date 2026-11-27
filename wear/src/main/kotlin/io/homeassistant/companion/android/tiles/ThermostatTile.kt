@@ -22,6 +22,7 @@ import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.database.wear.ThermostatLayoutStyle
 import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.home.HomeActivity
@@ -88,7 +89,9 @@ class ThermostatTile : TileService() {
     lateinit var thermostatMetadata: ThermostatMetadata
 
     private suspend fun shouldShowInvitation(config: ThermostatTile?, tileId: Int): Boolean {
-        if (config == null || config.layoutStyle != "classic" || config.entityId.isNullOrBlank()) return false
+        if (config == null || config.layoutStyle != ThermostatLayoutStyle.CLASSIC || config.entityId.isNullOrBlank()) {
+            return false
+        }
         return !wearPrefsRepository.isThermostatLayoutInvitationAcknowledged(tileId)
     }
 
@@ -137,7 +140,7 @@ class ThermostatTile : TileService() {
             }
             if (!shouldShowInvitation(config, tileId)) return@withLock config
             val updated = if (clickedId == ThermostatTileIds.INVITATION_ACCEPT) {
-                config.copy(layoutStyle = "enhanced").also { thermostatTileDao.add(it) }
+                config.copy(layoutStyle = ThermostatLayoutStyle.ENHANCED).also { thermostatTileDao.add(it) }
             } else {
                 config
             }
@@ -199,10 +202,15 @@ class ThermostatTile : TileService() {
         val displayEntity = entity.copy(name = metadata.name)
         val views = ThermostatTileViews(this)
         return tile.setTileTimeline(
-            if (config.layoutStyle == "classic") {
-                views.classicTimeline(config, displayEntity, temperatureUnit, pending, actionPrefix)
-            } else {
-                views.enhancedTimeline(
+            when (config.layoutStyle) {
+                ThermostatLayoutStyle.CLASSIC -> views.classicTimeline(
+                    config,
+                    displayEntity,
+                    temperatureUnit,
+                    pending,
+                    actionPrefix,
+                )
+                ThermostatLayoutStyle.ENHANCED -> views.enhancedTimeline(
                     config,
                     displayEntity,
                     temperatureUnit,
@@ -320,7 +328,7 @@ class ThermostatTile : TileService() {
         val tileId = requestParams.tileId
         launchSettingsEvent {
             if (thermostatTileDao.get(tileId) == null) {
-                thermostatTileDao.add(ThermostatTile(id = tileId, layoutStyle = "enhanced"))
+                thermostatTileDao.add(ThermostatTile(id = tileId, layoutStyle = ThermostatLayoutStyle.ENHANCED))
                 wearPrefsRepository.setThermostatLayoutInvitationAcknowledged(tileId, true)
             }
         }

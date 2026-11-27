@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.tiles
 
 import io.homeassistant.companion.android.common.data.integration.ClimateControls
+import io.homeassistant.companion.android.database.wear.ThermostatLayoutStyle
 import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.homeassistant.companion.android.tiles.ThermostatCommandCoordinator.TemperatureSlot
 import io.mockk.every
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 class ThermostatTileActionTest {
     private val prefix = "1|climate.living_room|"
     private val classic = ThermostatTile(id = 1)
-    private val enhanced = classic.copy(layoutStyle = "enhanced")
+    private val enhanced = classic.copy(layoutStyle = ThermostatLayoutStyle.ENHANCED)
     private val controls = mockk<ClimateControls> {
         every { hvacModes } returns listOf("heat", "cool", "heat_cool", "off")
     }

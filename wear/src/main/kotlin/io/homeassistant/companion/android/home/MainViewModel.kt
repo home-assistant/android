@@ -33,6 +33,7 @@ import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.database.wear.FavoriteCaches
 import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
+import io.homeassistant.companion.android.database.wear.ThermostatLayoutStyle
 import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.database.wear.getAll
@@ -530,7 +531,9 @@ class MainViewModel @Inject constructor(
         thermostatSettingsMutex.withLock {
             withContext(Dispatchers.IO) {
                 val current = thermostatTileDao.get(tileId)
-                val updated = update(current ?: ThermostatTile(id = tileId, layoutStyle = "enhanced"))
+                val updated = update(
+                    current ?: ThermostatTile(id = tileId, layoutStyle = ThermostatLayoutStyle.ENHANCED),
+                )
                 thermostatTileDao.add(updated)
                 if (current == null || updated.layoutStyle != current.layoutStyle) {
                     wearPrefsRepository.setThermostatLayoutInvitationAcknowledged(tileId, true)

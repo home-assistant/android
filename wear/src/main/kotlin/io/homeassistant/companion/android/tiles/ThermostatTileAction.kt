@@ -1,6 +1,7 @@
 package io.homeassistant.companion.android.tiles
 
 import io.homeassistant.companion.android.common.data.integration.ClimateControls
+import io.homeassistant.companion.android.database.wear.ThermostatLayoutStyle
 import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.homeassistant.companion.android.tiles.ThermostatCommandCoordinator.TemperatureSlot
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_ACTION_DOWN
@@ -26,10 +27,9 @@ internal fun resolveThermostatAction(
         return null
     }
     val action = clickedId.removePrefix(actionPrefix)
-    return if (config.layoutStyle == "classic") {
-        classicAction(action, state)
-    } else {
-        enhancedAction(action, config, controls)
+    return when (config.layoutStyle) {
+        ThermostatLayoutStyle.CLASSIC -> classicAction(action, state)
+        ThermostatLayoutStyle.ENHANCED -> enhancedAction(action, config, controls)
     }
 }
 

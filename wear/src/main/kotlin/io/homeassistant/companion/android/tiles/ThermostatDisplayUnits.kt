@@ -1,12 +1,17 @@
 package io.homeassistant.companion.android.tiles
 
+import io.homeassistant.companion.android.database.wear.ThermostatTemperatureUnit
 import kotlin.math.abs
 import kotlin.math.round
 
 /** Converts presentation values and adjustments at the boundary of the server-unit command pipeline. */
-internal class ThermostatDisplayUnits(source: String?, preference: String) {
+internal class ThermostatDisplayUnits(source: String?, preference: ThermostatTemperatureUnit) {
     private val sourceUnit = Unit.fromSymbol(source)
-    private val requestedUnit = Unit.fromSymbol(preference)
+    private val requestedUnit = when (preference) {
+        ThermostatTemperatureUnit.DEFAULT -> null
+        ThermostatTemperatureUnit.CELSIUS -> Unit.CELSIUS
+        ThermostatTemperatureUnit.FAHRENHEIT -> Unit.FAHRENHEIT
+    }
     val hasOverride = sourceUnit != null && requestedUnit != null
     private val displayUnit = if (hasOverride) requestedUnit else sourceUnit
     val symbol = if (hasOverride) checkNotNull(displayUnit).symbol else source ?: "°"

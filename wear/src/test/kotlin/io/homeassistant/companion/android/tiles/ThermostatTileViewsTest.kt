@@ -14,6 +14,8 @@ import dagger.hilt.android.testing.HiltTestApplication
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.data.integration.ClimateControls
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
+import io.homeassistant.companion.android.database.wear.ThermostatLayoutStyle
+import io.homeassistant.companion.android.database.wear.ThermostatTemperatureUnit
 import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.mockk.mockk
 import org.junit.Test
@@ -88,7 +90,7 @@ class ThermostatTileViewsTest {
 
     @Test
     fun `Given compact Enhanced layout when rendered then single and dual setpoint actions stay distinct`() {
-        val enhanced = config.copy(layoutStyle = "enhanced", showSecondaryButtons = true)
+        val enhanced = config.copy(layoutStyle = ThermostatLayoutStyle.ENHANCED, showSecondaryButtons = true)
         val single = views.enhancedTimeline(enhanced, thermostat(), "°C", null, prefix, 192, 192).actions()
         val dual = views.enhancedTimeline(enhanced, thermostat("heat_cool"), "°C", null, prefix, 192, 192).actions()
         val modes = setOf("Mode:heat", "Mode:cool", "Mode:heat_cool", "Mode:off", "CycleFan")
@@ -98,7 +100,7 @@ class ThermostatTileViewsTest {
 
     @Test
     fun `Given default Enhanced settings when rendered then hide secondary adjustments on both watch sizes`() {
-        val enhanced = config.copy(layoutStyle = "enhanced")
+        val enhanced = config.copy(layoutStyle = ThermostatLayoutStyle.ENHANCED)
         val modes = setOf("Mode:heat", "Mode:cool", "Mode:heat_cool", "Mode:off", "CycleFan")
         for (size in listOf(192, 240)) {
             for (state in listOf("heat", "cool")) {
@@ -114,7 +116,11 @@ class ThermostatTileViewsTest {
 
     @Test
     fun `Given secondary adjustments enabled when rendered then use the saved step on both watch sizes`() {
-        val enhanced = config.copy(layoutStyle = "enhanced", showSecondaryButtons = true, secondaryStep = 5)
+        val enhanced = config.copy(
+            layoutStyle = ThermostatLayoutStyle.ENHANCED,
+            showSecondaryButtons = true,
+            secondaryStep = 5,
+        )
         val modes = setOf("Mode:heat", "Mode:cool", "Mode:heat_cool", "Mode:off", "CycleFan")
         for (size in listOf(192, 240)) {
             val single = views.enhancedTimeline(enhanced, thermostat(), "°C", null, prefix, size, size)
@@ -126,7 +132,7 @@ class ThermostatTileViewsTest {
 
     @Test
     fun `Given a unit override when rendering both layouts then show converted temperatures and degree symbols`() {
-        val fahrenheit = config.copy(temperatureUnit = "F")
+        val fahrenheit = config.copy(temperatureUnit = ThermostatTemperatureUnit.FAHRENHEIT)
         val classicTexts = views.classicTimeline(fahrenheit, thermostat(), "°C", null, prefix)
             .elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
         assertTrue("67.1 °F" in classicTexts)
@@ -147,7 +153,7 @@ class ThermostatTileViewsTest {
     @Test
     fun `Given HVAC off when fan activity changes then Enhanced displays the reported activity`() {
         fun texts(action: String, fanMode: String) = views.enhancedTimeline(
-            config.copy(layoutStyle = "enhanced"),
+            config.copy(layoutStyle = ThermostatLayoutStyle.ENHANCED),
             thermostat("off", hvacAction = action, fanMode = fanMode),
             "°C",
             null,
@@ -171,7 +177,7 @@ class ThermostatTileViewsTest {
 
     @Test
     fun `Given pending or failed commands when rendering Enhanced then show feedback without failed setpoints`() {
-        val enhanced = config.copy(layoutStyle = "enhanced")
+        val enhanced = config.copy(layoutStyle = ThermostatLayoutStyle.ENHANCED)
         val waiting = ThermostatCommandCoordinator.Pending("21°", ThermostatCommandCoordinator.Pending.Status.WAITING, single = 21f)
         fun texts(pending: ThermostatCommandCoordinator.Pending) = views.enhancedTimeline(
             enhanced,

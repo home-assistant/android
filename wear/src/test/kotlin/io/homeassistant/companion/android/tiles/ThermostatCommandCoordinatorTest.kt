@@ -12,6 +12,7 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationRep
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithoutContext
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.database.server.Server
+import io.homeassistant.companion.android.database.wear.ThermostatTemperatureUnit
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -483,7 +484,7 @@ class ThermostatCommandCoordinatorTest {
         coEvery { repository.getEntity(target.entityId) } returns state(70f)
         coEvery { repository.getEntityChanges(any()) } returns null
         coordinator.rememberEntity(target, snapshot)
-        val units = ThermostatDisplayUnits("°F", "default")
+        val units = ThermostatDisplayUnits("°F", ThermostatTemperatureUnit.DEFAULT)
         val slot = ThermostatCommandCoordinator.TemperatureSlot.SINGLE
         coordinator.adjustTemperature(target, units, slot, 1f)
         coordinator.cycleFan(target)
@@ -511,7 +512,7 @@ class ThermostatCommandCoordinatorTest {
         val gate = CompletableDeferred<Unit>()
         val snapshot = EntityDisplayWithoutContext(state(70f))
         coordinator.rememberEntity(target, snapshot)
-        val units = ThermostatDisplayUnits("°F", "default")
+        val units = ThermostatDisplayUnits("°F", ThermostatTemperatureUnit.DEFAULT)
         val slot = ThermostatCommandCoordinator.TemperatureSlot.SINGLE
         val sent = mutableListOf<Float>()
         coEvery { repository.callAction("climate", "set_temperature", any()) } coAnswers {
@@ -542,7 +543,7 @@ class ThermostatCommandCoordinatorTest {
             ),
         )
         coordinator.rememberEntity(target, snapshot)
-        val units = ThermostatDisplayUnits("°F", "default")
+        val units = ThermostatDisplayUnits("°F", ThermostatTemperatureUnit.DEFAULT)
         coordinator.adjustTemperature(target, units, ThermostatCommandCoordinator.TemperatureSlot.HEAT, 1f)
         coordinator.adjustTemperature(target, units, ThermostatCommandCoordinator.TemperatureSlot.COOL, -1f)
         assertEquals(68f, coordinator.get(target)?.low)
@@ -557,7 +558,7 @@ class ThermostatCommandCoordinatorTest {
         coEvery { repository.getEntity(target.entityId) } returns state(75f)
         coEvery { repository.getEntityChanges(any()) } returns null
         coEvery { repository.callAction("climate", "set_temperature", any()) } returns Unit
-        val units = ThermostatDisplayUnits("°F", "default")
+        val units = ThermostatDisplayUnits("°F", ThermostatTemperatureUnit.DEFAULT)
         val slot = ThermostatCommandCoordinator.TemperatureSlot.SINGLE
 
         coordinator.adjustTemperature(target, units, slot, 1f)
@@ -583,7 +584,7 @@ class ThermostatCommandCoordinatorTest {
 
         coordinator.adjustTemperature(
             target,
-            ThermostatDisplayUnits("°F", "default"),
+            ThermostatDisplayUnits("°F", ThermostatTemperatureUnit.DEFAULT),
             ThermostatCommandCoordinator.TemperatureSlot.SINGLE,
             1f,
         )
