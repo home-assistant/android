@@ -47,12 +47,15 @@ val frontendExternalBusJson = Json(kotlinJsonMapper) {
 @ViewModelScoped
 class FrontendExternalBusRepository @Inject constructor() {
 
+    /** Associates the parsed message with its source navigation while it is queued for delivery. */
+    data class ReceivedMessage(val message: IncomingExternalBusMessage, val navigationId: Long?)
+
     private val actionsFlow = MutableSharedFlow<WebViewAction>(
         // Don't suspend if the WebView is temporarily unavailable
         extraBufferCapacity = BUFFER_CAPACITY,
     )
 
-    private val incomingFlow = MutableSharedFlow<IncomingExternalBusMessage>(
+    private val incomingFlow = MutableSharedFlow<ReceivedMessage>(
         extraBufferCapacity = BUFFER_CAPACITY,
     )
 
@@ -110,7 +113,7 @@ class FrontendExternalBusRepository @Inject constructor() {
      * Unknown message types are emitted as [io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage]
      * instead of throwing exceptions, ensuring forward compatibility with newer frontend versions.
      */
-    fun incomingMessages(): Flow<IncomingExternalBusMessage> = incomingFlow.asSharedFlow()
+    fun incomingMessages(): Flow<ReceivedMessage> = incomingFlow.asSharedFlow()
 
     /**
      * Called by the WebView JavaScript interface when a message is received from the frontend.
@@ -118,11 +121,12 @@ class FrontendExternalBusRepository @Inject constructor() {
      * The message is deserialized and emitted to subscribers of [incomingMessages].
      *
      * @param messageJson The JSON message from the frontend
+     * @param navigationId The navigation that was active when the bridge received the message
      */
-    suspend fun onMessageReceived(messageJson: JsonElement) {
+    suspend fun onMessageReceived(messageJson: JsonElement, navigationId: Long?) {
         val message = deserializeMessage(messageJson)
         if (message != null) {
-            incomingFlow.emit(message)
+            incomingFlow.emit(ReceivedMessage(message, navigationId))
         }
     }
 

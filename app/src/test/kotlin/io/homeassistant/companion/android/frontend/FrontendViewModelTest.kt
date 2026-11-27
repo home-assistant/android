@@ -168,6 +168,14 @@ class FrontendViewModelTest {
         every { scanRequested } returns improvScanRequestedFlow
     }
 
+    private suspend fun MutableSharedFlow<FrontendHandlerEvent>.emitConnected(viewModel: FrontendViewModel) {
+        emit(FrontendHandlerEvent.Connected(viewModel.viewState.value.navigationId))
+    }
+
+    private suspend fun MutableSharedFlow<FrontendHandlerEvent>.emitLoaded(viewModel: FrontendViewModel) {
+        emit(FrontendHandlerEvent.Loaded(viewModel.viewState.value.navigationId))
+    }
+
     private fun createViewModel(
         serverId: Int = this.serverId,
         path: String? = null,
@@ -663,7 +671,7 @@ class FrontendViewModelTest {
             assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
 
             // Emit connected message
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceUntilIdle()
 
             val state = assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
@@ -687,11 +695,11 @@ class FrontendViewModelTest {
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceTimeBy(1.seconds)
             assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
 
-            messageFlow.emit(FrontendHandlerEvent.Loaded)
+            messageFlow.emitLoaded(viewModel)
             advanceUntilIdle()
             assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
         }
@@ -708,11 +716,14 @@ class FrontendViewModelTest {
 
             // Backgrounded mid-load. The watchdog is cancelled, so the state simply stays Loading
             // however long the app stays away.
+            val firstNavigation = viewModel.viewState.value.navigationId
             viewModel.onScreenStartedChanged(false)
             advanceTimeBy(5.minutes)
             assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
 
             viewModel.onScreenStartedChanged(true)
+            runCurrent()
+            assertTrue(viewModel.viewState.value.navigationId > firstNavigation)
             advanceTimeBy(CONNECTION_TIMEOUT + 1.seconds)
 
             // Resuming restarts the timeout countdown, so it must also restart the load. The paused
@@ -755,7 +766,7 @@ class FrontendViewModelTest {
 
             val viewModel = createViewModel()
             advanceTimeBy(1.seconds)
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceTimeBy(1.seconds)
             val state = assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
             assertTrue(state.connected)
@@ -785,7 +796,7 @@ class FrontendViewModelTest {
 
             val viewModel = createViewModel()
             advanceTimeBy(1.seconds)
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceTimeBy(CONNECTION_TIMEOUT + 1.seconds)
 
             assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
@@ -800,7 +811,7 @@ class FrontendViewModelTest {
             )
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceUntilIdle()
 
             messageFlow.emit(
@@ -829,7 +840,7 @@ class FrontendViewModelTest {
             )
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             messageFlow.emit(
                 FrontendHandlerEvent.ShowBarcodeScanner(1, "Scan", "Point", alternativeOptionLabel = null),
             )
@@ -849,7 +860,7 @@ class FrontendViewModelTest {
             )
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             messageFlow.emit(
                 FrontendHandlerEvent.ShowBarcodeScanner(1, "Scan", "Point", alternativeOptionLabel = null),
             )
@@ -869,7 +880,7 @@ class FrontendViewModelTest {
             )
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             messageFlow.emit(
                 FrontendHandlerEvent.ShowBarcodeScanner(7, "Scan", "Point", alternativeOptionLabel = null),
             )
@@ -1335,10 +1346,10 @@ class FrontendViewModelTest {
                 UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
             )
 
-            createViewModel()
+            val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceUntilIdle()
 
             coVerify { permissionManager.checkNotificationPermission(serverId) }
@@ -1358,14 +1369,14 @@ class FrontendViewModelTest {
                 serverId = serverId,
             )
 
-            createViewModel()
+            val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceTimeBy(1.seconds)
             coVerify(exactly = 0) { permissionManager.checkNotificationPermission(any()) }
 
-            messageFlow.emit(FrontendHandlerEvent.Loaded)
+            messageFlow.emitLoaded(viewModel)
             advanceUntilIdle()
             coVerify { permissionManager.checkNotificationPermission(serverId) }
         }
@@ -1568,7 +1579,7 @@ class FrontendViewModelTest {
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
             // Transition to Content
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceUntilIdle()
 
             val handler = mockk<HttpAuthHandler>(relaxed = true)
@@ -1591,7 +1602,7 @@ class FrontendViewModelTest {
             val (viewModel, triggerAuth) = createViewModelWithAuthCapture()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceUntilIdle()
 
             triggerAuth(mockk(relaxed = true), "example.com", "https://example.com/", "realm")
@@ -1612,7 +1623,7 @@ class FrontendViewModelTest {
             val (viewModel, triggerAuth) = createViewModelWithAuthCapture()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
 
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceUntilIdle()
 
             val handler = mockk<HttpAuthHandler>(relaxed = true)
@@ -1739,7 +1750,7 @@ class FrontendViewModelTest {
 
             val (viewModel, reportCanGoBack) = createViewModelWithCanGoBackCapture()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceUntilIdle()
 
             assertFalse(viewModel.canGoBack())
@@ -1761,7 +1772,7 @@ class FrontendViewModelTest {
 
             val (viewModel, reportCanGoBack) = createViewModelWithCanGoBackCapture()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceUntilIdle()
             reportCanGoBack(true)
             assertTrue(viewModel.canGoBack())
@@ -1788,7 +1799,7 @@ class FrontendViewModelTest {
                 advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
                 // Connecting makes the dashboard the current page; clearing history drops the
                 // intermediate about:blank placeholder so it is not a reachable back entry.
-                messageFlow.emit(FrontendHandlerEvent.Connected)
+                messageFlow.emitConnected(viewModel)
                 advanceUntilIdle()
 
                 assertInstanceOf(WebViewAction.ClearHistory::class.java, awaitItem())
@@ -1811,7 +1822,7 @@ class FrontendViewModelTest {
 
             // Connect to server 1 and let it accrue in-dashboard back history.
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceUntilIdle()
             reportCanGoBack(true)
             assertTrue(viewModel.canGoBack())
@@ -1819,7 +1830,7 @@ class FrontendViewModelTest {
             viewModel.webViewActions.test {
                 viewModel.switchServer(2)
                 advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-                messageFlow.emit(FrontendHandlerEvent.Connected)
+                messageFlow.emitConnected(viewModel)
                 advanceUntilIdle()
 
                 // The new server's history is cleared so back cannot return to the previous server.
@@ -1868,7 +1879,7 @@ class FrontendViewModelTest {
 
             viewModel.webViewActions.test {
                 advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-                messageFlow.emit(FrontendHandlerEvent.Connected)
+                messageFlow.emitConnected(viewModel)
                 advanceUntilIdle()
 
                 completeConnect(this@runTest, WebViewAction.ReadThemeColors.Companion.ThemeColors(statusBarColor, backgroundColor))
@@ -1887,7 +1898,7 @@ class FrontendViewModelTest {
 
             viewModel.webViewActions.test {
                 advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-                messageFlow.emit(FrontendHandlerEvent.Connected)
+                messageFlow.emitConnected(viewModel)
                 advanceUntilIdle()
                 completeConnect(this@runTest, themeColors = null)
 
@@ -1906,7 +1917,7 @@ class FrontendViewModelTest {
 
             viewModel.webViewActions.test {
                 advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-                messageFlow.emit(FrontendHandlerEvent.Connected)
+                messageFlow.emitConnected(viewModel)
                 advanceUntilIdle()
 
                 completeConnect(this@runTest, themeColors = null)
@@ -1931,7 +1942,7 @@ class FrontendViewModelTest {
 
             viewModel.webViewActions.test {
                 advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-                messageFlow.emit(FrontendHandlerEvent.Connected)
+                messageFlow.emitConnected(viewModel)
                 advanceUntilIdle()
 
                 completeConnect(this@runTest, themeColors = null)
@@ -1955,7 +1966,7 @@ class FrontendViewModelTest {
 
             viewModel.webViewActions.test {
                 advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-                messageFlow.emit(FrontendHandlerEvent.Connected)
+                messageFlow.emitConnected(viewModel)
                 advanceUntilIdle()
 
                 completeConnect(this@runTest, themeColors = null)
@@ -1979,7 +1990,7 @@ class FrontendViewModelTest {
 
             viewModel.webViewActions.test {
                 advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-                messageFlow.emit(FrontendHandlerEvent.Connected)
+                messageFlow.emitConnected(viewModel)
                 advanceUntilIdle()
 
                 completeConnect(this@runTest, themeColors = null)
@@ -2003,7 +2014,7 @@ class FrontendViewModelTest {
 
             viewModel.webViewActions.test {
                 advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-                messageFlow.emit(FrontendHandlerEvent.Connected)
+                messageFlow.emitConnected(viewModel)
                 advanceUntilIdle()
 
                 completeConnect(this@runTest, themeColors = null)
@@ -2028,7 +2039,7 @@ class FrontendViewModelTest {
 
             viewModel.webViewActions.test {
                 advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-                messageFlow.emit(FrontendHandlerEvent.Connected)
+                messageFlow.emitConnected(viewModel)
                 advanceUntilIdle()
                 completeConnect(this@runTest, themeColors = null)
 
@@ -2054,7 +2065,7 @@ class FrontendViewModelTest {
 
             viewModel.webViewActions.test {
                 advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-                messageFlow.emit(FrontendHandlerEvent.Connected)
+                messageFlow.emitConnected(viewModel)
                 advanceUntilIdle()
                 completeConnect(this@runTest, themeColors = null)
 
@@ -2305,7 +2316,7 @@ class FrontendViewModelTest {
             assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
 
             // Connect before timeout
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceUntilIdle()
 
             // Verify content state
@@ -2357,6 +2368,27 @@ class FrontendViewModelTest {
         }
 
         @Test
+        fun `Given a retry that times out when the user waits then the same navigation continues`() = runTest {
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            val viewModel = createViewModel()
+            runCurrent()
+            val first = viewModel.viewState.value
+            viewModel.onRetry()
+            runCurrent()
+            val retry = assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+            assertTrue(retry.navigationId > first.navigationId)
+            advanceTimeBy(CONNECTION_TIMEOUT + 1.seconds)
+            val error = assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
+            assertEquals(FrontendConnectionError.ExternalBusTimeout, error.error)
+
+            viewModel.onErrorAction(ErrorActionIntent.Wait)
+
+            assertEquals(retry, viewModel.viewState.value)
+        }
+
+        @Test
         fun `Given external bus timeout error when frontend connects then state recovers to Content`() = runTest {
             val messageFlow = MutableSharedFlow<FrontendHandlerEvent>()
             every { frontendBusObserver.messageResults() } returns messageFlow
@@ -2370,7 +2402,7 @@ class FrontendViewModelTest {
             assertEquals(FrontendConnectionError.ExternalBusTimeout, errorState.error)
 
             // The WebView keeps loading under the error overlay and completes the handshake
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceUntilIdle()
 
             val state = assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
@@ -2389,7 +2421,7 @@ class FrontendViewModelTest {
             advanceUntilIdle()
             assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
 
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceUntilIdle()
 
             assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
@@ -2661,7 +2693,7 @@ class FrontendViewModelTest {
 
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceUntilIdle()
             assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
 
@@ -2896,7 +2928,7 @@ class FrontendViewModelTest {
 
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceTimeBy(1.seconds)
 
             improvUiStateFlow.value = ImprovUIState.SearchingDevice(deviceName = "Smart Plug")
@@ -3265,7 +3297,7 @@ class FrontendViewModelTest {
             )
             val viewModel = createViewModel()
             advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-            messageFlow.emit(FrontendHandlerEvent.Connected)
+            messageFlow.emitConnected(viewModel)
             advanceUntilIdle()
             return viewModel
         }
@@ -3560,7 +3592,7 @@ class FrontendViewModelTest {
                 val viewModel = createViewModel()
                 viewModel.events.test {
                     advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-                    messageFlow.emit(FrontendHandlerEvent.Connected)
+                    messageFlow.emitConnected(viewModel)
 
                     val event = assertInstanceOf(FrontendEvent.ShowSnackbar::class.java, awaitItem())
                     assertEquals(
@@ -3586,7 +3618,7 @@ class FrontendViewModelTest {
             val viewModel = createViewModel()
             viewModel.events.test {
                 advanceTimeBy(CONNECTION_TIMEOUT - 1.seconds)
-                messageFlow.emit(FrontendHandlerEvent.Connected)
+                messageFlow.emitConnected(viewModel)
                 advanceUntilIdle()
                 expectNoEvents()
                 cancelAndIgnoreRemainingEvents()
@@ -3600,6 +3632,55 @@ class FrontendViewModelTest {
         private fun stubClientCert(certificate: ClientCertificate?) {
             coEvery { keyChainRepository.getClientCertProvider() } returns object : ClientCertProvider {
                 override val certificate = certificate
+            }
+        }
+
+        @ParameterizedTest
+        @ValueSource(booleans = [false, true])
+        fun `Given a retry awaiting certificate priming when the old page reports ready then the retry still times out`(reportsLoaded: Boolean) = runTest {
+            val messages = MutableSharedFlow<FrontendHandlerEvent>()
+            every { frontendBusObserver.messageResults() } returns messages
+            every { urlManager.serverUrlFlow(any(), any()) } returns flowOf(
+                UrlLoadResult.Success(url = testUrlWithAuth, serverId = serverId),
+            )
+            coEvery { serverManager.getServer(serverId) } returns mockServer(
+                url = testUrlWithAuth,
+                name = "Test",
+                haVersion = if (reportsLoaded) HomeAssistantVersion(2026, 8, 0) else HomeAssistantVersion(2026, 7, 0),
+                serverId = serverId,
+            )
+            stubClientCert(mockk())
+            val viewModel = createViewModel()
+            runCurrent()
+            val previousNavigation = viewModel.viewState.value.navigationId
+            viewModel.onRetry()
+            runCurrent()
+            val retry = assertInstanceOf(FrontendViewState.Loading::class.java, viewModel.viewState.value)
+
+            viewModel.webViewActions.test {
+                val prepare = launch { viewModel.prepareUrlLoad(retry.url) }
+                val ping = assertInstanceOf(WebViewAction.PingUrl::class.java, awaitItem())
+                messages.emit(FrontendHandlerEvent.Connected(previousNavigation))
+                if (reportsLoaded) messages.emit(FrontendHandlerEvent.Loaded(previousNavigation))
+                runCurrent()
+                assertEquals(retry, viewModel.viewState.value)
+
+                ping.result.complete(Unit)
+                prepare.join()
+                advanceTimeBy(CONNECTION_TIMEOUT + 1.seconds)
+                val error = assertInstanceOf(FrontendViewState.Error::class.java, viewModel.viewState.value)
+                assertEquals(FrontendConnectionError.ExternalBusTimeout, error.error)
+
+                val ready = if (reportsLoaded) {
+                    FrontendHandlerEvent.Loaded(retry.navigationId)
+                } else {
+                    FrontendHandlerEvent.Connected(retry.navigationId)
+                }
+                messages.emit(ready)
+                runCurrent()
+                val content = assertInstanceOf(FrontendViewState.Content::class.java, viewModel.viewState.value)
+                assertEquals(retry.navigationId, content.navigationId)
+                cancelAndIgnoreRemainingEvents()
             }
         }
 
