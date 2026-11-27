@@ -33,6 +33,10 @@ internal val currentChangelog = Changelog(
             contentRes = commonR.string.changelog_entry_hinge_status_sensor,
             platforms = setOf(ChangelogPlatform.APP),
         ),
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_progress_style_notifications,
+            platforms = setOf(ChangelogPlatform.APP),
+        ),
     ),
     improved = listOf(),
     fixed = listOf(
