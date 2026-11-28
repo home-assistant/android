@@ -26,10 +26,12 @@ import dagger.hilt.components.SingletonComponent
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
+import io.homeassistant.companion.android.common.util.AnySerializer
 import io.homeassistant.companion.android.common.util.CHANNEL_WEBSOCKET
 import io.homeassistant.companion.android.common.util.CHANNEL_WEBSOCKET_ISSUES
 import io.homeassistant.companion.android.common.util.CheckLocalNetworkPermissionUseCase
 import io.homeassistant.companion.android.common.util.SdkVersion
+import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.database.settings.SettingsDao
 import io.homeassistant.companion.android.database.settings.WebsocketSetting
 import io.homeassistant.companion.android.launch.LaunchActivity
@@ -236,33 +238,41 @@ class WebsocketManager(appContext: Context, workerParams: WorkerParameters) :
                 }
             }
             val flattened = mutableMapOf<String, String>()
-            if (it.containsKey("data")) {
-                for ((key, value) in it["data"] as Map<*, *>) {
-                    if (key == "actions" && value is List<*>) {
-                        value.forEachIndexed { i, action ->
-                            if (action is Map<*, *>) {
-                                flattened["action_${i + 1}_key"] = action["action"].toString()
-                                flattened["action_${i + 1}_title"] = action["title"].toString()
-                                for (key in ACTION_EXTRA_KEYS) {
-                                    action[key]?.let { value -> flattened["action_${i + 1}_$key"] = value.toString() }
-                                }
-                            }
-                        }
-                    } else {
-                        flattened[key.toString()] = value.toString()
-                    }
-                }
-            }
-            // Message and title are in the root unlike all the others.
-            listOf("message", "title").forEach { key ->
-                if (it.containsKey(key)) {
-                    flattened[key] = it[key].toString()
-                }
-            }
+            flattened.flattenNotification(it)
             serverManager.getServer(serverId)?.let { server ->
                 flattened["webhook_id"] = server.connection.webhookId.toString()
             }
             messagingManager.handleMessage(flattened, SOURCE)
+        }
+    }
+
+    private fun MutableMap<String, String>.flattenNotification(notification: Map<String, Any>) {
+        if (notification.containsKey("data")) {
+            for ((key, value) in notification["data"] as Map<*, *>) {
+                if (key == "actions" && value is List<*>) {
+                    value.forEachIndexed { i, action ->
+                        if (action is Map<*, *>) {
+                            this["action_${i + 1}_key"] = action["action"].toString()
+                            this["action_${i + 1}_title"] = action["title"].toString()
+                            for (key in ACTION_EXTRA_KEYS) {
+                                action[key]?.let { value -> this["action_${i + 1}_$key"] = value.toString() }
+                            }
+                        }
+                    }
+                } else if (value is Map<*, *>) {
+                    this[key.toString()] = kotlinJsonMapper.encodeToString(AnySerializer, value)
+                } else if (value is Iterable<*>) {
+                    this[key.toString()] = kotlinJsonMapper.encodeToString(AnySerializer, value.toList())
+                } else {
+                    this[key.toString()] = value.toString()
+                }
+            }
+        }
+        // Message and title are in the root unlike all the others.
+        listOf("message", "title").forEach { key ->
+            if (notification.containsKey(key)) {
+                this[key] = notification[key].toString()
+            }
         }
     }
 

@@ -27,9 +27,11 @@ import io.mockk.coEvery
 import io.mockk.coJustRun
 import io.mockk.coVerify
 import io.mockk.every
+import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.mockkConstructor
 import io.mockk.mockkStatic
+import io.mockk.slot
 import io.mockk.spyk
 import io.mockk.unmockkAll
 import io.mockk.verify
@@ -342,6 +344,91 @@ class WebsocketManagerTest {
         testScheduler.advanceTimeBy(30_000)
         testScheduler.runCurrent()
         coVerify(exactly = 2) { repository.getNotifications() }
+
+        work.cancelAndJoin()
+    }
+
+    @Test
+    fun `Given a notification with nested objects, lists, and actions when collected then flattens and forwards it to MessagingManager`() = runTest {
+        mockSetting(WebsocketSetting.ALWAYS)
+        every { context.hasActiveConnection() } returns true
+        coEvery { entryPoint.serverManager.isRegistered() } returns true
+
+        mockkConstructor(NotificationCompat.Builder::class)
+        every { anyConstructed<NotificationCompat.Builder>().build() } returns mockk<Notification>()
+
+        val server = mockk<Server>(relaxed = true)
+        every { server.connection.webhookId } returns "test_webhook_id"
+        coEvery { entryPoint.serverManager.servers() } returns listOf(server)
+        coEvery { entryPoint.serverManager.getServer(any<Int>()) } returns server
+
+        val notificationsFlow = MutableSharedFlow<Map<String, Any>>()
+        val repository = mockk<WebSocketRepository>(relaxed = true)
+        coEvery { entryPoint.serverManager.webSocketRepository(any()) } returns repository
+        coEvery { repository.getNotifications() } returns notificationsFlow
+
+        val capturedMessage = slot<Map<String, String>>()
+        justRun { entryPoint.messagingManager.handleMessage(capture(capturedMessage), any()) }
+
+        val worker = spyk(TestListenableWorkerBuilder<WebsocketManager>(context).build())
+        coJustRun { worker.setForeground(any()) }
+        worker.dispatcher = StandardTestDispatcher(testScheduler)
+
+        val work = launch { worker.doWork() }
+        testScheduler.runCurrent()
+
+        notificationsFlow.emit(
+            mapOf(
+                "hass_confirm_id" to "confirm_123",
+                "title" to "Car is currently charged to 50%",
+                "message" to "Limit is set to 80%",
+                "data" to mapOf(
+                    "progress" to 50,
+                    "tag" to "car_charging",
+                    "progress_segments" to listOf(
+                        mapOf("length" to 80),
+                        mapOf("length" to 20, "color" to "#FF0000"),
+                    ),
+                    "progress_points" to setOf(
+                        mapOf("position" to 80, "color" to "#00FF00"),
+                    ),
+                    "custom_object" to mapOf("nested" to "value", "count" to 2),
+                    "actions" to listOf(
+                        mapOf(
+                            "action" to "URI",
+                            "title" to "Open Cameras",
+                            "uri" to "/lovelace/cameras",
+                        ),
+                        mapOf(
+                            "action" to "DISMISS",
+                            "title" to "Dismiss",
+                        ),
+                    ),
+                ),
+            ),
+        )
+        testScheduler.runCurrent()
+
+        coVerify(exactly = 1) { repository.ackNotification("confirm_123") }
+        verify(exactly = 1) { entryPoint.messagingManager.handleMessage(any(), "Websocket") }
+        assertEquals(
+            mapOf(
+                "title" to "Car is currently charged to 50%",
+                "message" to "Limit is set to 80%",
+                "webhook_id" to "test_webhook_id",
+                "progress" to "50",
+                "tag" to "car_charging",
+                "progress_segments" to """[{"length":80},{"length":20,"color":"#FF0000"}]""",
+                "progress_points" to """[{"position":80,"color":"#00FF00"}]""",
+                "custom_object" to """{"nested":"value","count":2}""",
+                "action_1_key" to "URI",
+                "action_1_title" to "Open Cameras",
+                "action_1_uri" to "/lovelace/cameras",
+                "action_2_key" to "DISMISS",
+                "action_2_title" to "Dismiss",
+            ),
+            capturedMessage.captured,
+        )
 
         work.cancelAndJoin()
     }

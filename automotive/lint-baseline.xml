@@ -52,7 +52,7 @@
         errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/notifications/MessagingManager.kt"
-            line="1145"
+            line="1180"
             column="17"/>
     </issue>
 
@@ -118,7 +118,7 @@
         errorLine2="                             ~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/controls/HaControlsProviderService.kt"
-            line="58"
+            line="59"
             column="30"/>
     </issue>
 
@@ -745,7 +745,7 @@
         errorLine2="    ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
-            line="173"
+            line="175"
             column="5"/>
     </issue>
 
@@ -756,7 +756,7 @@
         errorLine2="        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
-            line="326"
+            line="331"
             column="9"/>
     </issue>
 
@@ -767,7 +767,7 @@
         errorLine2="                                                      ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
-            line="477"
+            line="482"
             column="55"/>
     </issue>
 
@@ -778,7 +778,7 @@
         errorLine2="        ^">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/frontend/FrontendScreen.kt"
-            line="523"
+            line="528"
             column="9"/>
     </issue>
 
@@ -1042,7 +1042,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/vehicle/HaCarAppService.kt"
-            line="34"
+            line="36"
             column="1"/>
     </issue>
 
@@ -1229,7 +1229,7 @@
         errorLine2="~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/settings/vehicle/ManageAndroidAutoViewModel.kt"
-            line="28"
+            line="35"
             column="1"/>
     </issue>
 
@@ -1943,6 +1943,28 @@
             file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/widgets/button/ButtonWidgetConfigureActivity.kt"
             line="421"
             column="59"/>
+    </issue>
+
+    <issue
+        id="AvoidAnySerializer"
+        message="Prefer polymorphic serializer over AnySerializer."
+        errorLine1="                    this[key.toString()] = kotlinJsonMapper.encodeToString(AnySerializer, value)"
+        errorLine2="                                                                           ~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/websocket/WebsocketManager.kt"
+            line="263"
+            column="76"/>
+    </issue>
+
+    <issue
+        id="AvoidAnySerializer"
+        message="Prefer polymorphic serializer over AnySerializer."
+        errorLine1="                    this[key.toString()] = kotlinJsonMapper.encodeToString(AnySerializer, value.toList())"
+        errorLine2="                                                                           ~~~~~~~~~~~~~">
+        <location
+            file="${:automotive*fullDebug*MAIN*sourceProvider*0*javaDir*5}/io/homeassistant/companion/android/websocket/WebsocketManager.kt"
+            line="265"
+            column="76"/>
     </issue>
 
     <issue
