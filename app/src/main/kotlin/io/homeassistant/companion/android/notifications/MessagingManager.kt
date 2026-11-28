@@ -13,6 +13,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
 import android.graphics.drawable.Icon
 import android.media.AudioManager
 import android.media.MediaMetadataRetriever
@@ -26,9 +28,12 @@ import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.provider.Settings
+import android.util.TypedValue
 import android.view.KeyEvent
 import android.widget.RemoteViews
 import android.widget.Toast
+import androidx.annotation.ColorInt
+import androidx.annotation.ColorRes
 import androidx.annotation.RequiresApi
 import androidx.biometric.BiometricManager
 import androidx.car.app.notification.CarAppExtender
@@ -40,6 +45,8 @@ import androidx.core.app.RemoteInput
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.content.getSystemService
+import androidx.core.content.withStyledAttributes
+import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.scale
 import androidx.core.net.toUri
@@ -54,7 +61,10 @@ import coil3.request.SuccessResult
 import coil3.request.allowHardware
 import coil3.size.Size
 import coil3.toBitmap
+import com.google.android.material.color.DynamicColors
 import dagger.hilt.android.qualifiers.ApplicationContext
+import io.github.timoptr.mdiicons.Mdi
+import io.github.timoptr.mdiicons.toBitmap
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.R
 import io.homeassistant.companion.android.authenticator.Authenticator
@@ -84,8 +94,13 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.cancelGroupIfNeeded
 import io.homeassistant.companion.android.common.util.createSystemAppSettingsIntent
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
+import io.homeassistant.companion.android.common.util.fromHaName
 import io.homeassistant.companion.android.common.util.getActiveNotificationGroup
+import io.homeassistant.companion.android.common.util.getIntOrNull
+import io.homeassistant.companion.android.common.util.getStringOrNull
 import io.homeassistant.companion.android.common.util.isAutomotive
+import io.homeassistant.companion.android.common.util.jsonArrayOrNull
+import io.homeassistant.companion.android.common.util.jsonObjectOrNull
 import io.homeassistant.companion.android.common.util.kotlinJsonMapper
 import io.homeassistant.companion.android.common.util.parseExternalIntentUri
 import io.homeassistant.companion.android.common.util.toJsonObject
@@ -131,6 +146,8 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.json.JsonElement
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.sink
@@ -153,97 +170,109 @@ class MessagingManager @Inject constructor(
     private val clock: Clock,
 ) {
     companion object {
-        const val APP_PREFIX = "app://"
-        const val DEEP_LINK_PREFIX = "deep-link://"
-        const val INTENT_PREFIX = "intent:"
-        const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
-        const val SETTINGS_PREFIX = "settings://"
-        const val NOTIFICATION_HISTORY = "notification_history"
-        const val NO_ACTION = "noAction"
+        private const val APP_PREFIX = "app://"
+        private const val DEEP_LINK_PREFIX = "deep-link://"
+        private const val INTENT_PREFIX = "intent:"
+        private const val MARKET_PREFIX = "https://play.google.com/store/apps/details?id="
+        private const val SETTINGS_PREFIX = "settings://"
+        private const val NOTIFICATION_HISTORY = "notification_history"
+        private const val NO_ACTION = "noAction"
 
-        const val SUBJECT = "subject"
-        const val TIMEOUT = "timeout"
-        const val IMAGE_URL = "image"
-        const val ICON_URL = "icon_url"
-        const val VIDEO_URL = "video"
-        const val VISIBILITY = "visibility"
-        const val PERSISTENT = "persistent"
-        const val CHRONOMETER = "chronometer"
-        const val WHEN = "when"
-        const val WHEN_RELATIVE = "when_relative"
-        const val PROGRESS = "progress"
-        const val PROGRESS_MAX = "progress_max"
-        const val PROGRESS_INDETERMINATE = "progress_indeterminate"
-        const val LIVE_UPDATE = "live_update"
-        const val CRITICAL_TEXT = "critical_text"
-        const val CAR_UI = "car_ui"
+        private const val SUBJECT = "subject"
+        private const val TIMEOUT = "timeout"
+        private const val IMAGE_URL = "image"
+        private const val ICON_URL = "icon_url"
+        private const val VIDEO_URL = "video"
+        private const val VISIBILITY = "visibility"
+        private const val PERSISTENT = "persistent"
+        private const val CHRONOMETER = "chronometer"
+        private const val WHEN = "when"
+        private const val WHEN_RELATIVE = "when_relative"
+        private const val PROGRESS = "progress"
+        private const val PROGRESS_MAX = "progress_max"
+        private const val PROGRESS_INDETERMINATE = "progress_indeterminate"
+        private const val PROGRESS_SEGMENTS = "progress_segments"
+        private const val PROGRESS_SEGMENTS_LENGTH = "length"
+        private const val PROGRESS_SEGMENTS_COLOR = "color"
+        private const val PROGRESS_POINTS = "progress_points"
+        private const val PROGRESS_POINTS_POSITION = "position"
+        private const val PROGRESS_POINTS_COLOR = "color"
+        private const val PROGRESS_TRACKER_ICON = "progress_tracker_icon"
+        private const val PROGRESS_TRACKER_COLOR = "progress_tracker_color"
+        private const val PROGRESS_START_ICON = "progress_start_icon"
+        private const val PROGRESS_START_COLOR = "progress_start_color"
+        private const val PROGRESS_END_ICON = "progress_end_icon"
+        private const val PROGRESS_END_COLOR = "progress_end_color"
+        private const val LIVE_UPDATE = "live_update"
+        private const val CRITICAL_TEXT = "critical_text"
+        private const val CAR_UI = "car_ui"
         const val KEY_TEXT_REPLY = "key_text_reply"
-        const val INTENT_CLASS_NAME = "intent_class_name"
-        const val URI = "URI"
-        const val REPLY = "REPLY"
-        const val TEXT_INPUT = "textinput"
-        const val HIGH_ACCURACY_UPDATE_INTERVAL = "high_accuracy_update_interval"
-        const val PACKAGE_NAME = "package_name"
-        const val CONFIRMATION = "confirmation"
+        private const val INTENT_CLASS_NAME = "intent_class_name"
+        private const val URI = "URI"
+        private const val REPLY = "REPLY"
+        private const val TEXT_INPUT = "textinput"
+        private const val HIGH_ACCURACY_UPDATE_INTERVAL = "high_accuracy_update_interval"
+        private const val PACKAGE_NAME = "package_name"
+        private const val CONFIRMATION = "confirmation"
 
         // special intent constants
-        const val INTENT_PACKAGE_NAME = "intent_package_name"
-        const val INTENT_ACTION = "intent_action"
-        const val INTENT_EXTRAS = "intent_extras"
-        const val INTENT_URI = "intent_uri"
-        const val INTENT_TYPE = "intent_type"
+        private const val INTENT_PACKAGE_NAME = "intent_package_name"
+        private const val INTENT_ACTION = "intent_action"
+        private const val INTENT_EXTRAS = "intent_extras"
+        private const val INTENT_URI = "intent_uri"
+        private const val INTENT_TYPE = "intent_type"
 
         // special action constants
-        const val REQUEST_LOCATION_UPDATE = "request_location_update"
-        const val REMOVE_CHANNEL = "remove_channel"
-        const val COMMAND_DND = "command_dnd"
-        const val COMMAND_RINGER_MODE = "command_ringer_mode"
-        const val COMMAND_BROADCAST_INTENT = "command_broadcast_intent"
-        const val COMMAND_VOLUME_LEVEL = "command_volume_level"
-        const val COMMAND_BLUETOOTH = "command_bluetooth"
-        const val COMMAND_SCREEN_ON = "command_screen_on"
-        const val COMMAND_MEDIA = "command_media"
-        const val COMMAND_HIGH_ACCURACY_MODE = "command_high_accuracy_mode"
-        const val COMMAND_ACTIVITY = "command_activity"
-        const val COMMAND_WEBVIEW = "command_webview"
-        const val COMMAND_KEEP_SCREEN_ON = "keep_screen_on"
-        const val COMMAND_LAUNCH_APP = "command_launch_app"
-        const val COMMAND_APP_LOCK = "command_app_lock"
-        const val COMMAND_PERSISTENT_CONNECTION = "command_persistent_connection"
-        const val COMMAND_AUTO_SCREEN_BRIGHTNESS = "command_auto_screen_brightness"
-        const val COMMAND_SCREEN_BRIGHTNESS_LEVEL = "command_screen_brightness_level"
-        const val COMMAND_SCREEN_OFF_TIMEOUT = "command_screen_off_timeout"
-        const val COMMAND_FLASHLIGHT = "command_flashlight"
+        private const val REQUEST_LOCATION_UPDATE = "request_location_update"
+        private const val REMOVE_CHANNEL = "remove_channel"
+        private const val COMMAND_DND = "command_dnd"
+        private const val COMMAND_RINGER_MODE = "command_ringer_mode"
+        private const val COMMAND_BROADCAST_INTENT = "command_broadcast_intent"
+        private const val COMMAND_VOLUME_LEVEL = "command_volume_level"
+        private const val COMMAND_BLUETOOTH = "command_bluetooth"
+        private const val COMMAND_SCREEN_ON = "command_screen_on"
+        private const val COMMAND_MEDIA = "command_media"
+        private const val COMMAND_HIGH_ACCURACY_MODE = "command_high_accuracy_mode"
+        private const val COMMAND_ACTIVITY = "command_activity"
+        private const val COMMAND_WEBVIEW = "command_webview"
+        private const val COMMAND_KEEP_SCREEN_ON = "keep_screen_on"
+        private const val COMMAND_LAUNCH_APP = "command_launch_app"
+        private const val COMMAND_APP_LOCK = "command_app_lock"
+        private const val COMMAND_PERSISTENT_CONNECTION = "command_persistent_connection"
+        private const val COMMAND_AUTO_SCREEN_BRIGHTNESS = "command_auto_screen_brightness"
+        private const val COMMAND_SCREEN_BRIGHTNESS_LEVEL = "command_screen_brightness_level"
+        private const val COMMAND_SCREEN_OFF_TIMEOUT = "command_screen_off_timeout"
+        private const val COMMAND_FLASHLIGHT = "command_flashlight"
 
-        const val COMMAND_WAKE_WORD_DETECTION = "command_wake_word_detection"
+        private const val COMMAND_WAKE_WORD_DETECTION = "command_wake_word_detection"
 
         // DND commands
-        const val DND_PRIORITY_ONLY = "priority_only"
-        const val DND_ALARMS_ONLY = "alarms_only"
-        const val DND_ALL = "off"
-        const val DND_NONE = "total_silence"
+        private const val DND_PRIORITY_ONLY = "priority_only"
+        private const val DND_ALARMS_ONLY = "alarms_only"
+        private const val DND_ALL = "off"
+        private const val DND_NONE = "total_silence"
 
         // Ringer mode commands
-        const val RM_NORMAL = "normal"
-        const val RM_SILENT = "silent"
-        const val RM_VIBRATE = "vibrate"
+        private const val RM_NORMAL = "normal"
+        private const val RM_SILENT = "silent"
+        private const val RM_VIBRATE = "vibrate"
 
         // Media Commands
-        const val MEDIA_FAST_FORWARD = "fast_forward"
-        const val MEDIA_NEXT = "next"
-        const val MEDIA_PAUSE = "pause"
-        const val MEDIA_PLAY = "play"
-        const val MEDIA_PLAY_PAUSE = "play_pause"
-        const val MEDIA_PREVIOUS = "previous"
-        const val MEDIA_REWIND = "rewind"
-        const val MEDIA_STOP = "stop"
-        const val MEDIA_PACKAGE_NAME = "media_package_name"
-        const val MEDIA_COMMAND = "media_command"
+        private const val MEDIA_FAST_FORWARD = "fast_forward"
+        private const val MEDIA_NEXT = "next"
+        private const val MEDIA_PAUSE = "pause"
+        private const val MEDIA_PLAY = "play"
+        private const val MEDIA_PLAY_PAUSE = "play_pause"
+        private const val MEDIA_PREVIOUS = "previous"
+        private const val MEDIA_REWIND = "rewind"
+        private const val MEDIA_STOP = "stop"
+        private const val MEDIA_PACKAGE_NAME = "media_package_name"
+        private const val MEDIA_COMMAND = "media_command"
 
         // App-lock command parameters:
-        const val APP_LOCK_ENABLED = "app_lock_enabled"
-        const val APP_LOCK_TIMEOUT = "app_lock_timeout"
-        const val HOME_BYPASS_ENABLED = "home_bypass_enabled"
+        private const val APP_LOCK_ENABLED = "app_lock_enabled"
+        private const val APP_LOCK_TIMEOUT = "app_lock_timeout"
+        private const val HOME_BYPASS_ENABLED = "home_bypass_enabled"
 
         // High accuracy commands
         const val HIGH_ACCURACY_SET_UPDATE_INTERVAL = "high_accuracy_set_update_interval"
@@ -251,7 +280,7 @@ class MessagingManager @Inject constructor(
         const val FORCE_OFF = "force_off"
 
         // Command groups
-        val DEVICE_COMMANDS = listOf(
+        private val DEVICE_COMMANDS = listOf(
             COMMAND_DND,
             COMMAND_RINGER_MODE,
             COMMAND_BROADCAST_INTENT,
@@ -274,9 +303,9 @@ class MessagingManager @Inject constructor(
             COMMAND_FLASHLIGHT,
             COMMAND_WAKE_WORD_DETECTION,
         )
-        val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
-        val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
-        val CHANNEL_VOLUME_STREAM = listOf(
+        private val DND_COMMANDS = listOf(DND_ALARMS_ONLY, DND_ALL, DND_NONE, DND_PRIORITY_ONLY)
+        private val RM_COMMANDS = listOf(RM_NORMAL, RM_SILENT, RM_VIBRATE)
+        private val CHANNEL_VOLUME_STREAM = listOf(
             NotificationData.ALARM_STREAM,
             NotificationData.MUSIC_STREAM,
             NotificationData.NOTIFICATION_STREAM,
@@ -286,8 +315,8 @@ class MessagingManager @Inject constructor(
             NotificationData.DTMF_STREAM,
             NotificationData.ASSISTANT_STREAM,
         )
-        val FORCE_COMMANDS = listOf(FORCE_OFF, FORCE_ON)
-        val MEDIA_COMMANDS = listOf(
+        private val FORCE_COMMANDS = listOf(FORCE_OFF, FORCE_ON)
+        private val MEDIA_COMMANDS = listOf(
             MEDIA_FAST_FORWARD,
             MEDIA_NEXT,
             MEDIA_PAUSE,
@@ -299,22 +328,26 @@ class MessagingManager @Inject constructor(
         )
 
         // Video Values
-        const val VIDEO_START_MICROSECONDS = 100000L
-        const val VIDEO_INCREMENT_MICROSECONDS = 750000L
-        const val VIDEO_GUESS_MILLISECONDS = 7000L
+        private const val VIDEO_START_MICROSECONDS = 100000L
+        private const val VIDEO_INCREMENT_MICROSECONDS = 750000L
+        private const val VIDEO_GUESS_MILLISECONDS = 7000L
 
         // Values for a notification that has been replied to
         const val SOURCE_REPLY = "REPLY_"
         const val SOURCE_REPLY_HISTORY = "reply_history_"
 
         // Values for temporarily added keys
-        const val THIS_SERVER_ID = "server_id"
+        private const val THIS_SERVER_ID = "server_id"
 
         private const val HEADER_AUTHORIZATION = "Authorization"
         private const val MIME_TYPE_GIF = "image/gif"
         private const val ANIMATED_IMAGE_FOLDER = "animated_notification_image"
         private val ANIMATED_IMAGE_MAX_AGE = 2.days
         private const val MAX_NOTIFICATION_IMAGE_SIZE_PX = 1024
+
+        // Values for progress style notifications
+        private const val PROGRESS_ICON_SIZE_DP = 20 // Taken from "Progress-centric notifications" in Android docs
+        private const val PROGRESS_ICON_PADDING_DP = 3 // Ensures that a square fits inside the circular background
     }
 
     private val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Main + Job())
@@ -1125,6 +1158,8 @@ class MessagingManager @Inject constructor(
 
         handleProgress(notificationBuilder, data)
 
+        handleProgressStyle(notificationBuilder, data)
+
         handleLive(notificationBuilder, data)
 
         val useCarNotification = handleCarUiVisible(context, notificationBuilder, data)
@@ -1197,6 +1232,215 @@ class MessagingManager @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "Error while handling progress notification")
         }
+    }
+
+    private fun handleProgressStyle(builder: NotificationCompat.Builder, data: Map<String, String>) {
+        if (SdkVersion.isAtLeast(Build.VERSION_CODES.BAKLAVA)) {
+            val progressStyle = NotificationCompat.ProgressStyle().setStyledByProgress(true)
+                .setProgress(data[PROGRESS]?.toIntOrNull() ?: 0)
+
+            val dynamicColorContext = DynamicColors.wrapContextIfAvailable(context)
+            var accentColor = commonR.color.colorAccent
+            dynamicColorContext.withStyledAttributes(null, intArrayOf(android.R.attr.colorAccent)) {
+                accentColor = getResourceId(0, accentColor)
+            }
+
+            var useProgressStyle = false
+            if (applyProgressSegments(progressStyle, accentColor, data)) useProgressStyle = true
+            if (applyProgressPoints(progressStyle, accentColor, data)) useProgressStyle = true
+            if (applyProgressStartIcon(progressStyle, accentColor, data)) useProgressStyle = true
+            if (applyProgressEndIcon(progressStyle, accentColor, data)) useProgressStyle = true
+            if (applyProgressTrackerIcon(progressStyle, accentColor, data)) useProgressStyle = true
+            if (useProgressStyle) {
+                builder.setStyle(progressStyle)
+            }
+        }
+    }
+
+    private fun applyProgressSegments(
+        style: NotificationCompat.ProgressStyle,
+        @ColorRes accentColor: Int,
+        data: Map<String, String>,
+    ): Boolean {
+        val segmentsData = data[PROGRESS_SEGMENTS]
+        if (segmentsData.isNullOrBlank()) return false
+
+        return try {
+            val segments = kotlinJsonMapper.parseToJsonElement(segmentsData).jsonArrayOrNull()
+            if (segments == null) {
+                Timber.w("Notification progress segments is not a JSON array: ${sensitive(segmentsData)}")
+                false
+            } else {
+                segments
+                    .mapNotNull { parseProgressSegment(it, accentColor) }
+                    .onEach(style::addProgressSegment)
+                    .isNotEmpty()
+            }
+        } catch (e: SerializationException) {
+            Timber.e(e, "Error while parsing notification progress segments")
+            false
+        }
+    }
+
+    private fun parseProgressSegment(
+        element: JsonElement,
+        @ColorRes accentColor: Int,
+    ): NotificationCompat.ProgressStyle.Segment? {
+        val segment = element.jsonObjectOrNull()
+        val length = segment?.getIntOrNull(PROGRESS_SEGMENTS_LENGTH)
+        return when {
+            segment == null -> {
+                Timber.w("Ignoring invalid notification progress segment: ${sensitive(element.toString())}")
+                null
+            }
+            length == null || length <= 0 -> {
+                Timber.w("Ignoring progress segment with invalid length: ${sensitive(segment.toString())}")
+                null
+            }
+            else -> {
+                val progressSegment = NotificationCompat.ProgressStyle.Segment(length)
+                segment.getStringOrNull(PROGRESS_SEGMENTS_COLOR)?.let { color ->
+                    progressSegment.setColor(parseColor(context, color, accentColor))
+                }
+                progressSegment
+            }
+        }
+    }
+
+    private fun applyProgressPoints(
+        style: NotificationCompat.ProgressStyle,
+        @ColorRes accentColor: Int,
+        data: Map<String, String>,
+    ): Boolean {
+        val pointsData = data[PROGRESS_POINTS]
+        if (pointsData.isNullOrBlank()) return false
+
+        return try {
+            val points = kotlinJsonMapper.parseToJsonElement(pointsData).jsonArrayOrNull()
+            if (points == null) {
+                Timber.w("Notification progress points is not a JSON array: ${sensitive(pointsData)}")
+                false
+            } else {
+                points
+                    .mapNotNull { parseProgressPoint(it, accentColor) }
+                    .onEach(style::addProgressPoint)
+                    .isNotEmpty()
+            }
+        } catch (e: SerializationException) {
+            Timber.e(e, "Error while parsing notification progress points")
+            false
+        }
+    }
+
+    private fun parseProgressPoint(
+        element: JsonElement,
+        @ColorRes accentColor: Int,
+    ): NotificationCompat.ProgressStyle.Point? {
+        val point = element.jsonObjectOrNull()
+        val position = point?.getIntOrNull(PROGRESS_POINTS_POSITION)
+        return when {
+            point == null -> {
+                Timber.w("Ignoring invalid notification progress point: ${sensitive(element.toString())}")
+                null
+            }
+            position == null || position <= 0 -> {
+                Timber.w("Ignoring progress point with invalid position: ${sensitive(point.toString())}")
+                null
+            }
+            else -> {
+                val progressPoint = NotificationCompat.ProgressStyle.Point(position)
+                point.getStringOrNull(PROGRESS_POINTS_COLOR)?.let { color ->
+                    progressPoint.setColor(parseColor(context, color, accentColor))
+                }
+                progressPoint
+            }
+        }
+    }
+
+    private fun applyProgressTrackerIcon(
+        style: NotificationCompat.ProgressStyle,
+        @ColorRes accentColor: Int,
+        data: Map<String, String>,
+    ): Boolean {
+        val progressTrackerIcon = data[PROGRESS_TRACKER_ICON].orEmpty()
+        val progressTrackerColor =
+            parseColor(context, data[PROGRESS_TRACKER_COLOR].orEmpty(), commonR.color.colorPrimary)
+        val icon = createProgressIcon(context, progressTrackerIcon, progressTrackerColor, accentColor)
+        if (icon != null) {
+            style.setProgressTrackerIcon(icon)
+            return true
+        }
+        return false
+    }
+
+    private fun applyProgressStartIcon(
+        style: NotificationCompat.ProgressStyle,
+        @ColorRes accentColor: Int,
+        data: Map<String, String>,
+    ): Boolean {
+        val progressStartIcon = data[PROGRESS_START_ICON].orEmpty()
+        val progressStartColor = parseColor(context, data[PROGRESS_START_COLOR].orEmpty(), accentColor)
+        val icon = createProgressIcon(context, progressStartIcon, progressStartColor)
+        if (icon != null) {
+            style.setProgressStartIcon(icon)
+            return true
+        }
+        return false
+    }
+
+    private fun applyProgressEndIcon(
+        style: NotificationCompat.ProgressStyle,
+        @ColorRes accentColor: Int,
+        data: Map<String, String>,
+    ): Boolean {
+        val progressEndIcon = data[PROGRESS_END_ICON].orEmpty()
+        val progressEndColor = parseColor(context, data[PROGRESS_END_COLOR].orEmpty(), accentColor)
+        val icon = createProgressIcon(context, progressEndIcon, progressEndColor)
+        if (icon != null) {
+            style.setProgressEndIcon(icon)
+            return true
+        }
+        return false
+    }
+
+    private fun createProgressIcon(
+        context: Context,
+        iconString: String,
+        @ColorInt iconColor: Int,
+        @ColorRes backgroundColor: Int? = null,
+    ): IconCompat? {
+        val icon = Mdi.fromHaName(iconString)
+        if (icon == null) return null
+
+        val bitmap = if (backgroundColor != null) {
+            // Create a canvas with a circular background and the padded MDI icon
+            val sizePx = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                PROGRESS_ICON_SIZE_DP.toFloat(),
+                context.resources.displayMetrics,
+            ).toInt()
+            val paddingPx = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                PROGRESS_ICON_PADDING_DP.toFloat(),
+                context.resources.displayMetrics,
+            ).toInt()
+            val iconBitmap = icon.toBitmap(sizePx - 2 * paddingPx, iconColor)
+
+            createBitmap(sizePx, sizePx).apply {
+                val canvas = Canvas(this)
+                val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    color = ContextCompat.getColor(context, backgroundColor)
+                }
+                val radius = sizePx / 2f
+                canvas.drawCircle(radius, radius, radius, backgroundPaint)
+                canvas.drawBitmap(iconBitmap, paddingPx.toFloat(), paddingPx.toFloat(), null)
+            }
+        } else {
+            // Return just the bitmap if no background is required
+            icon.toBitmap(context, PROGRESS_ICON_SIZE_DP, iconColor)
+        }
+
+        return IconCompat.createWithBitmap(bitmap)
     }
 
     private fun handleLive(builder: NotificationCompat.Builder, data: Map<String, String>) {
