@@ -124,7 +124,7 @@ internal abstract class TileExtensions @VisibleForTesting internal constructor(
                 ) {
                     serverManager.integrationRepository(
                         tileData.serverId,
-                    ).getEntityChanges(EntityFilter(entityIds = setOf(tileData.entityId)))?.collect { change ->
+                    ).getEntityChanges(EntityFilter(entityIds = setOf(tileData.entityId))).collect { change ->
                         val entity = when (change) {
                             is EntityChange.StateChanged -> change.entity
                             // The entity has no state anymore, the tile becomes unavailable

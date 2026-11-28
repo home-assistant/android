@@ -13,15 +13,21 @@ import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.database.widget.WidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetEntity
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import timber.log.Timber
+
+/** The [entities] a widget follows the changes of, and the [job] following them. */
+private data class WidgetSubscription(val entities: List<String>, val job: Job)
 
 /**
  * A widget provider class for widgets that update based on entity state changes.
@@ -35,8 +41,7 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
             "io.homeassistant.companion.android.widgets.UPDATE_WIDGETS"
 
         private var widgetScope: CoroutineScope = newCoroutineScopeProvider()
-        private val widgetEntities = mutableMapOf<Int, List<String>>()
-        private val widgetJobs = mutableMapOf<Int, Job>()
+        private val widgetSubscriptions = ConcurrentHashMap<Int, WidgetSubscription>()
 
         private fun newCoroutineScopeProvider() = CoroutineScope(Dispatchers.Default + SupervisorJob())
     }
@@ -110,10 +115,12 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
         updateAllWidgets(context)
 
         val allWidgets = getAllWidgetIdsWithEntities(context)
-        val widgetsWithDifferentEntities = allWidgets.filter { it.value.second != widgetEntities[it.key] }
+        val widgetsWithDifferentEntities = allWidgets.filter {
+            it.value.second != widgetSubscriptions[it.key]?.entities
+        }
         if (widgetsWithDifferentEntities.isNotEmpty()) {
             widgetsWithDifferentEntities.forEach { (id, pair) ->
-                widgetJobs[id]?.cancel()
+                widgetSubscriptions[id]?.job?.cancel()
 
                 val (serverId, entities) = pair.first to pair.second
                 val entityChanges =
@@ -125,8 +132,7 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
                         null
                     }
                 if (entityChanges != null) {
-                    widgetEntities[id] = entities
-                    widgetJobs[id] = widgetScope.launch {
+                    val job = widgetScope.launch(start = CoroutineStart.LAZY) {
                         entityChanges.collect { change ->
                             when (change) {
                                 is EntityChange.StateChanged -> onEntityStateChanged(context, id, change.entity)
@@ -134,10 +140,14 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
                                 is EntityChange.Removed -> updateView(context, id)
                             }
                         }
+                        // Only completes when the changes cannot be followed, remove data to make it
+                        // retry on the next update, unless a newer job already replaced this one
+                        widgetSubscriptions.remove(id, WidgetSubscription(entities, coroutineContext.job))
                     }
+                    widgetSubscriptions[id] = WidgetSubscription(entities, job)
+                    job.start()
                 } else { // Remove data to make it retry on the next update
-                    widgetEntities.remove(id)
-                    widgetJobs.remove(id)
+                    widgetSubscriptions.remove(id)
                 }
             }
         }
@@ -149,8 +159,7 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
         } catch (e: IllegalStateException) {
             Timber.w(e, "Calling onScreenOff without any job started")
         }
-        widgetEntities.clear()
-        widgetJobs.clear()
+        widgetSubscriptions.clear()
     }
 
     private suspend fun updateAllWidgets(context: Context) {
@@ -182,9 +191,7 @@ abstract class BaseWidgetProvider<T : WidgetEntity<T>, DAO : WidgetDao<T>> : App
     }
 
     protected fun removeSubscription(appWidgetId: Int) {
-        widgetEntities.remove(appWidgetId)
-        widgetJobs[appWidgetId]?.cancel()
-        widgetJobs.remove(appWidgetId)
+        widgetSubscriptions.remove(appWidgetId)?.job?.cancel()
     }
 
     abstract fun getWidgetProvider(context: Context): ComponentName
