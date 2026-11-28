@@ -29,9 +29,9 @@ class EntityTest {
 
     private val baseDateTime = LocalDateTime.of(2024, 1, 1, 12, 0, 0)
 
-    private val newDateTime = LocalDateTime.of(2025, 1, 1, 12, 0, 0)
+    private val newDateTime = LocalDateTime.of(2025, 1, 1, 12, 0, 0, 123_456_000)
 
-    private val newDateTimeEpoch = newDateTime.toEpochSecond(ZoneOffset.UTC).toDouble()
+    private val newDateTimeEpoch = newDateTime.toEpochSecond(ZoneOffset.UTC) + newDateTime.nano / 1_000_000_000.0
 
     private fun createEntity(
         entityId: String = "light.living_room",
@@ -95,6 +95,32 @@ class EntityTest {
         fun `Given non-string friendly_name attribute when accessing friendlyName then returns its string value`() {
             val entity = createEntity(attributes = mapOf("friendly_name" to 42))
             assertEquals("42", entity.friendlyName)
+        }
+    }
+
+    @Nested
+    inner class ClimateRangeAndFanModes {
+        @Test
+        fun `Given supported climate range and fan modes when resolving climate controls then expose them`() {
+            val entity = createEntity(
+                entityId = "climate.dining_room",
+                state = "heat_cool",
+                attributes = mapOf(
+                    "current_temperature" to 72,
+                    "target_temp_low" to 69,
+                    "target_temp_high" to 75,
+                    "target_temp_step" to 1,
+                    "fan_mode" to "auto",
+                    "fan_modes" to listOf("auto", "on"),
+                    "hvac_modes" to listOf("off", "heat", "cool", "heat_cool"),
+                    "supported_features" to EntityExt.CLIMATE_SUPPORT_TARGET_TEMPERATURE_RANGE,
+                ),
+            )
+            val controls = entity.getClimateControls()!!
+            assertEquals(69f, controls.targetTemperatureLow)
+            assertEquals(75f, controls.targetTemperatureHigh)
+            assertEquals("auto", controls.fanMode)
+            assertEquals(listOf("auto", "on"), controls.fanModes)
         }
     }
 

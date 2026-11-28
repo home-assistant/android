@@ -1,6 +1,8 @@
 package io.homeassistant.companion.android.home
 
 import android.app.Application
+import androidx.wear.tiles.TileService
+import androidx.wear.tiles.TileUpdateRequester
 import io.homeassistant.companion.android.common.data.integration.EntityFilter
 import io.homeassistant.companion.android.common.data.integration.display.EntitiesForDisplayManager
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
@@ -11,14 +13,22 @@ import io.homeassistant.companion.android.common.sensors.SensorRepository
 import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
+import io.homeassistant.companion.android.database.wear.ThermostatLayoutStyle
+import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.testing.unit.MainDispatcherJUnit5Extension
+import io.homeassistant.companion.android.tiles.thermostatSettingsMutex
 import io.mockk.coEvery
+import io.mockk.coJustRun
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.verify
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
@@ -49,6 +59,7 @@ class MainViewModelTest {
         sensorRepository = sensorRepository,
         cameraTileDao = cameraTileDao,
         thermostatTileDao = thermostatTileDao,
+        wearPrefsRepository = mockk(relaxed = true),
         managers = emptySet(),
         application = mockk<Application>(relaxed = true),
     )
@@ -78,5 +89,41 @@ class MainViewModelTest {
         assertEquals(listOf("climate.living"), uiState.climateItems.map { it.entityId })
         assertEquals(setOf("light.kitchen"), uiState.displayItems.keys)
         assertEquals(setOf("light"), uiState.allDisplayItemsByDomain.keys)
+    }
+
+    @Test
+    fun `Given missing thermostat tile when selecting an entity then an enhanced configuration is created`() = runTest {
+        mockkStatic(TileService::class) {
+            val updater = mockk<TileUpdateRequester>(relaxed = true)
+            every { TileService.getUpdater(any()) } returns updater
+            coEvery { thermostatTileDao.get(1) } returns null
+            coJustRun { thermostatTileDao.add(any()) }
+
+            createViewModel().setThermostatTileEntity(1, "climate.living").join()
+
+            coVerify(exactly = 1) {
+                thermostatTileDao.add(
+                    ThermostatTile(id = 1, entityId = "climate.living", layoutStyle = ThermostatLayoutStyle.ENHANCED),
+                )
+            }
+            verify(exactly = 1) { updater.requestUpdate(any()) }
+        }
+    }
+
+    @Test
+    fun `Given existing thermostat tile when editing settings then other preferences remain and refresh runs outside the lock`() = runTest {
+        mockkStatic(TileService::class) {
+            val updater = mockk<TileUpdateRequester>()
+            every { TileService.getUpdater(any()) } returns updater
+            every { updater.requestUpdate(any()) } answers { assertFalse(thermostatSettingsMutex.isLocked) }
+            val existing = ThermostatTile(id = 1, entityId = "climate.living", refreshInterval = 60L)
+            coEvery { thermostatTileDao.get(1) } returns existing
+            coJustRun { thermostatTileDao.add(any()) }
+
+            createViewModel().setThermostatTileShowName(1, false).join()
+
+            coVerify(exactly = 1) { thermostatTileDao.add(existing.copy(showEntityName = false)) }
+            verify(exactly = 1) { updater.requestUpdate(any()) }
+        }
     }
 }

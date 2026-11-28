@@ -14,6 +14,7 @@ import io.homeassistant.companion.android.database.mediacontrol.MediaControlsDao
 import io.homeassistant.companion.android.database.migration.Migration27to28
 import io.homeassistant.companion.android.database.migration.Migration36to37
 import io.homeassistant.companion.android.database.migration.Migration52to53
+import io.homeassistant.companion.android.database.migration.Migration56to57
 import io.homeassistant.companion.android.database.notification.NotificationDao
 import io.homeassistant.companion.android.database.notification.NotificationItem
 import io.homeassistant.companion.android.database.qs.TileDao
@@ -57,7 +58,7 @@ import io.homeassistant.companion.android.database.widget.WidgetTapActionColumnT
 import io.homeassistant.companion.android.database.widget.converters.TodoLastUpdateDataConverter
 
 @VisibleForTesting
-const val DATABASE_VERSION = 56
+const val DATABASE_VERSION = 57
 
 @Database(
     entities = [
@@ -114,6 +115,7 @@ const val DATABASE_VERSION = 56
         AutoMigration(from = 52, to = 53, spec = Migration52to53::class),
         AutoMigration(from = 53, to = 54),
         AutoMigration(from = 54, to = 55),
+        AutoMigration(from = 56, to = 57, spec = Migration56to57::class),
     ],
 )
 @ColumnTypeConverters(

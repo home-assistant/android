@@ -31,6 +31,9 @@ import io.homeassistant.companion.android.splash.SplashActivity
 const val RESOURCE_REFRESH = "refresh"
 const val MODIFIER_CLICK_REFRESH = "refresh"
 
+private const val INVITATION_MESSAGE_GAP_DP = 6f
+private const val INVITATION_CHOICE_GAP_DP = 4f
+
 /** Performs a [VibrationEffect.EFFECT_CLICK] or equivalent on older Android versions */
 fun hapticClick(context: Context) {
     if (SdkVersion.isAtLeast(Build.VERSION_CODES.S)) {
@@ -210,4 +213,58 @@ fun getNotConfiguredTimeline(
             .build(),
     )
     return notConfiguredTimeline
+}
+
+internal fun thermostatInvitationTimeline(context: Context, requestParams: RequestBuilders.TileRequest): Timeline {
+    val theme = Colors(
+        ContextCompat.getColor(context, commonR.color.colorPrimary),
+        ContextCompat.getColor(context, commonR.color.colorOnPrimary),
+        ContextCompat.getColor(context, R.color.colorOverlay),
+        ContextCompat.getColor(context, android.R.color.white),
+    )
+    fun choice(label: Int, id: String): CompactChip = CompactChip.Builder(
+        context,
+        context.getString(label),
+        Clickable.Builder().setId(id).setOnClick(ActionBuilders.LoadAction.Builder().build()).build(),
+        requestParams.deviceConfiguration,
+    ).setChipColors(ChipColors.primaryChipColors(theme)).build()
+
+    return Timeline.fromLayoutElement(
+        PrimaryLayout.Builder(requestParams.deviceConfiguration)
+            .setResponsiveContentInsetEnabled(true)
+            .setPrimaryLabelTextContent(
+                Text.Builder(context, context.getString(commonR.string.thermostat_tile_invitation_title))
+                    .setTypography(Typography.TYPOGRAPHY_CAPTION1)
+                    .setColor(argb(theme.primary))
+                    .build(),
+            )
+            .setContent(
+                LayoutElementBuilders.Column.Builder()
+                    .addContent(
+                        Text.Builder(context, context.getString(commonR.string.thermostat_tile_invitation_message))
+                            .setTypography(Typography.TYPOGRAPHY_CAPTION1)
+                            .setMaxLines(3)
+                            .setColor(argb(theme.onSurface))
+                            .build(),
+                    )
+                    .addContent(
+                        LayoutElementBuilders.Spacer.Builder().setHeight(
+                            DimensionBuilders.dp(INVITATION_MESSAGE_GAP_DP),
+                        ).build(),
+                    )
+                    .addContent(
+                        choice(commonR.string.thermostat_tile_invitation_accept, ThermostatTileIds.INVITATION_ACCEPT),
+                    )
+                    .addContent(
+                        LayoutElementBuilders.Spacer.Builder().setHeight(
+                            DimensionBuilders.dp(INVITATION_CHOICE_GAP_DP),
+                        ).build(),
+                    )
+                    .addContent(
+                        choice(commonR.string.thermostat_tile_invitation_decline, ThermostatTileIds.INVITATION_DECLINE),
+                    )
+                    .build(),
+            )
+            .build(),
+    )
 }

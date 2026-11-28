@@ -214,12 +214,12 @@ import io.homeassistant.companion.android.common.data.integration.IntegrationDom
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.CompressedStateDiff
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.EntityRegistryOptions
+import io.homeassistant.companion.android.common.data.websocket.impl.entities.compressedTimestamp
 import io.homeassistant.companion.android.common.util.LocalDateTimeSerializer
 import io.homeassistant.companion.android.common.util.MDI_PREFIX
 import io.homeassistant.companion.android.common.util.MapAnySerializer
 import io.homeassistant.companion.android.common.util.fromHaName
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 import kotlin.math.round
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -378,6 +378,10 @@ data class ClimateControls(
     val temperatureUnit: String?,
     val hvacModes: List<String>,
     val supportsTargetTemperature: Boolean,
+    val targetTemperatureLow: Float? = null,
+    val targetTemperatureHigh: Float? = null,
+    val fanMode: String? = null,
+    val fanModes: List<String> = emptyList(),
 )
 
 /** Value range of a number entity, resolved from its state and attributes. */
@@ -558,13 +562,13 @@ fun Entity.applyCompressedStateDiff(diff: CompressedStateDiff): Entity {
 
     // Compute new timestamps
     val newLastChanged = plus?.lastChanged
-        ?.let { LocalDateTime.ofEpochSecond(round(it).toLong(), 0, ZoneOffset.UTC) }
+        ?.let(::compressedTimestamp)
         ?: lastChanged
 
     val newLastUpdated = when {
         plus?.lastChanged != null -> newLastChanged
         plus?.lastUpdated != null ->
-            LocalDateTime.ofEpochSecond(round(plus.lastUpdated).toLong(), 0, ZoneOffset.UTC)
+            compressedTimestamp(plus.lastUpdated)
 
         else -> lastUpdated
     }
@@ -794,6 +798,10 @@ fun Entity.getClimateControls(): ClimateControls? {
         supportsTargetTemperature = supportsFeature(
             EntityExt.CLIMATE_SUPPORT_TARGET_TEMPERATURE or EntityExt.CLIMATE_SUPPORT_TARGET_TEMPERATURE_RANGE,
         ),
+        targetTemperatureLow = numberAttributeOrNull("target_temp_low"),
+        targetTemperatureHigh = numberAttributeOrNull("target_temp_high"),
+        fanMode = attributes["fan_mode"]?.toString(),
+        fanModes = (attributes["fan_modes"] as? List<*>)?.filterIsInstance<String>().orEmpty(),
     )
 }
 

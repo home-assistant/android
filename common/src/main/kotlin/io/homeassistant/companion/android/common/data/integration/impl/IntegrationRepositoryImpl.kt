@@ -287,9 +287,9 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         return if (templateResult is JsonPrimitive) templateResult.contentOrNull else templateResult.toString()
     }
 
-    override suspend fun getTemplateUpdates(template: String): Flow<String?>? {
+    override suspend fun getTemplateUpdates(template: String): Flow<String?> {
         return webSocketRepository().getTemplateUpdates(template)
-            ?.map {
+            .map {
                 it.result
             }
     }
@@ -455,7 +455,7 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         text: String,
         pipelineId: String?,
         conversationId: String?,
-    ): Flow<AssistPipelineEvent>? {
+    ): Flow<AssistPipelineEvent> {
         return if (server().version?.isAtLeast(2023, 5, 0) == true) {
             webSocketRepository().runAssistPipelineForText(text, pipelineId, conversationId)
         } else {
@@ -522,25 +522,25 @@ class IntegrationRepositoryImpl @AssistedInject constructor(
         return response
     }
 
-    override suspend fun getEntityChanges(filter: EntityFilter): Flow<EntityChange>? = when {
+    override suspend fun getEntityChanges(filter: EntityFilter): Flow<EntityChange> = when {
         supportsFilteringOnServer(filter) ->
-            webSocketRepository().getCompressedStateAndChanges(filter)?.toEntityChanges(filter)
+            webSocketRepository().getCompressedStateAndChanges(filter).toEntityChanges(filter)
         supportsCompressedStateChanges() ->
             // The server sends every entity, the selection is done on the device
-            webSocketRepository().getCompressedStateAndChanges()?.map {
+            webSocketRepository().getCompressedStateAndChanges().map {
                 it.copy(
                     added = it.added?.filterKeys(filter::matches),
                     changed = it.changed?.filterKeys(filter::matches),
                     removed = it.removed?.filter(filter::matches),
                 )
-            }?.toEntityChanges(filter)
+            }.toEntityChanges(filter)
         filter.entityIds.isNotEmpty() && filter.domains.isEmpty() && server().user.isAdmin == true ->
             webSocketRepository().getStateChanges(filter.entityIds.toList())
-                ?.mapNotNull { it.toEntityChange() }
+                .mapNotNull { it.toEntityChange() }
         else ->
             webSocketRepository().getStateChanges()
-                ?.filter { filter.matches(it.entityId) }
-                ?.map { it.toEntityChange() }
+                .filter { filter.matches(it.entityId) }
+                .map { it.toEntityChange() }
     }
 
     /** An event without new state is the removal of the entity. */

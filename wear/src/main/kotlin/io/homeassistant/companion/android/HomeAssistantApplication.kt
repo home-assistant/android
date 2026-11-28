@@ -22,6 +22,7 @@ import coil3.network.okhttp.asNetworkClient
 import dagger.hilt.android.HiltAndroidApp
 import io.homeassistant.companion.android.common.sensors.AudioSensorManager
 import io.homeassistant.companion.android.common.util.HAStrictMode
+import io.homeassistant.companion.android.common.util.IgnoreActivityThreadVsyncDiskReadWrite
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.common.util.configureComposeDiagnosticStackTrace
 import io.homeassistant.companion.android.common.util.di.SuspendProvider
@@ -62,7 +63,9 @@ open class HomeAssistantApplication : Application() {
             BuildConfig.DEBUG &&
             !BuildConfig.NO_STRICT_MODE
         ) {
-            HAStrictMode.enable()
+            HAStrictMode.enable(
+                threadPolicyIgnoredViolationRules = listOf(IgnoreActivityThreadVsyncDiskReadWrite),
+            )
         }
 
         Timber.i("Running ${BuildConfig.VERSION_NAME} on SDK $SdkVersion")

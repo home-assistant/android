@@ -64,11 +64,14 @@ internal interface WebSocketCore {
     suspend fun ping(): Boolean
 
     /**
-     * Start a subscription for events on the websocket connection and get a Flow for listening to
-     * new messages. When there are no more listeners, the subscription will automatically be cancelled
-     * using `unsubscribe_events`. If the subscription already exists, the existing Flow is returned,
-     * unless [reconnectPolicy] is [SubscriptionReconnectPolicy.Complete], which always starts a
+     * Get a Flow for listening to the events of a subscription on the websocket connection. The
+     * subscription starts when the Flow is collected, and is cancelled using `unsubscribe_events`
+     * when there are no more listeners. Identical subscriptions share one subscription, unless
+     * [reconnectPolicy] is [SubscriptionReconnectPolicy.Complete], which always starts a
      * subscription of its own.
+     *
+     * When the subscription cannot be established the Flow completes without any event, and
+     * collecting it again makes a new attempt.
      *
      * @param type value for the `type` key in the subscription message, for example `subscribe_events`
      * @param data a key/value map of additional data to be included in the subscription message, for
@@ -76,15 +79,14 @@ internal interface WebSocketCore {
      * @param timeout timeout until the subscription is ended after the flow is no longer collected.
      *                Ignored with [SubscriptionReconnectPolicy.Complete], whose Flow is not shared.
      * @param reconnectPolicy what happens to the subscription when the connection is lost
-     * @return a Flow that will emit messages delivered to this subscription, or `null` if an error
-     *         occurred
+     * @return a Flow that will emit messages delivered to this subscription
      */
-    suspend fun <T : Any> subscribeTo(
+    fun <T : Any> subscribeTo(
         type: String,
         data: Map<String, Any?> = mapOf(),
         timeout: Duration = Duration.ZERO,
         reconnectPolicy: SubscriptionReconnectPolicy = SubscriptionReconnectPolicy.Resubscribe,
-    ): Flow<T>?
+    ): Flow<T>
 
     /**
      * Starts a subscription of its own, returns the first event it delivers and ends it. Use it

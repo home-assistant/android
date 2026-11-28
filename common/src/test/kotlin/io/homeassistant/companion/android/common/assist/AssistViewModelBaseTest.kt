@@ -2,6 +2,7 @@ package io.homeassistant.companion.android.common.assist
 
 import android.app.Application
 import android.content.pm.PackageManager
+import io.homeassistant.companion.android.common.R
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketRepository
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AssistPipelineError
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -344,6 +346,35 @@ class AssistViewModelBaseTest {
         advanceUntilIdle()
 
         assertEquals(listOf(AssistEvent.PipelineStarted), viewModel.receivedEvents)
+    }
+
+    @Test
+    fun `Given a pipeline that cannot be started When running it Then the error message is emitted`() = runTest {
+        every { application.getString(R.string.assist_error) } returns "error"
+        // The subscription of a pipeline that cannot be started completes without any event
+        coEvery {
+            webSocketRepository.runAssistPipelineForVoice(any(), any(), any(), any(), any())
+        } returns emptyFlow()
+        val viewModel = TestAssistViewModel(audioDispatcher = StandardTestDispatcher(testScheduler))
+
+        viewModel.runVoicePipeline()
+        advanceUntilIdle()
+
+        val event = viewModel.receivedEvents.single() as AssistEvent.Message.Output
+        assertEquals("error", event.message)
+    }
+
+    @Test
+    fun `Given a pipeline completing after its run ended When running it Then no error message is emitted`() = runTest {
+        coEvery {
+            webSocketRepository.runAssistPipelineForVoice(any(), any(), any(), any(), any())
+        } returns flowOf(AssistPipelineEvent(type = AssistPipelineEventType.RUN_END, data = null))
+        val viewModel = TestAssistViewModel(audioDispatcher = StandardTestDispatcher(testScheduler))
+
+        viewModel.runVoicePipeline()
+        advanceUntilIdle()
+
+        assertEquals(listOf(AssistEvent.PipelineEnded), viewModel.receivedEvents)
     }
 
     @Test

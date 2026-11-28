@@ -333,6 +333,9 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                     onNameEnabled = { tileIdToggle, showName ->
                         mainViewModel.setThermostatTileShowName(tileIdToggle, showName)
                     },
+                    onPreferencesChanged = { id, update ->
+                        mainViewModel.setThermostatTilePreferences(id, update)
+                    },
                 )
             }
             composable(
@@ -352,7 +355,6 @@ fun LoadHomePage(mainViewModel: MainViewModel) {
                     onEntitySelected = { entity ->
                         tileId?.let {
                             mainViewModel.setThermostatTileEntity(it, entity.entityId)
-                            TileService.getUpdater(context).requestUpdate(ThermostatTile::class.java)
                         }
                         swipeDismissableNavController.navigateUp()
                     },

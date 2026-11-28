@@ -19,14 +19,17 @@ import io.homeassistant.companion.android.common.util.FailFast
 import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.widget.WidgetDao
 import io.homeassistant.companion.android.database.widget.WidgetEntity
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -115,7 +118,7 @@ abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetD
 
     private var widgetScope: CoroutineScope = widgetScopeProvider()
 
-    private val widgetJobs = mutableMapOf<Int, Job>()
+    private val widgetJobs = ConcurrentHashMap<Int, Job>()
 
     // Helper to identify the widget in the logs
     private val widgetClassName by lazy { glanceAppWidget.javaClass.name }
@@ -251,7 +254,7 @@ abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetD
                 null
             }
             if (entityChangesFlow != null) {
-                widgetJobs[appWidgetId] = widgetScope.launch {
+                val job = widgetScope.launch(start = CoroutineStart.LAZY) {
                     Timber.tag(
                         widgetClassName,
                     ).d("Watching changes of entities($entitiesId) for widget $appWidgetId")
@@ -263,7 +266,13 @@ abstract class BaseGlanceEntityWidgetReceiver<T : WidgetEntity<T>, DAO : WidgetD
                         }
                         updateView(context, appWidgetId)
                     }
+                    // Only completes when the changes cannot be followed
+                    Timber.tag(widgetClassName).w("Entity changes ended for widget $appWidgetId not watching")
+                    // A newer job may already have replaced this one
+                    widgetJobs.remove(appWidgetId, coroutineContext.job)
                 }
+                widgetJobs[appWidgetId] = job
+                job.start()
             } else {
                 Timber.tag(widgetClassName).w("Entity changes is null for widget $appWidgetId not watching")
                 // Shouldn't do anything since the job should have been canceled already

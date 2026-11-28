@@ -33,6 +33,7 @@ import io.mockk.unmockkAll
 import java.time.LocalDateTime
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.AfterEach
@@ -118,6 +119,17 @@ class EntitiesForDisplayManagerTest {
         val state = awaitItem()
         assertInstanceOf(EntityDisplayState.Loaded::class.java, state)
         return state as EntityDisplayState.Loaded<EntityDisplayWithoutContext>
+    }
+
+    @Test
+    fun `Given a registry name when resolving metadata then no entity states are fetched`() = runTest {
+        givenRegistryName("Bed")
+        assertEquals("Bed", manager.registryDisplayName(serverId, "light.bed"))
+        assertEquals(null, manager.registryDisplayName(serverId, "light.other"))
+        coVerify(exactly = 0) { integrationRepository.getEntities(any()) }
+        coVerify(exactly = 1) {
+            webSocketRepository.getEntityRegistryDisplay(EntityFilter(entityIds = setOf("light.bed")))
+        }
     }
 
     @Test
@@ -1048,8 +1060,8 @@ class EntitiesForDisplayManagerTest {
                 coEvery { serverManager.integrationRepository(serverId) } returns integrationRepository
                 coEvery { integrationRepository.getEntities() } returns listOf(entity("light.bed", "Bed Light"))
                 coEvery { integrationRepository.getEntityChanges() } returns entityChanges
-                coEvery { webSocketRepository.getAreaRegistryUpdates() } returns null
-                coEvery { webSocketRepository.getDeviceRegistryUpdates() } returns null
+                coEvery { webSocketRepository.getAreaRegistryUpdates() } returns emptyFlow()
+                coEvery { webSocketRepository.getDeviceRegistryUpdates() } returns emptyFlow()
                 coEvery { webSocketRepository.getEntityRegistryUpdates() } returns entityRegistryUpdates
             }
 
@@ -1226,8 +1238,8 @@ class EntitiesForDisplayManagerTest {
 
             @Test
             fun `Given no update subscriptions when observing then flow completes after the loaded state`() = runTest {
-                coEvery { integrationRepository.getEntityChanges() } returns null
-                coEvery { webSocketRepository.getEntityRegistryUpdates() } returns null
+                coEvery { integrationRepository.getEntityChanges() } returns emptyFlow()
+                coEvery { webSocketRepository.getEntityRegistryUpdates() } returns emptyFlow()
 
                 manager.observeInContext(serverId).test {
                     awaitInitialLoad()
@@ -1237,13 +1249,13 @@ class EntitiesForDisplayManagerTest {
 
             @Test
             fun `Given no state subscription when observing then flow completes without following the registries`() = runTest {
-                coEvery { integrationRepository.getEntityChanges() } returns null
+                coEvery { integrationRepository.getEntityChanges() } returns emptyFlow()
 
                 manager.observeInContext(serverId).test {
                     awaitInitialLoad()
                     awaitComplete()
                 }
-                coVerify(exactly = 0) { webSocketRepository.getEntityRegistryUpdates() }
+                assertEquals(0, entityRegistryUpdates.subscriptionCount.value)
             }
         }
     }

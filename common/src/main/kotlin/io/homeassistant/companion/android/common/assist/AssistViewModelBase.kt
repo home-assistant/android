@@ -29,8 +29,10 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.emptyFlow
@@ -153,8 +155,7 @@ abstract class AssistViewModelBase(
         onEvent: (AssistEvent) -> Unit,
     ) {
         val isVoice = text == null
-        var job: Job? = null
-        job = viewModelScope.launch {
+        viewModelScope.launch {
             val flow = try {
                 if (isVoice) {
                     serverManager.webSocketRepository(selectedServerId).runAssistPipelineForVoice(
@@ -209,21 +210,23 @@ abstract class AssistViewModelBase(
 
                     AssistPipelineEventType.RUN_END -> {
                         stopRecording(sendRecorded = false)
-                        job?.cancel()
+                        cancel()
                         onEvent(AssistEvent.PipelineEnded)
                     }
 
                     AssistPipelineEventType.ERROR -> if (handleError(event.data as? AssistPipelineError, onEvent)) {
-                        job?.cancel()
+                        cancel()
                     }
 
                     else -> {
                         /*No op*/
                     }
                 }
-            } ?: run {
-                onEvent(AssistEvent.Message.Output(app.getString(R.string.assist_error)))
             }
+            // A run that ended cancelled this job, so getting here means the pipeline could not be
+            // started, or its connection was lost before it ended
+            ensureActive()
+            onEvent(AssistEvent.Message.Output(app.getString(R.string.assist_error)))
         }
     }
 

@@ -235,6 +235,18 @@ internal class WearPrefsRepositoryImpl @Inject constructor(
         return templateTile
     }
 
+    override suspend fun isThermostatLayoutInvitationAcknowledged(tileId: Int): Boolean =
+        localStorage().getBooleanOrNull("thermostat_layout_invitation_$tileId") == true
+
+    override suspend fun setThermostatLayoutInvitationAcknowledged(tileId: Int, acknowledged: Boolean) {
+        val key = "thermostat_layout_invitation_$tileId"
+        if (acknowledged) {
+            localStorage().putBoolean(key, true)
+        } else {
+            localStorage().remove(key)
+        }
+    }
+
     override suspend fun getWearHapticFeedback(): Boolean {
         return localStorage().getBoolean(PREF_WEAR_HAPTIC_FEEDBACK)
     }

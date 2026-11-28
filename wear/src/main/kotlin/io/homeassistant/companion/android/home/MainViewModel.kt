@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.wear.tiles.TileService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.homeassistant.companion.android.BuildConfig
 import io.homeassistant.companion.android.HomeAssistantApplication
@@ -19,6 +20,7 @@ import io.homeassistant.companion.android.common.data.integration.display.Entiti
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplay
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayState
 import io.homeassistant.companion.android.common.data.integration.display.EntityDisplayWithContext
+import io.homeassistant.companion.android.common.data.prefs.WearPrefsRepository
 import io.homeassistant.companion.android.common.data.prefs.impl.entities.TemplateTileConfig
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.websocket.WebSocketState
@@ -31,11 +33,13 @@ import io.homeassistant.companion.android.database.wear.CameraTileDao
 import io.homeassistant.companion.android.database.wear.FavoriteCaches
 import io.homeassistant.companion.android.database.wear.FavoriteCachesDao
 import io.homeassistant.companion.android.database.wear.FavoritesDao
+import io.homeassistant.companion.android.database.wear.ThermostatLayoutStyle
 import io.homeassistant.companion.android.database.wear.ThermostatTile
 import io.homeassistant.companion.android.database.wear.ThermostatTileDao
 import io.homeassistant.companion.android.database.wear.getAll
 import io.homeassistant.companion.android.database.wear.getAllFlow
 import io.homeassistant.companion.android.sensors.SensorReceiver
+import io.homeassistant.companion.android.tiles.thermostatSettingsMutex
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -43,6 +47,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -54,6 +59,7 @@ class MainViewModel @Inject constructor(
     private val sensorRepository: SensorRepository,
     private val cameraTileDao: CameraTileDao,
     private val thermostatTileDao: ThermostatTileDao,
+    private val wearPrefsRepository: WearPrefsRepository,
     private val managers: Set<@JvmSuppressWildcards SensorManager>,
     application: Application,
 ) : AndroidViewModel(application) {
@@ -521,24 +527,33 @@ class MainViewModel @Inject constructor(
         cameraTileDao.add(updated)
     }
 
-    fun setThermostatTileEntity(tileId: Int, entityId: String) = viewModelScope.launch {
-        val current = thermostatTileDao.get(tileId)
-        val updated = current?.copy(entityId = entityId) ?: ThermostatTile(id = tileId, entityId = entityId)
-        thermostatTileDao.add(updated)
+    private fun updateThermostatTile(tileId: Int, update: (ThermostatTile) -> ThermostatTile) = viewModelScope.launch {
+        thermostatSettingsMutex.withLock {
+            val current = thermostatTileDao.get(tileId)
+            val updated = update(
+                current ?: ThermostatTile(id = tileId, layoutStyle = ThermostatLayoutStyle.ENHANCED),
+            )
+            thermostatTileDao.add(updated)
+            if (current == null || updated.layoutStyle != current.layoutStyle) {
+                wearPrefsRepository.setThermostatLayoutInvitationAcknowledged(tileId, true)
+            }
+        }
+        TileService.getUpdater(getApplication<Application>()).requestUpdate(
+            io.homeassistant.companion.android.tiles.ThermostatTile::class.java,
+        )
     }
 
-    fun setThermostatTileRefreshInterval(tileId: Int, interval: Long) = viewModelScope.launch {
-        val current = thermostatTileDao.get(tileId)
-        val updated =
-            current?.copy(refreshInterval = interval) ?: ThermostatTile(id = tileId, refreshInterval = interval)
-        thermostatTileDao.add(updated)
-    }
+    fun setThermostatTileEntity(tileId: Int, entityId: String) =
+        updateThermostatTile(tileId) { it.copy(entityId = entityId) }
 
-    fun setThermostatTileShowName(tileId: Int, showName: Boolean) = viewModelScope.launch {
-        val current = thermostatTileDao.get(tileId)
-        val updated = current?.copy(showEntityName = showName) ?: ThermostatTile(id = tileId, showEntityName = showName)
-        thermostatTileDao.add(updated)
-    }
+    fun setThermostatTileRefreshInterval(tileId: Int, interval: Long) =
+        updateThermostatTile(tileId) { it.copy(refreshInterval = interval) }
+
+    fun setThermostatTilePreferences(tileId: Int, update: (ThermostatTile) -> ThermostatTile) =
+        updateThermostatTile(tileId, update)
+
+    fun setThermostatTileShowName(tileId: Int, showName: Boolean) =
+        updateThermostatTile(tileId) { it.copy(showEntityName = showName) }
 
     fun setTileShortcut(tileId: Int?, index: Int, entity: SimplifiedEntity) {
         viewModelScope.launch {
