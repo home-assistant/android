@@ -31,7 +31,7 @@ internal sealed interface HttpAuthOutcome {
  */
 @ViewModelScoped
 internal class FrontendDialogManager @Inject constructor(
-    @param:ApplicationContext private val applicationContext: Context,
+    @ApplicationContext private val applicationContext: Context,
 ) {
 
     private val queue = SingleSlotQueue<FrontendDialog>()

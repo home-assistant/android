@@ -185,8 +185,8 @@
     <string name="confirm_delete_all_notification_title">Confirm deleting all notifications</string>
     <string name="confirm_delete_this_notification_message">Are you sure? This cannot be undone</string>
     <string name="confirm_delete_this_notification_title">Confirm deleting this notification</string>
-    <string name="confirm_negative">NO</string>
-    <string name="confirm_positive">YES</string>
+    <string name="confirm_negative">No</string>
+    <string name="confirm_positive">Yes</string>
     <string name="continue_on_phone">Continue on your phone</string>
     <string name="connect">Connect</string>
     <string name="continue_connect">Continue</string>
