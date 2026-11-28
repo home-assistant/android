@@ -4,6 +4,7 @@
      Escaped inline HTML (like &lt;b&gt;) is rendered as styling. -->
 <resources>
     <string name="changelog_entry_bug_fixes">Small bug fixes and dependency updates everywhere</string>
+    <string name="changelog_entry_thread_store">&lt;b&gt;Thread credentials from Home Assistant&lt;/b&gt; can now be stored on this device from the frontend\'s Thread configuration panel</string>
     <string name="changelog_entry_fix_media_player_widget">Media player widgets better adjust to what is supported by the player, like play/stop instead of play/pause</string>
     <string name="changelog_entry_hinge_status_sensor">Added a &lt;b&gt;hinge status sensor&lt;/b&gt; to know whether a foldable device is closed, partially open or fully open</string>
     <string name="changelog_entry_assist_listening_chime">Added a &lt;b&gt;sound when Assist starts listening&lt;/b&gt;</string>

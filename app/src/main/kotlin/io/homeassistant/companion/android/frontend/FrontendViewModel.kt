@@ -1008,6 +1008,16 @@ internal class FrontendViewModel @VisibleForTesting constructor(
                 }
             }
 
+            is FrontendHandlerEvent.StoreThreadCredentialsInPlatformKeychain -> {
+                viewModelScope.launch {
+                    matterThreadHandler.onStoreThreadCredentialsInPlatformKeychain(
+                        serverId = _viewState.value.serverId,
+                        borderAgentId = result.borderAgentId,
+                        tlv = result.tlv,
+                    )
+                }
+            }
+
             is FrontendHandlerEvent.ShowBarcodeScanner -> barcodeScannerHandler.show(
                 messageId = result.messageId,
                 title = result.title,

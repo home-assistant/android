@@ -35,6 +35,7 @@ import io.homeassistant.companion.android.frontend.externalbus.incoming.OpenSett
 import io.homeassistant.companion.android.frontend.externalbus.incoming.TagWriteMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThemeUpdateMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.ThreadImportCredentialsMessage
+import io.homeassistant.companion.android.frontend.externalbus.incoming.ThreadStoreInPlatformKeychainMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.UnknownIncomingMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.WebRtcStreamStartMessage
 import io.homeassistant.companion.android.frontend.externalbus.incoming.WebRtcStreamStopMessage
@@ -305,6 +306,24 @@ class FrontendMessageHandler @Inject constructor(
             is ThreadImportCredentialsMessage -> {
                 Timber.d("thread/import_credentials received with id: ${message.id}")
                 FrontendHandlerEvent.ImportThreadCredentials
+            }
+
+            is ThreadStoreInPlatformKeychainMessage -> {
+                Timber.d("thread/store_in_platform_keychain received with id: ${message.id}")
+                val tlv = try {
+                    message.payload.activeOperationalDataset.hexToByteArray()
+                } catch (e: IllegalArgumentException) {
+                    Timber.w(e, "thread/store_in_platform_keychain: cannot decode TLV hex")
+                    null
+                }
+                if (tlv == null) {
+                    FrontendHandlerEvent.UnknownMessage
+                } else {
+                    FrontendHandlerEvent.StoreThreadCredentialsInPlatformKeychain(
+                        borderAgentId = message.payload.borderAgentId?.takeIf { it.isNotBlank() },
+                        tlv = tlv,
+                    )
+                }
             }
 
             is WebRtcStreamStartMessage -> {

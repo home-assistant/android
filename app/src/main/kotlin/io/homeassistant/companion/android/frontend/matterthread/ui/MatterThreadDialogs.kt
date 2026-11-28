@@ -31,7 +31,7 @@ internal fun MatterThreadProgressDialogContent() {
             Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 HALoading(modifier = Modifier.padding(top = HADimens.SPACE4))
                 Text(
-                    text = stringResource(commonR.string.thread_debug_active),
+                    text = stringResource(commonR.string.matter_thread_working),
                     style = HATextStyle.Body,
                     modifier = Modifier.padding(top = HADimens.SPACE4),
                 )

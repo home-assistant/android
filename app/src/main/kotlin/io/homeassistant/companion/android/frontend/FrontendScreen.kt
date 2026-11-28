@@ -300,7 +300,11 @@ internal fun FrontendScreenContent(
         onScreenStartedChanged = onScreenStartedChanged,
     )
 
-    FrontendScreenHandlers(pendingPermissionRequest = pendingPermissionRequest, pendingDialog = pendingDialog)
+    FrontendScreenHandlers(
+        pendingPermissionRequest = pendingPermissionRequest,
+        pendingDialog = pendingDialog,
+        onOpenExternalLink = onOpenExternalLink,
+    )
 
     Box(modifier = modifier.fillMaxSize()) {
         // Always render WebView at base layer
@@ -356,13 +360,18 @@ internal fun FrontendScreenContent(
 }
 
 @Composable
-private fun FrontendScreenHandlers(pendingPermissionRequest: PermissionRequest?, pendingDialog: FrontendDialog?) {
+private fun FrontendScreenHandlers(
+    pendingPermissionRequest: PermissionRequest?,
+    pendingDialog: FrontendDialog?,
+    onOpenExternalLink: suspend (Uri) -> Unit,
+) {
     PendingPermissionHandler(
         pendingRequest = pendingPermissionRequest,
     )
 
     PendingDialogHandler(
         pendingDialog = pendingDialog,
+        onOpenExternalLink = onOpenExternalLink,
     )
 }
 

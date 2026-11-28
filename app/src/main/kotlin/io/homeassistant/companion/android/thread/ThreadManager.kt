@@ -81,6 +81,61 @@ interface ThreadManager {
     }
 
     /**
+     * Predicted state of the Thread credentials stored on the device if a given credential were
+     * added now.
+     *
+     * Surfaced to the user before a write so they understand the post-add state: the device
+     * exposes no way to remove "preferred" status from a Thread credential once it has been
+     * promoted, so a wrongly-promoted credential is hard to recover from inside the app.
+     */
+    sealed interface PreflightOutcome {
+        /** The credential being inspected is already this device's preferred Thread credential. */
+        data object AlreadyPreferred : PreflightOutcome
+
+        /**
+         * A different credential owned by this app is already this device's preferred Thread
+         * network. The device typically keeps preferring it; adding a new credential is unlikely
+         * to change which network is preferred.
+         *
+         * @param networkName Name of the network the device currently prefers.
+         */
+        data class AppCredentialPreferred(val networkName: String) : PreflightOutcome
+
+        /**
+         * The app has no credentials stored on this device. Adding a credential is likely to
+         * make it the device-preferred one (the first credential added gets promoted).
+         *
+         * This is a best-effort prediction: the device only exposes credentials owned by the
+         * calling app, so a preferred network owned by another app — or established by the
+         * system from a border router set up with the user's account — is invisible here and
+         * would win over the credential being added.
+         */
+        data object LikelyToBecomePreferred : PreflightOutcome
+
+        /**
+         * This app has credentials stored on the device but none of them is preferred, or the
+         * stored credentials could not be read. Another app may own the preferred credential;
+         * the outcome of adding one more is ambiguous.
+         */
+        data object Unknown : PreflightOutcome
+    }
+
+    /**
+     * Outcome of [addCredentialToDevice]: whether the added credential ended up as the device's
+     * preferred Thread credential.
+     */
+    sealed interface AddCredentialResult {
+        /** The added credential is now the device's preferred Thread credential. */
+        data object Preferred : AddCredentialResult
+
+        /** The device kept preferring a different Thread credential. */
+        data object NotPreferred : AddCredentialResult
+
+        /** The credential was added but the post-add preferred state could not be determined. */
+        data object PreferredUnknown : AddCredentialResult
+    }
+
+    /**
      * Indicates if the app on this device supports Thread credential management.
      */
     fun appSupportsThread(): Boolean
@@ -136,4 +191,27 @@ interface ThreadManager {
      * @return Network name that was sent and accepted, or `null` if not sent or accepted
      */
     suspend fun sendThreadDatasetExportResult(result: ActivityResult, serverId: Int): String?
+
+    /**
+     * Parse a Thread Active Operational Dataset TLV and return the embedded network name, or
+     * `null` if the TLV is malformed or Thread isn't supported by the current build.
+     */
+    fun networkNameFromTlv(tlv: ByteArray): String?
+
+    /**
+     * Predict what state the Thread credentials stored on the device will be in if [tlv] is
+     * added now.
+     */
+    suspend fun predictPreferredOutcome(tlv: ByteArray): PreflightOutcome
+
+    /**
+     * Add the given Thread credential ([tlv]) to the device's credential storage under
+     * [borderAgentId].
+     *
+     * The [borderAgentId] is appended to the per-server tracked list so the orphan-cleanup path
+     * can remove the credential when [serverId] is later removed. After the add the device's
+     * preferred credential is queried so the caller can report the actual outcome as an
+     * [AddCredentialResult].
+     */
+    suspend fun addCredentialToDevice(serverId: Int, tlv: ByteArray, borderAgentId: String): AddCredentialResult
 }

@@ -1,6 +1,9 @@
 package io.homeassistant.companion.android.frontend.dialog
 
 import android.content.Context
+import android.net.Uri
+import androidx.annotation.StringRes
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.scopes.ViewModelScoped
 import io.homeassistant.companion.android.common.util.SingleSlotQueue
 import io.homeassistant.companion.android.frontend.matterthread.MatterThreadTerminal
@@ -27,7 +30,9 @@ internal sealed interface HttpAuthOutcome {
  * never see [FrontendDialog] internals.
  */
 @ViewModelScoped
-internal class FrontendDialogManager @Inject constructor() {
+internal class FrontendDialogManager @Inject constructor(
+    @ApplicationContext private val applicationContext: Context,
+) {
 
     private val queue = SingleSlotQueue<FrontendDialog>()
 
@@ -39,28 +44,66 @@ internal class FrontendDialogManager @Inject constructor() {
      *
      * Returns `true` if the user confirmed, `false` if they cancelled. The slot is freed
      * before returning, including on cancellation of the calling coroutine.
+     *
+     * Pass [moreInfoUrl] to offer a "Learn more" action that opens documentation without
+     * closing the dialog, and [buttons] to change the button labels for messages phrased as a
+     * question.
      */
-    suspend fun showConfirm(message: String): Boolean = queue.awaitResult { onResult ->
+    suspend fun showConfirm(
+        message: String,
+        moreInfoUrl: Uri? = null,
+        buttons: ConfirmButtons = ConfirmButtons.OkCancel,
+    ): Boolean = queue.awaitResult { onResult ->
         FrontendDialog.Confirm(
             message = message,
             onConfirm = { onResult(true) },
             onCancel = { onResult(false) },
+            moreInfoUrl = moreInfoUrl,
+            buttons = buttons,
         )
     }
+
+    /** [showConfirm] variant resolving a string resource with optional format arguments. */
+    suspend fun showConfirm(
+        @StringRes messageRes: Int,
+        vararg formatArgs: Any,
+        moreInfoUrl: Uri? = null,
+        buttons: ConfirmButtons = ConfirmButtons.OkCancel,
+    ): Boolean = showConfirm(
+        message = getString(messageRes, formatArgs),
+        moreInfoUrl = moreInfoUrl,
+        buttons = buttons,
+    )
 
     /**
      * Shows an informational dialog with a single dismiss button and suspends until the user
      * dismisses it. There is no result to return; callers use this purely to surface a message
      * (e.g. the frontend's `bar_code/notify`). The slot is freed before returning, including on
      * cancellation of the calling coroutine.
+     *
+     * Pass [moreInfoUrl] to offer a "Learn more" action that opens documentation without
+     * closing the dialog.
      */
-    suspend fun showInformation(message: String) {
+    suspend fun showInformation(message: String, moreInfoUrl: Uri? = null) {
         queue.awaitResult { onResult ->
             FrontendDialog.Information(
                 message = message,
                 onDismiss = { onResult(Unit) },
+                moreInfoUrl = moreInfoUrl,
             )
         }
+    }
+
+    /** [showInformation] variant resolving a string resource with optional format arguments. */
+    suspend fun showInformation(@StringRes messageRes: Int, vararg formatArgs: Any, moreInfoUrl: Uri? = null) {
+        showInformation(message = getString(messageRes, formatArgs), moreInfoUrl = moreInfoUrl)
+    }
+
+    @Suppress("SpreadOperator")
+    private fun getString(@StringRes messageRes: Int, formatArgs: Array<out Any>): String = if (formatArgs.isEmpty()) {
+        applicationContext.getString(messageRes)
+    } else {
+        applicationContext.getString(messageRes, *formatArgs)
     }
 
     /**

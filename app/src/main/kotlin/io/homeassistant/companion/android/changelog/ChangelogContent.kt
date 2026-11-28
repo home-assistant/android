@@ -43,7 +43,13 @@ internal val currentChangelog = Changelog(
             ),
         ),
     ),
-    improved = listOf(),
+    improved = listOf(
+        ChangelogEntry(
+            contentRes = commonR.string.changelog_entry_thread_store,
+            platforms = setOf(ChangelogPlatform.APP),
+            requiresFlavor = ChangelogFlavor.FULL,
+        ),
+    ),
     fixed = listOf(
         ChangelogEntry(
             contentRes = commonR.string.changelog_entry_fix_media_player_widget,
