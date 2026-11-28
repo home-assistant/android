@@ -200,7 +200,7 @@ internal class ThermostatCommandCoordinator internal constructor(
             try {
                 serverManager.integrationRepository(target.serverId)
                     .getEntityChanges(EntityFilter(entityIds = setOf(target.entityId)))
-                    ?.collect { change -> applyLiveChange(target, generation, change) }
+                    .collect { change -> applyLiveChange(target, generation, change) }
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
@@ -674,7 +674,7 @@ internal class ThermostatCommandCoordinator internal constructor(
         return try {
             val change = withTimeoutOrNull(SUBSCRIPTION_CONFIRMATION_TIMEOUT_MS) {
                 repository.getEntityChanges(EntityFilter(entityIds = setOf(target.entityId)))
-                    ?.firstOrNull { change ->
+                    .firstOrNull { change ->
                         when (change) {
                             is EntityChange.StateChanged -> checkState(EntityDisplayWithoutContext(change.entity))
                             is EntityChange.Removed -> {

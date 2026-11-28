@@ -27,6 +27,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -159,7 +160,7 @@ class ThermostatCommandCoordinatorTest {
             sent.add(temperature)
             if (temperature == 71f) error("Simulated service failure")
         }
-        coEvery { repository.getEntityChanges(any()) } returns null
+        coEvery { repository.getEntityChanges(any()) } returns emptyFlow()
         coEvery { repository.getEntity(target.entityId) } returnsMany listOf(null, state(72f))
         coordinator.submitTemperature(target, false, null, null, 71f)
         coordinator.submitTemperature(target, false, null, null, 72f)
@@ -309,7 +310,7 @@ class ThermostatCommandCoordinatorTest {
         val coordinator = coordinator(observationContext(), clock)
         val changes = MutableSharedFlow<EntityChange>()
         coEvery { repository.getEntity(target.entityId) } returns state(70f)
-        coEvery { repository.getEntityChanges(any()) } returnsMany listOf(null, changes)
+        coEvery { repository.getEntityChanges(any()) } returnsMany listOf(emptyFlow(), changes)
 
         coordinator.observeVisibleTile(10, target, clock.now().toEpochMilliseconds())
         runCurrent()
@@ -473,7 +474,7 @@ class ThermostatCommandCoordinatorTest {
             gate.await()
         }
         coEvery { repository.getEntity(target.entityId) } returns state(70f)
-        coEvery { repository.getEntityChanges(any()) } returns null
+        coEvery { repository.getEntityChanges(any()) } returns emptyFlow()
         coordinator.rememberEntity(target, snapshot)
         val units = ThermostatDisplayUnits("°F", ThermostatTemperatureUnit.DEFAULT)
         val slot = ThermostatCommandCoordinator.TemperatureSlot.SINGLE
@@ -545,7 +546,7 @@ class ThermostatCommandCoordinatorTest {
         coordinator.rememberEntity(target, EntityDisplayWithoutContext(state(70f)))
         advanceTimeBy(6_000L)
         coEvery { repository.getEntity(target.entityId) } returns state(75f)
-        coEvery { repository.getEntityChanges(any()) } returns null
+        coEvery { repository.getEntityChanges(any()) } returns emptyFlow()
         coEvery { repository.callAction("climate", "set_temperature", any()) } returns Unit
         val units = ThermostatDisplayUnits("°F", ThermostatTemperatureUnit.DEFAULT)
         val slot = ThermostatCommandCoordinator.TemperatureSlot.SINGLE
