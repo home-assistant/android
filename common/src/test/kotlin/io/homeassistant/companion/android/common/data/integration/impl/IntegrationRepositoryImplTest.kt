@@ -30,9 +30,12 @@ import io.mockk.mockk
 import io.mockk.spyk
 import java.io.IOException
 import java.time.LocalDateTime
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -475,6 +478,20 @@ class IntegrationRepositoryImplTest {
 
             assertEquals(listOf(entityId to "off"), updates.map { it.entityId to it.state })
             coVerify(exactly = 0) { webSocketRepository.getStates() }
+        }
+
+        @Test
+        fun `Given a pending seed fetch when collection times out then the subscription is not collected`() = runTest {
+            val filter = EntityFilter(entityIds = setOf(entityId))
+            coEvery { webSocketRepository.getStates(filter) } coAnswers { awaitCancellation() }
+            every { webSocketRepository.getCompressedStateAndChanges(filter) } returns flow {
+                error("Subscription collected before the seed fetch completed")
+            }
+
+            val changes = withTimeoutOrNull(1_000) { repository.getEntityChanges(filter).toList() }
+
+            assertNull(changes)
+            coVerify(exactly = 1) { webSocketRepository.getStates(filter) }
         }
 
         @Test

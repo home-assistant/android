@@ -5,7 +5,6 @@ import io.github.timoptr.mdiicons.MdiIcon
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.integration.EntityChange
 import io.homeassistant.companion.android.common.data.integration.EntityFilter
-import io.homeassistant.companion.android.common.data.integration.friendlyName
 import io.homeassistant.companion.android.common.data.servers.ServerManager
 import io.homeassistant.companion.android.common.data.servers.integrationRepositoryOrNull
 import io.homeassistant.companion.android.common.data.servers.webSocketRepositoryOrNull
@@ -486,7 +485,9 @@ private class EntityRegistryEntries(
      */
     fun registryNameOf(entityId: String): String? = displayEntries?.get(entityId)?.name?.takeIf { it.isNotBlank() }
 
-    fun nameOf(entity: Entity): String = registryNameOf(entity.entityId) ?: entity.friendlyName
+    fun nameOf(entity: Entity): String = registryNameOf(entity.entityId)
+        ?: entity.attributes["friendly_name"]?.toString()?.takeIf { it.isNotBlank() }
+        ?: entity.entityId
 
     /**
      * Resolves [entity] into everything its state and the registry provide, with the following
