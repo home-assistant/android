@@ -36,11 +36,14 @@ private const val CLASSIC_RANGE_TEXT_SP = 22f
 private const val CLASSIC_TARGET_TEXT_SP = 30f
 private const val AUTO_CURRENT_TEXT_SP = 26f
 private const val COMPACT_ACTIVITY_TEXT_SP = 10f
-private const val COMPACT_AUTO_CURRENT_TEXT_SP = 24f
-private const val COMPACT_CONTROL_GAP_DP = 4f
-private const val COMPACT_CURRENT_TEXT_SP = 27f
+private const val COMPACT_HEADER_HEIGHT_DP = 30f
+private const val COMPACT_HEADER_WIDTH_DP = 112f
+private const val COMPACT_STATUS_MAX_LINES = 2
+private const val COMPACT_AUTO_CURRENT_TEXT_SP = 20f
+private const val COMPACT_CONTROL_GAP_DP = 5f
+private const val COMPACT_CURRENT_TEXT_SP = 22f
 private const val COMPACT_NAME_TEXT_SP = 12f
-private const val COMPACT_RANGE_BOTTOM_CLEARANCE_DP = 8f
+private const val COMPACT_RANGE_BOTTOM_CLEARANCE_DP = 4f
 private const val CONTROL_GAP_DP = 5f
 private const val CONTROL_SECTION_GAP_DP = 5f
 private const val CURRENT_TEXT_SP = 30f
@@ -54,15 +57,17 @@ private const val SETPOINT_TEXT_SP = 16f
 private const val TOP_ARC_ANCHOR_DEGREES = 180f
 
 private const val COMPACT_MODE_HEIGHT_DP = 29f
+private const val COMPACT_PRIMARY_MODE_HEIGHT_DP = 31f
 private const val MODE_HEIGHT_DP = 34f
-private const val COMPACT_MODE_WIDTH_DP = 37f
-private const val MODE_WIDTH_DP = 39f
+private const val COMPACT_MODE_WIDTH_DP = 39f
+private const val MODE_WIDTH_DP = 43f
 private const val COMPACT_TARGET_ROW_HEIGHT_DP = 32f
+private const val COMPACT_PRIMARY_ROW_HEIGHT_DP = 34f
 private const val TARGET_ROW_HEIGHT_DP = 36f
 
 private const val COMPACT_WIDTH_THRESHOLD_DP = 220
 private const val COMPACT_HEIGHT_THRESHOLD_DP = 225
-private const val COMPACT_ROW_GAP_DP = 2f
+private const val COMPACT_ROW_GAP_DP = 4f
 private const val SETPOINT_ROW_GAP_DP = 2f
 private const val COMPACT_SECONDARY_WIDTH_DP = 29f
 private const val SECONDARY_WIDTH_DP = 32f
@@ -321,14 +326,7 @@ internal class ThermostatTileViews(private val context: Context) {
         if (showName) {
             column.addContent(verticalGap(ENHANCED_NAME_GAP_DP))
         }
-        column.addContent(
-            temperatureText(
-                units.enhancedText(current),
-                enhancedCurrentTextSize(state, compact),
-                PRIMARY_TEXT_COLOR,
-            ),
-        )
-        addActivity(column, layout)
+        addTemperatureHeader(column, layout, units.enhancedText(current))
         column.addContent(verticalGap(if (compact) COMPACT_ROW_GAP_DP else ROW_GAP_DP))
         addSetpoints(column, layout, range)
         addControlRows(column, layout, controls)
@@ -351,6 +349,45 @@ internal class ThermostatTileViews(private val context: Context) {
                 }
                 .build(),
         )
+    }
+
+    private fun addTemperatureHeader(
+        column: LayoutElementBuilders.Column.Builder,
+        layout: EnhancedLayout,
+        current: String,
+    ) {
+        val state = layout.entity.rawState
+        val temperature = temperatureText(current, enhancedCurrentTextSize(state, layout.compact), PRIMARY_TEXT_COLOR)
+        if (!layout.compact) {
+            column.addContent(temperature)
+            addActivity(column, layout)
+            return
+        }
+        val message = pendingStatusText(layout.pending)
+        val header = if (message == null) {
+            temperature
+        } else {
+            val color = if (layout.pending?.status == ThermostatCommandCoordinator.Pending.Status.FAILED) {
+                FAILED_TEXT_COLOR
+            } else {
+                WAITING_TEXT_COLOR
+            }
+            temperatureText(message, COMPACT_ACTIVITY_TEXT_SP, color, COMPACT_STATUS_MAX_LINES)
+        }
+        // Feedback replaces the temperature without moving any controls.
+        column.addContent(
+            LayoutElementBuilders.Box.Builder()
+                .setWidth(DimensionBuilders.dp(COMPACT_HEADER_WIDTH_DP))
+                .setHeight(DimensionBuilders.dp(COMPACT_HEADER_HEIGHT_DP))
+                .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+                .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+                .addContent(header)
+                .build(),
+        )
+        // Preserve the status when mode buttons cannot identify the active mode.
+        if (!layout.config.showHvacModes || state !in listOf("heat", "cool", "heat_cool", "auto")) {
+            addActivity(column, layout.copy(pending = null))
+        }
     }
 
     private fun enhancedCurrentTextSize(state: String, compact: Boolean): Float = when (state) {
@@ -419,9 +456,17 @@ internal class ThermostatTileViews(private val context: Context) {
         val compact: Boolean,
         val units: ThermostatDisplayUnits,
     ) {
-        val modeHeight: Float get() = if (compact) COMPACT_MODE_HEIGHT_DP else MODE_HEIGHT_DP
+        val modeHeight: Float get() = when {
+            compact && !config.showSecondaryButtons -> COMPACT_PRIMARY_MODE_HEIGHT_DP
+            compact -> COMPACT_MODE_HEIGHT_DP
+            else -> MODE_HEIGHT_DP
+        }
         val modeWidth: Float get() = if (compact) COMPACT_MODE_WIDTH_DP else MODE_WIDTH_DP
-        val targetRowHeight: Float get() = if (compact) COMPACT_TARGET_ROW_HEIGHT_DP else TARGET_ROW_HEIGHT_DP
+        val targetRowHeight: Float get() = when {
+            compact && !config.showSecondaryButtons -> COMPACT_PRIMARY_ROW_HEIGHT_DP
+            compact -> COMPACT_TARGET_ROW_HEIGHT_DP
+            else -> TARGET_ROW_HEIGHT_DP
+        }
         val secondaryStep: Int? get() = config.secondaryStep.takeIf { config.showSecondaryButtons }
     }
 
@@ -505,7 +550,7 @@ internal class ThermostatTileViews(private val context: Context) {
                         actionPrefix,
                     ),
                 )
-                column.addContent(verticalGap(SETPOINT_ROW_GAP_DP))
+                column.addContent(verticalGap(if (compact) COMPACT_ROW_GAP_DP else SETPOINT_ROW_GAP_DP))
                 column.addContent(
                     temperatureRow(
                         "cool",
@@ -856,15 +901,25 @@ internal class ThermostatTileViews(private val context: Context) {
     private fun verticalGap(height: Float): LayoutElementBuilders.Spacer = LayoutElementBuilders.Spacer.Builder()
         .setHeight(DimensionBuilders.dp(height)).build()
 
-    private fun temperatureText(text: String, size: Float, color: Int): LayoutElementBuilders.Text =
-        LayoutElementBuilders.Text.Builder()
-            .setText(text)
-            .setFontStyle(
-                LayoutElementBuilders.FontStyle.Builder()
-                    .setSize(DimensionBuilders.sp(size))
-                    .setColor(ColorBuilders.argb(color))
-                    .build(),
-            ).build()
+    private fun temperatureText(
+        text: String,
+        size: Float,
+        color: Int,
+        maxLines: Int? = null,
+    ): LayoutElementBuilders.Text = LayoutElementBuilders.Text.Builder()
+        .setText(text)
+        .apply {
+            if (maxLines != null) {
+                setMaxLines(maxLines)
+                setMultilineAlignment(LayoutElementBuilders.TEXT_ALIGN_CENTER)
+            }
+        }
+        .setFontStyle(
+            LayoutElementBuilders.FontStyle.Builder()
+                .setSize(DimensionBuilders.sp(size))
+                .setColor(ColorBuilders.argb(color))
+                .build(),
+        ).build()
 
     // Exhaustive state-to-localized-label mapping; branching is intentional.
     @Suppress("CyclomaticComplexMethod")

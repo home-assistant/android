@@ -90,20 +90,6 @@ class ThermostatTileViewsTest {
     }
 
     @Test
-    fun `Given compact Enhanced layout when rendered then single and dual setpoint actions stay distinct`() {
-        val enhanced = config.copy(
-            layoutStyle = ThermostatLayoutStyle.ENHANCED,
-            showSecondaryButtons = true,
-            showFanControl = true,
-        )
-        val single = views.enhancedTimeline(enhanced, thermostat(), "°C", null, prefix, 192, 192).actions()
-        val dual = views.enhancedTimeline(enhanced, thermostat("heat_cool"), "°C", null, prefix, 192, 192).actions()
-        val modes = setOf("Mode:heat", "Mode:cool", "Mode:heat_cool", "Mode:off", "CycleFan")
-        assertEquals(modes + setOf("Temp:single:-3", "Temp:single:-1", "Temp:single:1", "Temp:single:3"), single)
-        assertEquals(modes + listOf("heat", "cool").flatMap { slot -> listOf(-3, -1, 1, 3).map { "Temp:$slot:$it" } }, dual)
-    }
-
-    @Test
     fun `Given default Enhanced settings when rendered then hide secondary adjustments and fan on both watch sizes`() {
         val enhanced = config.copy(layoutStyle = ThermostatLayoutStyle.ENHANCED)
         val modes = setOf("Mode:heat", "Mode:cool", "Mode:heat_cool", "Mode:off")
@@ -121,18 +107,21 @@ class ThermostatTileViewsTest {
 
     @Test
     fun `Given secondary adjustments enabled when rendered then use the saved step on both watch sizes`() {
-        val enhanced = config.copy(
-            layoutStyle = ThermostatLayoutStyle.ENHANCED,
-            showSecondaryButtons = true,
-            secondaryStep = 5,
-            showFanControl = true,
-        )
         val modes = setOf("Mode:heat", "Mode:cool", "Mode:heat_cool", "Mode:off", "CycleFan")
-        for (size in listOf(192, 240)) {
-            val single = views.enhancedTimeline(enhanced, thermostat(), "°C", null, prefix, size, size)
-            val dual = views.enhancedTimeline(enhanced, thermostat("heat_cool"), "°C", null, prefix, size, size)
-            assertEquals(modes + setOf("Temp:single:-5", "Temp:single:-1", "Temp:single:1", "Temp:single:5"), single.actions())
-            assertEquals(modes + listOf("heat", "cool").flatMap { slot -> listOf(-5, -1, 1, 5).map { "Temp:$slot:$it" } }, dual.actions())
+        for (step in listOf(3, 5)) {
+            val enhanced = config.copy(
+                layoutStyle = ThermostatLayoutStyle.ENHANCED,
+                showSecondaryButtons = true,
+                secondaryStep = step,
+                showFanControl = true,
+            )
+            val amounts = listOf(-step, -1, 1, step)
+            for (size in listOf(192, 240)) {
+                val single = views.enhancedTimeline(enhanced, thermostat(), "°C", null, prefix, size, size)
+                val dual = views.enhancedTimeline(enhanced, thermostat("heat_cool"), "°C", null, prefix, size, size)
+                assertEquals(modes + amounts.map { "Temp:single:$it" }, single.actions())
+                assertEquals(modes + listOf("heat", "cool").flatMap { slot -> amounts.map { "Temp:$slot:$it" } }, dual.actions())
+            }
         }
     }
 
@@ -226,25 +215,26 @@ class ThermostatTileViewsTest {
     }
 
     @Test
-    fun `Given pending or failed commands when rendering Enhanced then show feedback without failed setpoints`() {
+    fun `Given pending or failed commands when rendering Enhanced then preserve controls and show feedback`() {
         val enhanced = config.copy(layoutStyle = ThermostatLayoutStyle.ENHANCED)
         val waiting = ThermostatCommandCoordinator.Pending("21°", ThermostatCommandCoordinator.Pending.Status.WAITING, single = 21f)
-        fun texts(pending: ThermostatCommandCoordinator.Pending) = views.enhancedTimeline(
-            enhanced,
-            thermostat(),
-            "°C",
-            pending,
-            prefix,
-            192,
-            192,
-        ).elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
-        val waitingTexts = texts(waiting)
-        assertTrue(context.getString(commonR.string.thermostat_tile_waiting) in waitingTexts)
-        assertTrue("21°" in waitingTexts)
-        val failedTexts = texts(waiting.copy(status = ThermostatCommandCoordinator.Pending.Status.FAILED))
-        assertTrue(context.getString(commonR.string.thermostat_tile_unconfirmed) in failedTexts)
-        assertFalse("21°" in failedTexts)
-        assertTrue("19.5°" in failedTexts)
+        for (size in listOf(192, 240)) {
+            fun timeline(pending: ThermostatCommandCoordinator.Pending?) = views.enhancedTimeline(enhanced, thermostat(), "°C", pending, prefix, size, size)
+            fun Timeline.texts() = elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
+            val normal = timeline(null)
+            val pending = timeline(waiting)
+            val failed = timeline(waiting.copy(status = ThermostatCommandCoordinator.Pending.Status.FAILED))
+            assertEquals(normal.actions(), pending.actions())
+            assertEquals(normal.actions(), failed.actions())
+            assertTrue(context.getString(commonR.string.thermostat_tile_waiting) in pending.texts())
+            assertTrue(context.getString(commonR.string.thermostat_tile_unconfirmed) in failed.texts())
+            assertTrue("21°" in pending.texts())
+            assertFalse("21°" in failed.texts())
+            assertTrue("19.5°" in failed.texts())
+            assertTrue("19.4° C" in normal.texts())
+            assertEquals(size == 240, "19.4° C" in pending.texts())
+            assertEquals(size == 240, "19.4° C" in failed.texts())
+        }
     }
 
     @Test
