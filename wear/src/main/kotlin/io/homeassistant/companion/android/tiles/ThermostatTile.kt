@@ -352,6 +352,7 @@ private class ThermostatTileRenderer(
                     actionPrefix,
                     request.deviceConfiguration.screenWidthDp,
                     request.deviceConfiguration.screenHeightDp,
+                    clickedId,
                 )
             },
         ).build()

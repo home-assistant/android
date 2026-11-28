@@ -2,12 +2,14 @@ package io.homeassistant.companion.android.tiles
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import androidx.wear.protolayout.DimensionBuilders.DpProp
 import androidx.wear.protolayout.LayoutElementBuilders.Arc
 import androidx.wear.protolayout.LayoutElementBuilders.ArcAdapter
 import androidx.wear.protolayout.LayoutElementBuilders.Box
 import androidx.wear.protolayout.LayoutElementBuilders.Column
 import androidx.wear.protolayout.LayoutElementBuilders.LayoutElement
 import androidx.wear.protolayout.LayoutElementBuilders.Row
+import androidx.wear.protolayout.LayoutElementBuilders.Spacer
 import androidx.wear.protolayout.LayoutElementBuilders.Text
 import androidx.wear.protolayout.TimelineBuilders.Timeline
 import dagger.hilt.android.testing.HiltTestApplication
@@ -81,12 +83,12 @@ class ThermostatTileViewsTest {
         .map { it.removePrefix(prefix) }
         .toSet()
 
-    private fun Timeline.assertTemperatureBackground(secondary: Boolean, count: Int) {
+    private fun Timeline.assertTemperatureBackground(count: Int) {
         val buttons = elements().filterIsInstance<Box>()
             .filter { it.modifiers?.clickable?.id?.startsWith(prefix + "Temp:") == true }
         assertEquals(count, buttons.size)
         for (button in buttons) {
-            assertEquals(if (secondary) 0xFF293447.toInt() else 0x00000000, button.modifiers?.background?.color?.argb)
+            assertEquals(0xFF293447.toInt(), button.modifiers?.background?.color?.argb)
         }
     }
 
@@ -101,20 +103,39 @@ class ThermostatTileViewsTest {
         assertTrue(classic(state = "unknown").actions().isEmpty())
     }
 
+    private fun compactTimeline(settings: ThermostatTile, entity: EntityDisplayWithoutContext, menu: String = "") = views.enhancedTimeline(settings, entity, "°C", null, prefix, 192, 192, if (menu.isEmpty()) "" else prefix + menu)
+
+    private fun Timeline.assertAccessibleTargets(size: Float = 48f) {
+        val buttons = elements().filterIsInstance<Box>()
+            .filter { it.modifiers?.clickable?.id?.startsWith(prefix) == true }
+        for (button in buttons) {
+            assertEquals(size, (button.width as? DpProp)?.value)
+            assertEquals(size, (button.height as? DpProp)?.value)
+        }
+    }
+
     @Test
     fun `Given default Enhanced settings when rendered then hide secondary adjustments and fan on both watch sizes`() {
         val modes = setOf("Mode:heat", "Mode:cool", "Mode:heat_cool", "Mode:off")
-        for (size in listOf(192, 240)) {
-            for (state in listOf("heat", "cool")) {
-                val single = views.enhancedTimeline(enhancedConfig, thermostat(state), "°C", null, prefix, size, size)
-                assertEquals(modes + setOf("Temp:single:-1", "Temp:single:1"), single.actions())
-                single.assertTemperatureBackground(secondary = false, count = 2)
+        for (state in listOf("heat", "cool", "heat_cool", "off")) {
+            val slots = when (state) {
+                "heat_cool" -> listOf("heat", "cool")
+                "off" -> emptyList()
+                else -> listOf("single")
             }
-            val dual = views.enhancedTimeline(enhancedConfig, thermostat("heat_cool"), "°C", null, prefix, size, size)
-            assertEquals(modes + setOf("Temp:heat:-1", "Temp:heat:1", "Temp:cool:-1", "Temp:cool:1"), dual.actions())
-            dual.assertTemperatureBackground(secondary = false, count = 4)
-            val off = views.enhancedTimeline(enhancedConfig, thermostat("off"), "°C", null, prefix, size, size)
-            assertEquals(modes, off.actions())
+            val adjustments = slots.flatMap { listOf("Temp:$it:-1", "Temp:$it:1") }
+            val compact = compactTimeline(enhancedConfig, thermostat(state))
+            assertEquals(setOf("ModeMenu") + adjustments, compact.actions())
+            compact.assertTemperatureBackground(count = adjustments.size)
+            compact.assertAccessibleTargets()
+            val menu = compactTimeline(enhancedConfig, thermostat(state), "ModeMenu")
+            assertEquals(modes + "MenuBack", menu.actions())
+            menu.assertAccessibleTargets()
+            assertEquals(compact.actions(), compactTimeline(enhancedConfig, thermostat(state), "MenuBack").actions())
+            val large = views.enhancedTimeline(enhancedConfig, thermostat(state), "°C", null, prefix, 234, 234)
+            assertEquals(modes + adjustments, large.actions())
+            large.assertTemperatureBackground(count = adjustments.size)
+            large.assertAccessibleTargets(40f)
         }
     }
 
@@ -122,17 +143,33 @@ class ThermostatTileViewsTest {
     fun `Given secondary adjustments enabled when rendered then use the saved step on both watch sizes`() {
         val modes = setOf("Mode:heat", "Mode:cool", "Mode:heat_cool", "Mode:off")
         for (step in listOf(3, 5)) {
-            val amounts = listOf(-step, -1, 1, step)
             for (fan in listOf(false, true)) {
                 val enhanced = enhancedConfig.copy(showSecondaryButtons = true, secondaryStep = step, showFanControl = fan)
                 val actions = if (fan) modes + "CycleFan" else modes
-                for (size in listOf(192, 240)) {
-                    for (state in listOf("heat", "cool", "heat_cool")) {
-                        val timeline = views.enhancedTimeline(enhanced, thermostat(state), "°C", null, prefix, size, size)
-                        val slots = if (state == "heat_cool") listOf("heat", "cool") else listOf("single")
-                        assertEquals(actions + slots.flatMap { slot -> amounts.map { "Temp:$slot:$it" } }, timeline.actions())
-                        timeline.assertTemperatureBackground(secondary = true, count = slots.size * amounts.size)
+                for (state in listOf("heat", "cool", "heat_cool")) {
+                    val slots = if (state == "heat_cool") listOf("heat", "cool") else listOf("single")
+                    val entity = thermostat(state)
+                    val compact = compactTimeline(enhanced, entity)
+                    assertEquals(
+                        setOf("ModeMenu") + slots.flatMap { listOf("Temp:$it:-1", "Temp:$it:1", "AdjustMenu:$it") },
+                        compact.actions(),
+                    )
+                    compact.assertAccessibleTargets()
+                    compact.assertTemperatureBackground(count = slots.size * 2)
+                    val menu = compactTimeline(enhanced, entity, "ModeMenu")
+                    assertEquals(actions + "MenuBack", menu.actions())
+                    menu.assertAccessibleTargets()
+                    for (slot in slots) {
+                        val adjustment = compactTimeline(enhanced, entity, "AdjustMenu:$slot")
+                        assertEquals(setOf("Temp:$slot:-$step", "Temp:$slot:$step", "MenuBack"), adjustment.actions())
+                        adjustment.assertAccessibleTargets()
+                        adjustment.assertTemperatureBackground(count = 2)
                     }
+                    val large = views.enhancedTimeline(enhanced, entity, "°C", null, prefix, 234, 234)
+                    val amounts = listOf(-step, -1, 1, step)
+                    assertEquals(actions + slots.flatMap { slot -> amounts.map { "Temp:$slot:$it" } }, large.actions())
+                    large.assertTemperatureBackground(count = slots.size * amounts.size)
+                    large.assertAccessibleTargets(40f)
                 }
             }
         }
@@ -140,20 +177,16 @@ class ThermostatTileViewsTest {
 
     @Test
     fun `Given fan preference and capability when rendered then show fan only when both are present`() {
-        val enhanced = enhancedConfig.copy(showFanControl = true)
-        for (size in listOf(192, 240)) {
-            val supported = views.enhancedTimeline(enhanced, thermostat(), "°C", null, prefix, size, size)
-            val unsupported = views.enhancedTimeline(
-                enhanced,
-                thermostat(fanModes = emptyList()),
-                "°C",
-                null,
-                prefix,
-                size,
-                size,
-            )
-            assertTrue("CycleFan" in supported.actions())
-            assertFalse("CycleFan" in unsupported.actions())
+        for (enabled in listOf(false, true)) {
+            val enhanced = enhancedConfig.copy(showFanControl = enabled)
+            for (supported in listOf(false, true)) {
+                val entity = thermostat(fanModes = if (supported) listOf("auto", "on") else emptyList())
+                val compact = compactTimeline(enhanced, entity, "ModeMenu")
+                val large = views.enhancedTimeline(enhanced, entity, "°C", null, prefix, 240, 240)
+                assertEquals(enabled && supported, "CycleFan" in compact.actions())
+                assertEquals(enabled && supported, "CycleFan" in large.actions())
+                compact.assertAccessibleTargets()
+            }
         }
     }
 
@@ -185,11 +218,7 @@ class ThermostatTileViewsTest {
             240,
         ).texts()
         val off = context.getString(commonR.string.state_off).uppercase(java.util.Locale.getDefault())
-        val fanOnly = context.getString(
-            commonR.string.thermostat_tile_activity_summary,
-            off,
-            context.getString(commonR.string.state_fan_only),
-        )
+        val fanOnly = context.getString(commonR.string.state_fan_only)
         assertTrue(fanOnly in texts("fan", "on"))
         assertTrue(fanOnly in texts("fan", "auto"))
         assertTrue(fanOnly in texts("fan_only", "on"))
@@ -214,8 +243,70 @@ class ThermostatTileViewsTest {
             assertFalse("21°" in failed.texts())
             assertTrue("19.5°" in failed.texts())
             assertTrue("19.4° C" in normal.texts())
-            assertEquals(size == 240, "19.4° C" in pending.texts())
-            assertEquals(size == 240, "19.4° C" in failed.texts())
+            if (size == 240) {
+                val mode = context.getString(commonR.string.state_heat).uppercase(java.util.Locale.getDefault())
+                val activity = context.getString(commonR.string.climate_heating)
+                assertTrue(mode in normal.texts())
+                assertTrue(activity in normal.texts())
+                assertFalse(mode in pending.texts())
+                assertFalse(activity in failed.texts())
+            }
+            assertFalse("19.4° C" in pending.texts())
+            assertFalse("19.4° C" in failed.texts())
+        }
+    }
+
+    private fun Timeline.loweredAutoHeader(): Box? = elements().filterIsInstance<Box>().singleOrNull { box ->
+        box.contents.size == 2 && box.contents.all { it is Column }
+    }
+
+    private fun Column.spacerHeight(index: Int): Float? = ((contents[index] as? Spacer)?.height as? DpProp)?.value
+
+    @Test
+    fun `Given direct AUTO with name when feedback changes then retain header offset and controls`() {
+        val settings = enhancedConfig.copy(showEntityName = true, showActivity = true)
+        val entity = thermostat("heat_cool")
+        val waiting = ThermostatCommandCoordinator.Pending(
+            "18.5°",
+            ThermostatCommandCoordinator.Pending.Status.WAITING,
+            low = 18.5f,
+            high = 22f,
+        )
+        fun timeline(pending: ThermostatCommandCoordinator.Pending?) = views.enhancedTimeline(settings, entity, "°C", pending, prefix, 234, 234)
+        val normal = timeline(null)
+        val cases = listOf(
+            null to "19.4° C",
+            waiting to context.getString(commonR.string.thermostat_tile_waiting),
+            waiting.copy(status = ThermostatCommandCoordinator.Pending.Status.FAILED) to
+                context.getString(commonR.string.thermostat_tile_unconfirmed),
+        )
+        for ((pending, expectedText) in cases) {
+            val rendered = timeline(pending)
+            val overlay = checkNotNull(rendered.loweredAutoHeader())
+            val setpoints = overlay.contents[0] as Column
+            val header = overlay.contents[1] as Column
+            assertEquals(38f, setpoints.spacerHeight(0))
+            assertEquals(1f, setpoints.spacerHeight(1))
+            assertEquals(6f, header.spacerHeight(0))
+            assertEquals(38f, ((header.contents[1] as Box).height as? DpProp)?.value)
+            assertTrue(expectedText in header.descendants().filterIsInstance<Text>().mapNotNull { it.text?.value })
+            assertEquals(normal.actions(), rendered.actions())
+            rendered.assertAccessibleTargets(40f)
+        }
+    }
+
+    @Test
+    fun `Given other layouts when rendering Enhanced then do not lower the AUTO header`() {
+        val settings = enhancedConfig.copy(showEntityName = true, showActivity = true)
+        for (state in listOf("heat", "cool", "off")) {
+            val direct = views.enhancedTimeline(settings, thermostat(state), "°C", null, prefix, 234, 234)
+            assertEquals(null, direct.loweredAutoHeader())
+        }
+        val entity = thermostat("heat_cool")
+        assertEquals(null, compactTimeline(settings, entity).loweredAutoHeader())
+        for (disabled in listOf(settings.copy(showEntityName = false), settings.copy(showActivity = false))) {
+            val direct = views.enhancedTimeline(disabled, entity, "°C", null, prefix, 234, 234)
+            assertEquals(null, direct.loweredAutoHeader())
         }
     }
 

@@ -26,6 +26,9 @@ import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_FAN
 import io.homeassistant.companion.android.tiles.ThermostatTileIds.TAP_MODE_PREFIX
 import kotlin.math.roundToInt
 
+private const val ACCESSIBLE_TARGET_DP = 48f
+private const val ACCESSIBLE_GAP_DP = 4f
+private const val ACCESSIBLE_MENU_TEXT_SP = 12f
 private const val ACTIVITY_TEXT_SP = 11f
 private const val BUTTON_CORNER_DP = 14f
 private const val BUTTON_TEXT_SP = 14f
@@ -35,6 +38,7 @@ private const val CLASSIC_NAME_ARC_DP = 30f
 private const val CLASSIC_RANGE_TEXT_SP = 22f
 private const val CLASSIC_TARGET_TEXT_SP = 30f
 private const val AUTO_CURRENT_TEXT_SP = 26f
+private const val AUTO_HEADER_OFFSET_DP = 6f
 private const val COMPACT_ACTIVITY_TEXT_SP = 10f
 private const val COMPACT_HEADER_HEIGHT_DP = 30f
 private const val COMPACT_HEADER_WIDTH_DP = 112f
@@ -43,40 +47,42 @@ private const val COMPACT_AUTO_CURRENT_TEXT_SP = 20f
 private const val COMPACT_CONTROL_GAP_DP = 5f
 private const val COMPACT_CURRENT_TEXT_SP = 22f
 private const val COMPACT_NAME_TEXT_SP = 12f
-private const val COMPACT_RANGE_BOTTOM_CLEARANCE_DP = 4f
-private const val CONTROL_GAP_DP = 5f
-private const val CONTROL_SECTION_GAP_DP = 5f
+private const val CONTROL_GAP_DP = 3f
+private const val CONTROL_SECTION_GAP_DP = 1f
 private const val CURRENT_TEXT_SP = 30f
 private const val ENHANCED_NAME_ARC_DP = 24f
 private const val ENHANCED_NAME_GAP_DP = 16f
 private const val FULL_CIRCLE_DEGREES = 360f
 private const val NAME_TEXT_SP = 13f
-private const val RANGE_BOTTOM_CLEARANCE_DP = 12f
-private const val ROW_GAP_DP = 3f
+private const val ROW_GAP_DP = 1f
 private const val SETPOINT_TEXT_SP = 16f
 private const val TOP_ARC_ANCHOR_DEGREES = 180f
 
 private const val COMPACT_MODE_HEIGHT_DP = 29f
 private const val COMPACT_PRIMARY_MODE_HEIGHT_DP = 31f
-private const val MODE_HEIGHT_DP = 34f
+private const val DIRECT_TARGET_DP = 40f
+private const val DIRECT_HEADER_HEIGHT_DP = 38f
+private const val DIRECT_HEADER_WIDTH_DP = 208f
+private const val DIRECT_STATUS_WIDTH_DP = 48f
+private const val MODE_HEIGHT_DP = DIRECT_TARGET_DP
 private const val COMPACT_MODE_WIDTH_DP = 39f
-private const val MODE_WIDTH_DP = 43f
+private const val MODE_WIDTH_DP = DIRECT_TARGET_DP
 private const val COMPACT_TARGET_ROW_HEIGHT_DP = 32f
 private const val COMPACT_PRIMARY_ROW_HEIGHT_DP = 34f
-private const val TARGET_ROW_HEIGHT_DP = 36f
+private const val TARGET_ROW_HEIGHT_DP = DIRECT_TARGET_DP
 
-private const val COMPACT_WIDTH_THRESHOLD_DP = 220
-private const val COMPACT_HEIGHT_THRESHOLD_DP = 225
+private const val COMPACT_WIDTH_THRESHOLD_DP = 234
+private const val COMPACT_HEIGHT_THRESHOLD_DP = 234
 private const val COMPACT_ROW_GAP_DP = 4f
-private const val SETPOINT_ROW_GAP_DP = 2f
+private const val SETPOINT_ROW_GAP_DP = 1f
 private const val COMPACT_SECONDARY_WIDTH_DP = 29f
-private const val SECONDARY_WIDTH_DP = 32f
+private const val SECONDARY_WIDTH_DP = DIRECT_TARGET_DP
 private const val COMPACT_PRIMARY_WIDTH_DP = 33f
-private const val PRIMARY_WIDTH_DP = 37f
+private const val PRIMARY_WIDTH_DP = DIRECT_TARGET_DP
 private const val COMPACT_VALUE_WIDTH_DP = 42f
-private const val VALUE_WIDTH_DP = 48f
+private const val VALUE_WIDTH_DP = 44f
 private const val COMPACT_SETPOINT_GAP_DP = 1f
-private const val SETPOINT_GAP_DP = 2f
+private const val SETPOINT_GAP_DP = 1f
 private const val SINGLE_ICON_DP = 25f
 private const val AUTO_ICON_DP = 17f
 private const val AUTO_ICON_GAP_DP = 1f
@@ -105,6 +111,9 @@ internal object ThermostatTileIds {
     const val TAP_ACTION_DOWN = "Down"
     const val TAP_MODE_PREFIX = "Mode:"
     const val TAP_FAN = "CycleFan"
+    const val TAP_MODE_MENU = "ModeMenu"
+    const val TAP_ADJUST_MENU_PREFIX = "AdjustMenu:"
+    const val TAP_MENU_BACK = "MenuBack"
     const val INVITATION_ACCEPT = "thermostat_invitation_accept"
     const val INVITATION_DECLINE = "thermostat_invitation_decline"
 
@@ -309,10 +318,10 @@ internal class ThermostatTileViews(private val context: Context) {
         actionPrefix: String,
         screenWidthDp: Int,
         screenHeightDp: Int,
+        clickedId: String = "",
     ): Timeline {
         val controls = entity.climateControls
-        val state = entity.rawState
-        val range = state == "heat_cool" &&
+        val range = entity.rawState == "heat_cool" &&
             controls?.targetTemperatureLow != null &&
             controls.targetTemperatureHigh != null
         val units = ThermostatDisplayUnits(temperatureUnit, config.temperatureUnit)
@@ -320,33 +329,380 @@ internal class ThermostatTileViews(private val context: Context) {
         // Compact circular watches must not crop rows at the upper/lower edges.
         val compact = screenWidthDp < COMPACT_WIDTH_THRESHOLD_DP || screenHeightDp < COMPACT_HEIGHT_THRESHOLD_DP
         val layout = EnhancedLayout(config, entity, pending, actionPrefix, compact, units)
+        val currentText = units.enhancedText(current)
+        return if (compact) {
+            accessibleTimeline(layout, range, currentText, clickedId)
+        } else {
+            directTimeline(layout, range, currentText)
+        }
+    }
+
+    private fun directTimeline(layout: EnhancedLayout, range: Boolean, current: String): Timeline {
         val column = LayoutElementBuilders.Column.Builder()
             .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
-        val showName = config.showEntityName == true && !(compact && range)
+        val showName = layout.config.showEntityName == true
         if (showName) {
             column.addContent(verticalGap(ENHANCED_NAME_GAP_DP))
         }
-        addTemperatureHeader(column, layout, units.enhancedText(current))
-        column.addContent(verticalGap(if (compact) COMPACT_ROW_GAP_DP else ROW_GAP_DP))
-        addSetpoints(column, layout, range)
-        addControlRows(column, layout, controls)
-        addRangeBottomClearance(column, range, compact)
+        val showStatus = layout.config.showActivity || layout.pending != null
+        if (range && showName && showStatus) {
+            addLoweredAutoHeader(column, layout, current)
+        } else {
+            addTemperatureHeader(column, layout, current)
+            column.addContent(verticalGap(ROW_GAP_DP))
+            addSetpoints(column, layout, range)
+        }
+        addControlRows(column, layout, layout.entity.climateControls)
+        return enhancedRootTimeline(column, layout, showName)
+    }
 
-        return Timeline.fromLayoutElement(
+    /** The compact layout keeps all command targets at 48 dp, using temporary selection pages. */
+    private fun accessibleTimeline(
+        layout: EnhancedLayout,
+        range: Boolean,
+        current: String,
+        clickedId: String,
+    ): Timeline {
+        val column = LayoutElementBuilders.Column.Builder()
+            .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+        val menu = clickedId.takeIf { it.startsWith(layout.actionPrefix) }?.removePrefix(layout.actionPrefix)
+        val slots = accessibleSlots(layout, range)
+        val selected = slots.firstOrNull { menu == ThermostatTileIds.TAP_ADJUST_MENU_PREFIX + it.slot }
+        val modeControls = accessibleModeControls(layout)
+        val modePage = menu == ThermostatTileIds.TAP_MODE_MENU
+        val mainPage = !modePage && selected == null
+        val showName = layout.config.showEntityName == true && slots.size < 2 && mainPage
+        when {
+            modePage && modeControls != null -> addAccessibleModeMenu(column, layout, modeControls)
+            selected != null && layout.secondaryStep != null -> {
+                addAccessibleAdjustmentMenu(column, layout, selected, current)
+            }
+            else -> {
+                if (showName) column.addContent(verticalGap(ENHANCED_NAME_GAP_DP))
+                addAccessibleMainPage(column, layout, current, slots, modeControls != null)
+            }
+        }
+        return enhancedRootTimeline(column, layout, showName)
+    }
+
+    private fun accessibleModeControls(layout: EnhancedLayout): ClimateControls? {
+        if (layout.entity.rawState in listOf("unavailable", "unknown")) return null
+        return layout.entity.climateControls?.takeIf { hasAccessibleModeMenu(layout, it) }
+    }
+
+    private fun addAccessibleMainPage(
+        column: LayoutElementBuilders.Column.Builder,
+        layout: EnhancedLayout,
+        current: String,
+        slots: List<AccessibleSlot>,
+        modeMenu: Boolean,
+    ) {
+        addAccessibleHeader(column, layout, current)
+        if (slots.size < 2 || !modeMenu) addActivity(column, layout.copy(pending = null))
+        for (slot in slots) {
+            column.addContent(verticalGap(ACCESSIBLE_GAP_DP))
+            column.addContent(accessibleTemperatureRow(layout, slot))
+        }
+        if (modeMenu) {
+            column.addContent(verticalGap(ACCESSIBLE_GAP_DP))
+            val label = stateLabel(if (layout.entity.rawState == "heat_cool") "auto" else layout.entity.rawState)
+            column.addContent(
+                accessibleMenuButton(
+                    label,
+                    layout.actionPrefix + ThermostatTileIds.TAP_MODE_MENU,
+                    context.getString(commonR.string.thermostat_tile_select_mode, label),
+                ),
+            )
+        }
+    }
+
+    private fun enhancedRootTimeline(
+        column: LayoutElementBuilders.Column.Builder,
+        layout: EnhancedLayout,
+        showName: Boolean,
+    ): Timeline = Timeline.fromLayoutElement(
+        LayoutElementBuilders.Box.Builder()
+            .setWidth(DimensionBuilders.expand())
+            .setHeight(DimensionBuilders.expand())
+            .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+            .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+            .addContent(column.build())
+            .setModifiers(getRefreshModifiers())
+            .apply { if (showName) addContent(enhancedNameArc(layout.entity.name, layout.compact)) }
+            .build(),
+    )
+
+    private data class AccessibleSlot(val slot: String, val target: Float?, val label: String, val color: Int)
+
+    private fun accessibleSlots(layout: EnhancedLayout, range: Boolean): List<AccessibleSlot> {
+        val controls = layout.entity.climateControls
+        val state = layout.entity.rawState
+        if (controls == null || state in listOf("off", "unknown", "unavailable")) return emptyList()
+        val waiting = layout.pending?.takeIf { it.status == ThermostatCommandCoordinator.Pending.Status.WAITING }
+        return if (range) {
+            listOf(
+                AccessibleSlot(
+                    "heat",
+                    layout.units.display(waiting?.low ?: controls.targetTemperatureLow),
+                    context.getString(commonR.string.thermostat_tile_heat_short),
+                    HEAT_TEXT_COLOR,
+                ),
+                AccessibleSlot(
+                    "cool",
+                    layout.units.display(waiting?.high ?: controls.targetTemperatureHigh),
+                    context.getString(commonR.string.thermostat_tile_cool_short),
+                    COOL_TEXT_COLOR,
+                ),
+            )
+        } else if (controls.targetTemperature != null) {
+            listOf(
+                AccessibleSlot(
+                    "single",
+                    layout.units.display(waiting?.single ?: controls.targetTemperature),
+                    "",
+                    if (state == "cool") COOL_TEXT_COLOR else HEAT_TEXT_COLOR,
+                ),
+            )
+        } else {
+            emptyList()
+        }
+    }
+
+    private fun addAccessibleHeader(
+        column: LayoutElementBuilders.Column.Builder,
+        layout: EnhancedLayout,
+        current: String,
+    ) {
+        val message = pendingStatusText(layout.pending)
+        val color = when (layout.pending?.status) {
+            ThermostatCommandCoordinator.Pending.Status.WAITING -> WAITING_TEXT_COLOR
+            ThermostatCommandCoordinator.Pending.Status.FAILED -> FAILED_TEXT_COLOR
+            null -> PRIMARY_TEXT_COLOR
+        }
+        column.addContent(
             LayoutElementBuilders.Box.Builder()
-                .setWidth(DimensionBuilders.expand())
-                .setHeight(DimensionBuilders.expand())
+                .setWidth(DimensionBuilders.dp(COMPACT_HEADER_WIDTH_DP))
+                .setHeight(DimensionBuilders.dp(COMPACT_HEADER_HEIGHT_DP))
                 .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
                 .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
-                .addContent(column.build())
-                .setModifiers(getRefreshModifiers())
-                .apply {
-                    if (showName) {
-                        addContent(
-                            enhancedNameArc(entity.name, compact),
-                        )
-                    }
+                .addContent(
+                    temperatureText(
+                        message ?: current,
+                        if (message == null) COMPACT_AUTO_CURRENT_TEXT_SP else COMPACT_ACTIVITY_TEXT_SP,
+                        color,
+                        COMPACT_STATUS_MAX_LINES,
+                    ),
+                )
+                .build(),
+        )
+    }
+
+    private fun accessibleTemperatureRow(layout: EnhancedLayout, slot: AccessibleSlot): LayoutElement {
+        val value = "${slot.label}${slot.target?.let { nice(it) } ?: "--"}°"
+        val targetDescription = targetDescriptionForSlot(slot.slot)
+        val center = temperatureText(value, BUTTON_TEXT_SP, slot.color)
+        val row = LayoutElementBuilders.Row.Builder().setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+            .addContent(accessibleAdjustment(layout, slot.slot, -1))
+        if (layout.secondaryStep != null) {
+            row.addContent(
+                enhancedButton(
+                    center,
+                    layout.actionPrefix + ThermostatTileIds.TAP_ADJUST_MENU_PREFIX + slot.slot,
+                    ButtonSize(ACCESSIBLE_TARGET_DP, ACCESSIBLE_TARGET_DP),
+                    context.getString(commonR.string.thermostat_tile_more_adjustments, targetDescription, value),
+                    TRANSPARENT_COLOR,
+                ),
+            )
+        } else {
+            row.addContent(
+                LayoutElementBuilders.Box.Builder()
+                    .setWidth(DimensionBuilders.dp(ACCESSIBLE_TARGET_DP))
+                    .setHeight(DimensionBuilders.dp(ACCESSIBLE_TARGET_DP))
+                    .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+                    .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+                    .addContent(center)
+                    .setModifiers(
+                        ModifiersBuilders.Modifiers.Builder().setSemantics(
+                            ModifiersBuilders.Semantics.Builder().setContentDescription(
+                                context.getString(
+                                    commonR.string.thermostat_tile_target_value,
+                                    targetDescription,
+                                    value,
+                                ),
+                            ).build(),
+                        ).build(),
+                    )
+                    .build(),
+            )
+        }
+        return row.addContent(accessibleAdjustment(layout, slot.slot, 1)).build()
+    }
+
+    private fun accessibleAdjustment(layout: EnhancedLayout, slot: String, amount: Int): LayoutElement {
+        val quantity = kotlin.math.abs(amount)
+        val description = context.resources.getQuantityString(
+            if (amount < 0) commonR.plurals.thermostat_tile_decrease else commonR.plurals.thermostat_tile_increase,
+            quantity,
+            targetDescriptionForSlot(slot),
+            quantity,
+        )
+        val label = (if (amount < 0) "−" else "+") + if (quantity == 1) "" else quantity.toString()
+        return button(
+            label,
+            layout.actionPrefix + "Temp:$slot:$amount",
+            ButtonSize(ACCESSIBLE_TARGET_DP, ACCESSIBLE_TARGET_DP),
+            description,
+            BUTTON_BACKGROUND_COLOR,
+        )
+    }
+
+    private fun addAccessibleAdjustmentMenu(
+        column: LayoutElementBuilders.Column.Builder,
+        layout: EnhancedLayout,
+        slot: AccessibleSlot,
+        current: String,
+    ) {
+        val extra = checkNotNull(layout.secondaryStep).coerceIn(2, 10)
+        addAccessibleHeader(column, layout, current)
+        column.addContent(verticalGap(ACCESSIBLE_GAP_DP))
+        column.addContent(
+            temperatureText(
+                "${slot.label}${slot.target?.let {
+                    nice(it)
+                } ?: "--"}°",
+                SETPOINT_TEXT_SP,
+                slot.color,
+            ),
+        )
+        column.addContent(verticalGap(ACCESSIBLE_GAP_DP))
+        addAccessibleRows(
+            column,
+            listOf(
+                accessibleAdjustment(layout, slot.slot, -extra),
+                accessibleAdjustment(layout, slot.slot, extra),
+                accessibleBack(layout),
+            ),
+        )
+    }
+
+    private fun hasAccessibleModeMenu(layout: EnhancedLayout, controls: ClimateControls): Boolean = (
+        layout.config.showHvacModes &&
+            controls.hvacModes.any { it in listOf("heat", "cool", "heat_cool", "auto", "off") }
+        ) ||
+        (layout.config.showFanControl && controls.fanModes.isNotEmpty())
+
+    private fun accessibleMenuButton(label: String, action: String, description: String): LayoutElement =
+        enhancedButton(
+            temperatureText(label, ACCESSIBLE_MENU_TEXT_SP, PRIMARY_TEXT_COLOR, 2),
+            action,
+            ButtonSize(ACCESSIBLE_TARGET_DP, ACCESSIBLE_TARGET_DP),
+            description,
+            BUTTON_BACKGROUND_COLOR,
+        )
+
+    private fun accessibleBack(layout: EnhancedLayout): LayoutElement = accessibleMenuButton(
+        context.getString(commonR.string.back),
+        layout.actionPrefix + ThermostatTileIds.TAP_MENU_BACK,
+        context.getString(commonR.string.back),
+    )
+
+    private fun addAccessibleModeMenu(
+        column: LayoutElementBuilders.Column.Builder,
+        layout: EnhancedLayout,
+        controls: ClimateControls,
+    ) {
+        val buttons = mutableListOf<LayoutElement>()
+        val available = controls.hvacModes
+        if (layout.config.showHvacModes) {
+            fun addMode(mode: String, icon: String, color: Int, description: Int, second: String? = null) {
+                if (mode in available) {
+                    buttons.add(
+                        iconButton(
+                            icon,
+                            layout.actionPrefix + TAP_MODE_PREFIX + mode,
+                            layout.entity.rawState == mode,
+                            ACCESSIBLE_TARGET_DP,
+                            ACCESSIBLE_TARGET_DP,
+                            color,
+                            context.getString(description),
+                            second,
+                        ),
+                    )
                 }
+            }
+            addMode("heat", ICON_HEAT, HEAT_SELECTED_COLOR, commonR.string.thermostat_tile_heat_mode)
+            addMode("cool", ICON_COOL, COOL_SELECTED_COLOR, commonR.string.thermostat_tile_cool_mode)
+            val auto = if ("heat_cool" in available) "heat_cool" else "auto"
+            addMode(
+                auto,
+                ICON_HEAT,
+                AUTO_SELECTED_COLOR,
+                if (auto ==
+                    "heat_cool"
+                ) {
+                    commonR.string.thermostat_tile_heat_cool_mode
+                } else {
+                    commonR.string.thermostat_tile_auto_mode
+                },
+                ICON_COOL,
+            )
+            addMode("off", ICON_ENHANCED_POWER, OFF_SELECTED_COLOR, commonR.string.thermostat_tile_turn_off)
+        }
+        if (layout.config.showFanControl && controls.fanModes.isNotEmpty()) {
+            val on = controls.fanMode != null && controls.fanMode !in listOf("auto", "off")
+            buttons.add(
+                iconButton(
+                    if (on) ICON_FAN else ICON_FAN_OFF,
+                    layout.actionPrefix + TAP_FAN,
+                    on,
+                    ACCESSIBLE_TARGET_DP,
+                    ACCESSIBLE_TARGET_DP,
+                    FAN_SELECTED_COLOR,
+                    context.getString(commonR.string.thermostat_tile_fan_mode, stateLabel(controls.fanMode.orEmpty())),
+                ),
+            )
+        }
+        buttons.add(accessibleBack(layout))
+        addAccessibleRows(column, buttons)
+    }
+
+    private fun addAccessibleRows(column: LayoutElementBuilders.Column.Builder, buttons: List<LayoutElement>) {
+        for ((index, pair) in buttons.chunked(2).withIndex()) {
+            if (index > 0) column.addContent(verticalGap(ACCESSIBLE_GAP_DP))
+            val row = LayoutElementBuilders.Row.Builder().setVerticalAlignment(
+                LayoutElementBuilders.VERTICAL_ALIGN_CENTER,
+            )
+            pair.forEachIndexed { position, button ->
+                if (position > 0) row.addContent(horizontalGap(ACCESSIBLE_GAP_DP))
+                row.addContent(button)
+            }
+            column.addContent(row.build())
+        }
+    }
+
+    private fun addLoweredAutoHeader(
+        column: LayoutElementBuilders.Column.Builder,
+        layout: EnhancedLayout,
+        current: String,
+    ) {
+        // Reserve the original header and setpoint geometry independently of the shifted header.
+        val setpoints = LayoutElementBuilders.Column.Builder()
+            .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+            .addContent(verticalGap(DIRECT_HEADER_HEIGHT_DP))
+            .addContent(verticalGap(ROW_GAP_DP))
+        addSetpoints(setpoints, layout, true)
+
+        val header = LayoutElementBuilders.Column.Builder()
+            .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+            .addContent(verticalGap(AUTO_HEADER_OFFSET_DP))
+        addTemperatureHeader(header, layout, current)
+
+        column.addContent(
+            LayoutElementBuilders.Box.Builder()
+                .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+                .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_TOP)
+                .addContent(setpoints.build())
+                .addContent(header.build())
                 .build(),
         )
     }
@@ -357,54 +713,64 @@ internal class ThermostatTileViews(private val context: Context) {
         current: String,
     ) {
         val state = layout.entity.rawState
-        val temperature = temperatureText(current, enhancedCurrentTextSize(state, layout.compact), PRIMARY_TEXT_COLOR)
-        if (!layout.compact) {
-            column.addContent(temperature)
-            addActivity(column, layout)
-            return
-        }
+        val temperature = temperatureText(current, enhancedCurrentTextSize(state, false), PRIMARY_TEXT_COLOR)
         val message = pendingStatusText(layout.pending)
-        val header = if (message == null) {
-            temperature
-        } else {
-            val color = if (layout.pending?.status == ThermostatCommandCoordinator.Pending.Status.FAILED) {
-                FAILED_TEXT_COLOR
-            } else {
-                WAITING_TEXT_COLOR
-            }
-            temperatureText(message, COMPACT_ACTIVITY_TEXT_SP, color, COMPACT_STATUS_MAX_LINES)
+        val header = when {
+            message != null -> temperatureText(
+                message,
+                ACTIVITY_TEXT_SP,
+                if (layout.pending?.status == ThermostatCommandCoordinator.Pending.Status.FAILED) {
+                    FAILED_TEXT_COLOR
+                } else {
+                    WAITING_TEXT_COLOR
+                },
+                COMPACT_STATUS_MAX_LINES,
+            )
+            layout.config.showActivity -> directActivityHeader(layout, temperature)
+            else -> temperature
         }
-        // Feedback replaces the temperature without moving any controls.
+        // Keep both the normal header and temporary feedback at the same height.
         column.addContent(
             LayoutElementBuilders.Box.Builder()
-                .setWidth(DimensionBuilders.dp(COMPACT_HEADER_WIDTH_DP))
-                .setHeight(DimensionBuilders.dp(COMPACT_HEADER_HEIGHT_DP))
+                .setWidth(DimensionBuilders.dp(DIRECT_HEADER_WIDTH_DP))
+                .setHeight(DimensionBuilders.dp(DIRECT_HEADER_HEIGHT_DP))
                 .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
                 .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
                 .addContent(header)
                 .build(),
         )
-        // Preserve the status when mode buttons cannot identify the active mode.
-        if (!layout.config.showHvacModes || state !in listOf("heat", "cool", "heat_cool", "auto")) {
-            addActivity(column, layout.copy(pending = null))
-        }
     }
+
+    private fun directActivityHeader(layout: EnhancedLayout, temperature: LayoutElement): LayoutElement {
+        val state = layout.entity.rawState
+        val mode = stateLabel(if (state == "heat_cool") "auto" else state).uppercase(java.util.Locale.getDefault())
+        val action = layout.entity.climateControls?.hvacAction?.takeIf { it.isNotBlank() } ?: "idle"
+        val color = activityModeColor(state)
+        return LayoutElementBuilders.Row.Builder()
+            .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+            .addContent(directStatusLabel(mode, color))
+            .addContent(temperature)
+            .addContent(directStatusLabel(if (showHvacAction(state, action)) stateLabel(action) else "", color))
+            .build()
+    }
+
+    private fun directStatusLabel(label: String, color: Int): LayoutElement = LayoutElementBuilders.Box.Builder()
+        .setWidth(DimensionBuilders.dp(DIRECT_STATUS_WIDTH_DP))
+        .setHeight(DimensionBuilders.dp(DIRECT_HEADER_HEIGHT_DP))
+        .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
+        .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
+        .apply {
+            if (label.isNotEmpty()) {
+                addContent(
+                    temperatureText(label, ACTIVITY_TEXT_SP, color, COMPACT_STATUS_MAX_LINES),
+                )
+            }
+        }
+        .build()
 
     private fun enhancedCurrentTextSize(state: String, compact: Boolean): Float = when (state) {
         "heat_cool", "auto" -> if (compact) COMPACT_AUTO_CURRENT_TEXT_SP else AUTO_CURRENT_TEXT_SP
         else -> if (compact) COMPACT_CURRENT_TEXT_SP else CURRENT_TEXT_SP
-    }
-
-    private fun addRangeBottomClearance(
-        column: LayoutElementBuilders.Column.Builder,
-        range: Boolean,
-        compact: Boolean,
-    ) {
-        if (range) {
-            // Reserve clearance from the lower round-screen edge without shrinking touch targets.
-            val clearance = if (compact) COMPACT_RANGE_BOTTOM_CLEARANCE_DP else RANGE_BOTTOM_CLEARANCE_DP
-            column.addContent(verticalGap(clearance))
-        }
     }
 
     private fun addControlRows(
@@ -712,7 +1078,6 @@ internal class ThermostatTileViews(private val context: Context) {
         actionPrefix: String,
     ): LayoutElementBuilders.LayoutElement {
         val extra = secondaryStep?.coerceIn(2, 10)
-        val backgroundColor = if (extra == null) TRANSPARENT_COLOR else BUTTON_BACKGROUND_COLOR
         val targetDescription = targetDescriptionForSlot(slot)
         fun adjustmentDescription(amount: Int): String {
             val quantity = kotlin.math.abs(amount)
@@ -736,7 +1101,7 @@ internal class ThermostatTileViews(private val context: Context) {
                     actionPrefix + "Temp:$slot:${-extra}",
                     ButtonSize(outerWidth, height),
                     adjustmentDescription(-extra),
-                    backgroundColor,
+                    BUTTON_BACKGROUND_COLOR,
                 ),
             )
             row.addContent(horizontalGap(gap))
@@ -747,7 +1112,7 @@ internal class ThermostatTileViews(private val context: Context) {
                 actionPrefix + "Temp:$slot:-1",
                 ButtonSize(primaryWidth, height),
                 adjustmentDescription(-1),
-                backgroundColor,
+                BUTTON_BACKGROUND_COLOR,
             ),
         )
         row.addContent(horizontalGap(gap))
@@ -783,7 +1148,7 @@ internal class ThermostatTileViews(private val context: Context) {
                 actionPrefix + "Temp:$slot:1",
                 ButtonSize(primaryWidth, height),
                 adjustmentDescription(1),
-                backgroundColor,
+                BUTTON_BACKGROUND_COLOR,
             ),
         )
         if (extra != null) {
@@ -794,7 +1159,7 @@ internal class ThermostatTileViews(private val context: Context) {
                     actionPrefix + "Temp:$slot:$extra",
                     ButtonSize(outerWidth, height),
                     adjustmentDescription(extra),
-                    backgroundColor,
+                    BUTTON_BACKGROUND_COLOR,
                 ),
             )
         }

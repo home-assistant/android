@@ -1503,6 +1503,8 @@
     </plurals>
     <string name="thermostat_tile_increase_target">Increase target temperature</string>
     <string name="thermostat_tile_decrease_target">Decrease target temperature</string>
+    <string name="thermostat_tile_select_mode">%1$s; select thermostat mode or fan</string>
+    <string name="thermostat_tile_more_adjustments">%1$s: %2$s; more adjustments</string>
     <string name="thermostat_tile_target_value">%1$s: %2$s</string>
     <string name="climate_heating">Heating</string>
     <string name="climate_cooling">Cooling</string>
