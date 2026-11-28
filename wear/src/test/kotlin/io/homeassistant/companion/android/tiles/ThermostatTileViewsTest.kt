@@ -34,6 +34,7 @@ class ThermostatTileViewsTest {
     private val views = ThermostatTileViews(context)
     private val prefix = ThermostatCommandCoordinator.Target(1, "climate.living_room").actionPrefix
     private val config = ThermostatTile(id = 10, entityId = "climate.living_room")
+    private val enhancedConfig = config.copy(layoutStyle = ThermostatLayoutStyle.ENHANCED)
 
     private fun thermostat(
         state: String = "heat",
@@ -72,11 +73,22 @@ class ThermostatTileViewsTest {
 
     private fun Timeline.elements(): List<LayoutElement> = timelineEntries.first().layout!!.root!!.descendants()
 
+    private fun Timeline.texts() = elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
+
     private fun Timeline.actions(): Set<String> = elements().filterIsInstance<Box>()
         .mapNotNull { it.modifiers?.clickable?.id }
         .filter { it.startsWith(prefix) }
         .map { it.removePrefix(prefix) }
         .toSet()
+
+    private fun Timeline.assertTemperatureBackground(secondary: Boolean, count: Int) {
+        val buttons = elements().filterIsInstance<Box>()
+            .filter { it.modifiers?.clickable?.id?.startsWith(prefix + "Temp:") == true }
+        assertEquals(count, buttons.size)
+        for (button in buttons) {
+            assertEquals(if (secondary) 0xFF293447.toInt() else 0x00000000, button.modifiers?.background?.color?.argb)
+        }
+    }
 
     private fun classic(state: String = "heat") = views.classicTimeline(config, thermostat(state), "°C", null, prefix)
 
@@ -91,43 +103,44 @@ class ThermostatTileViewsTest {
 
     @Test
     fun `Given default Enhanced settings when rendered then hide secondary adjustments and fan on both watch sizes`() {
-        val enhanced = config.copy(layoutStyle = ThermostatLayoutStyle.ENHANCED)
         val modes = setOf("Mode:heat", "Mode:cool", "Mode:heat_cool", "Mode:off")
         for (size in listOf(192, 240)) {
             for (state in listOf("heat", "cool")) {
-                val single = views.enhancedTimeline(enhanced, thermostat(state), "°C", null, prefix, size, size)
+                val single = views.enhancedTimeline(enhancedConfig, thermostat(state), "°C", null, prefix, size, size)
                 assertEquals(modes + setOf("Temp:single:-1", "Temp:single:1"), single.actions())
+                single.assertTemperatureBackground(secondary = false, count = 2)
             }
-            val dual = views.enhancedTimeline(enhanced, thermostat("heat_cool"), "°C", null, prefix, size, size)
+            val dual = views.enhancedTimeline(enhancedConfig, thermostat("heat_cool"), "°C", null, prefix, size, size)
             assertEquals(modes + setOf("Temp:heat:-1", "Temp:heat:1", "Temp:cool:-1", "Temp:cool:1"), dual.actions())
-            val off = views.enhancedTimeline(enhanced, thermostat("off"), "°C", null, prefix, size, size)
+            dual.assertTemperatureBackground(secondary = false, count = 4)
+            val off = views.enhancedTimeline(enhancedConfig, thermostat("off"), "°C", null, prefix, size, size)
             assertEquals(modes, off.actions())
         }
     }
 
     @Test
     fun `Given secondary adjustments enabled when rendered then use the saved step on both watch sizes`() {
-        val modes = setOf("Mode:heat", "Mode:cool", "Mode:heat_cool", "Mode:off", "CycleFan")
+        val modes = setOf("Mode:heat", "Mode:cool", "Mode:heat_cool", "Mode:off")
         for (step in listOf(3, 5)) {
-            val enhanced = config.copy(
-                layoutStyle = ThermostatLayoutStyle.ENHANCED,
-                showSecondaryButtons = true,
-                secondaryStep = step,
-                showFanControl = true,
-            )
             val amounts = listOf(-step, -1, 1, step)
-            for (size in listOf(192, 240)) {
-                val single = views.enhancedTimeline(enhanced, thermostat(), "°C", null, prefix, size, size)
-                val dual = views.enhancedTimeline(enhanced, thermostat("heat_cool"), "°C", null, prefix, size, size)
-                assertEquals(modes + amounts.map { "Temp:single:$it" }, single.actions())
-                assertEquals(modes + listOf("heat", "cool").flatMap { slot -> amounts.map { "Temp:$slot:$it" } }, dual.actions())
+            for (fan in listOf(false, true)) {
+                val enhanced = enhancedConfig.copy(showSecondaryButtons = true, secondaryStep = step, showFanControl = fan)
+                val actions = if (fan) modes + "CycleFan" else modes
+                for (size in listOf(192, 240)) {
+                    for (state in listOf("heat", "cool", "heat_cool")) {
+                        val timeline = views.enhancedTimeline(enhanced, thermostat(state), "°C", null, prefix, size, size)
+                        val slots = if (state == "heat_cool") listOf("heat", "cool") else listOf("single")
+                        assertEquals(actions + slots.flatMap { slot -> amounts.map { "Temp:$slot:$it" } }, timeline.actions())
+                        timeline.assertTemperatureBackground(secondary = true, count = slots.size * amounts.size)
+                    }
+                }
             }
         }
     }
 
     @Test
     fun `Given fan preference and capability when rendered then show fan only when both are present`() {
-        val enhanced = config.copy(layoutStyle = ThermostatLayoutStyle.ENHANCED, showFanControl = true)
+        val enhanced = enhancedConfig.copy(showFanControl = true)
         for (size in listOf(192, 240)) {
             val supported = views.enhancedTimeline(enhanced, thermostat(), "°C", null, prefix, size, size)
             val unsupported = views.enhancedTimeline(
@@ -145,61 +158,32 @@ class ThermostatTileViewsTest {
     }
 
     @Test
-    fun `Given secondary preference when rendered then all visible adjustment buttons use the expected background`() {
-        for (size in listOf(192, 240)) {
-            for (state in listOf("heat", "cool", "heat_cool")) {
-                for (secondary in listOf(false, true)) {
-                    val enhanced = config.copy(
-                        layoutStyle = ThermostatLayoutStyle.ENHANCED,
-                        showSecondaryButtons = secondary,
-                    )
-                    val buttons = views.enhancedTimeline(enhanced, thermostat(state), "°C", null, prefix, size, size)
-                        .elements().filterIsInstance<Box>()
-                        .filter { it.modifiers?.clickable?.id?.startsWith(prefix + "Temp:") == true }
-                    val expectedCount = (if (state == "heat_cool") 2 else 1) * (if (secondary) 4 else 2)
-                    assertEquals(expectedCount, buttons.size)
-                    buttons.forEach { button ->
-                        assertEquals(
-                            if (secondary) 0xFF293447.toInt() else 0x00000000,
-                            button.modifiers?.background?.color?.argb,
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    @Test
     fun `Given a unit override when rendering both layouts then show converted temperatures and degree symbols`() {
         val fahrenheit = config.copy(temperatureUnit = ThermostatTemperatureUnit.FAHRENHEIT)
-        val classicTexts = views.classicTimeline(fahrenheit, thermostat(), "°C", null, prefix)
-            .elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
+        val classicTexts = views.classicTimeline(fahrenheit, thermostat(), "°C", null, prefix).texts()
         assertTrue("67.1 °F" in classicTexts)
         assertTrue("66.9 °F" in classicTexts)
-        val enhancedTexts = views.enhancedTimeline(fahrenheit, thermostat(), "°C", null, prefix, 240, 240)
-            .elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
+        val enhancedTexts = views.enhancedTimeline(fahrenheit, thermostat(), "°C", null, prefix, 240, 240).texts()
         assertTrue("66.9° F" in enhancedTexts)
         assertTrue("67.1°" in enhancedTexts)
-        val rangeTexts = views.enhancedTimeline(fahrenheit, thermostat("heat_cool"), "°C", null, prefix, 240, 240)
-            .elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
+        val rangeTexts = views.enhancedTimeline(fahrenheit, thermostat("heat_cool"), "°C", null, prefix, 240, 240).texts()
         assertTrue("H64.4°" in rangeTexts)
         assertTrue("C71.6°" in rangeTexts)
-        val defaultTexts = views.enhancedTimeline(config, thermostat(), "°C", null, prefix, 240, 240)
-            .elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
+        val defaultTexts = views.enhancedTimeline(config, thermostat(), "°C", null, prefix, 240, 240).texts()
         assertTrue("19.4° C" in defaultTexts)
     }
 
     @Test
     fun `Given HVAC off when fan activity changes then Enhanced displays the reported activity`() {
         fun texts(action: String, fanMode: String) = views.enhancedTimeline(
-            config.copy(layoutStyle = ThermostatLayoutStyle.ENHANCED),
+            enhancedConfig,
             thermostat("off", hvacAction = action, fanMode = fanMode),
             "°C",
             null,
             prefix,
             240,
             240,
-        ).elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
+        ).texts()
         val off = context.getString(commonR.string.state_off).uppercase(java.util.Locale.getDefault())
         val fanOnly = context.getString(
             commonR.string.thermostat_tile_activity_summary,
@@ -216,11 +200,9 @@ class ThermostatTileViewsTest {
 
     @Test
     fun `Given pending or failed commands when rendering Enhanced then preserve controls and show feedback`() {
-        val enhanced = config.copy(layoutStyle = ThermostatLayoutStyle.ENHANCED)
         val waiting = ThermostatCommandCoordinator.Pending("21°", ThermostatCommandCoordinator.Pending.Status.WAITING, single = 21f)
         for (size in listOf(192, 240)) {
-            fun timeline(pending: ThermostatCommandCoordinator.Pending?) = views.enhancedTimeline(enhanced, thermostat(), "°C", pending, prefix, size, size)
-            fun Timeline.texts() = elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
+            fun timeline(pending: ThermostatCommandCoordinator.Pending?) = views.enhancedTimeline(enhancedConfig, thermostat(), "°C", pending, prefix, size, size)
             val normal = timeline(null)
             val pending = timeline(waiting)
             val failed = timeline(waiting.copy(status = ThermostatCommandCoordinator.Pending.Status.FAILED))
@@ -250,7 +232,7 @@ class ThermostatTileViewsTest {
             "°C",
             pending,
             prefix,
-        ).elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
+        ).texts()
         val waitingTexts = texts(waiting)
         assertTrue(context.getString(commonR.string.thermostat_tile_waiting) in waitingTexts)
         assertTrue("21.0 °C" in waitingTexts)
@@ -285,7 +267,7 @@ class ThermostatTileViewsTest {
     @Test
     fun `Given Classic AUTO mode when rendered then display both setpoints and adjustment controls`() {
         val timeline = classic(state = "heat_cool")
-        val texts = timeline.elements().filterIsInstance<Text>().mapNotNull { it.text?.value }
+        val texts = timeline.texts()
         assertTrue("18.0–22.0 °C" in texts)
         assertEquals(setOf("Down", "Up"), timeline.actions())
     }

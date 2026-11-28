@@ -40,45 +40,21 @@ class ThermostatTemperatureLogicTest {
 
     @Test
     fun `Given a Classic range when shifting targets then preserve separation and respect limits`() {
-        assertEquals(
-            SetpointRange(74f, 79f),
-            ThermostatTemperatureLogic.shiftRange(1f, SetpointRange(73f, 78f), 50f, 90f, 1f),
-        )
-        assertEquals(
-            SetpointRange(72f, 77f),
-            ThermostatTemperatureLogic.shiftRange(-1f, SetpointRange(73f, 78f), 50f, 90f, 1f),
-        )
-        assertEquals(
-            SetpointRange(85f, 90f),
-            ThermostatTemperatureLogic.shiftRange(3f, SetpointRange(84f, 89f), 50f, 90f, 1f),
-        )
-        assertEquals(
-            SetpointRange(50f, 55f),
-            ThermostatTemperatureLogic.shiftRange(-3f, SetpointRange(51f, 56f), 50f, 90f, 1f),
-        )
-        assertEquals(
-            SetpointRange(85f, 90f),
-            ThermostatTemperatureLogic.shiftRange(1f, SetpointRange(85f, 90f), 50f, 90f, 1f),
-        )
+        fun assertShift(delta: Float, initial: SetpointRange, expected: SetpointRange, step: Float = 1f) {
+            assertEquals(expected, ThermostatTemperatureLogic.shiftRange(delta, initial, 50f, 90f, step))
+        }
+        assertShift(1f, SetpointRange(73f, 78f), SetpointRange(74f, 79f))
+        assertShift(-1f, SetpointRange(73f, 78f), SetpointRange(72f, 77f))
+        assertShift(3f, SetpointRange(84f, 89f), SetpointRange(85f, 90f))
+        assertShift(-3f, SetpointRange(51f, 56f), SetpointRange(50f, 55f))
+        assertShift(1f, SetpointRange(85f, 90f), SetpointRange(85f, 90f))
         assertEquals(
             SetpointRange(18.5f, 22.5f),
             ThermostatTemperatureLogic.shiftRange(0.5f, SetpointRange(18f, 22f), 5f, 30f, 0.5f),
         )
-        assertEquals(
-            SetpointRange(73f, 78f),
-            ThermostatTemperatureLogic.shiftRange(1f, SetpointRange(73f, 78f), 50f, 90f, 0f),
-        )
-        assertEquals(
-            SetpointRange(49f, 55f),
-            ThermostatTemperatureLogic.shiftRange(1f, SetpointRange(49f, 55f), 50f, 90f, 1f),
-        )
-        assertEquals(
-            SetpointRange(85f, 91f),
-            ThermostatTemperatureLogic.shiftRange(1f, SetpointRange(85f, 91f), 50f, 90f, 1f),
-        )
-        assertEquals(
-            SetpointRange(78f, 73f),
-            ThermostatTemperatureLogic.shiftRange(1f, SetpointRange(78f, 73f), 50f, 90f, 1f),
-        )
+        assertShift(1f, SetpointRange(73f, 78f), SetpointRange(73f, 78f), step = 0f)
+        for (invalid in listOf(SetpointRange(49f, 55f), SetpointRange(85f, 91f), SetpointRange(78f, 73f))) {
+            assertShift(1f, invalid, invalid)
+        }
     }
 }
